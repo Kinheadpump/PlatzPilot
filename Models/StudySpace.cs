@@ -24,7 +24,8 @@ public class StudySpace
     public List<string> SubLocations { get; set; } = new();
 
     public OpeningHoursDto? OpeningHours { get; set; }
-    public bool IsOpen => OpeningHours?.IsCurrentlyOpen() ?? true;
+    public DateTime ReferenceTime { get; set; } = DateTime.Now;
+    public bool IsOpen => OpeningHours?.IsCurrentlyOpen(ReferenceTime) ?? true;
 
     public DateTime LastUpdated { get; set; }
     public bool IsManualCount { get; set; }

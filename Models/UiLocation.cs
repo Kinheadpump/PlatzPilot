@@ -14,6 +14,7 @@ public partial class UiLocation : ObservableObject
     public List<StudySpace> SubSpaces { get; set; } = new();
     public string? MainUrl => SubSpaces.FirstOrDefault()?.Url;
     public string? BuildingNumber { get; set; }
+    public DateTime ReferenceTime { get; set; } = DateTime.Now;
 
     public DateTime? LastUpdated => SubSpaces.Max(s => s.LastUpdated);
     
@@ -28,7 +29,7 @@ public partial class UiLocation : ObservableObject
     public bool HasLocation => Latitude != 0 && Longitude != 0;
 
     // Prüft, ob der erste Raum (und damit das Gebäude) offen ist
-    public bool IsOpen => SubSpaces.FirstOrDefault()?.OpeningHours?.IsCurrentlyOpen() ?? true;
+    public bool IsOpen => SubSpaces.FirstOrDefault()?.OpeningHours?.IsCurrentlyOpen(ReferenceTime) ?? true;
 
     // Holt den Text für die Detailseite
     public string TodayOpeningHours 
@@ -47,7 +48,7 @@ public partial class UiLocation : ObservableObject
                 return "Unbekannt (Objekt Null)";
             }
 
-            var text = firstSpace.OpeningHours.GetTodayOpeningHoursText();
+            var text = firstSpace.OpeningHours.GetTodayOpeningHoursText(ReferenceTime);
             return text;
         }
     }

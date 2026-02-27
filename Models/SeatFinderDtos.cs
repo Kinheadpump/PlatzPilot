@@ -52,9 +52,9 @@ public class OpeningHoursDto
     [JsonPropertyName("exceptional_opening_hours")]
     public List<ExceptionalOpeningHoursDto>? ExceptionalOpeningHours { get; set; }
 
-    public bool IsCurrentlyOpen()
+    public bool IsCurrentlyOpen(DateTime? referenceTime = null)
     {
-        var now = DateTime.Now;
+        var now = referenceTime ?? DateTime.Now;
 
         // 1. VORRANGSCHALTUNG: Ausnahmen prüfen (Feiertage, Ferien, Schließungen)
         if (ExceptionalOpeningHours != null)
@@ -106,9 +106,9 @@ public class OpeningHoursDto
         return false;
     }
 
-    public string GetTodayOpeningHoursText()
+    public string GetTodayOpeningHoursText(DateTime? referenceTime = null)
     {
-        var now = DateTime.Now;
+        var now = referenceTime ?? DateTime.Now;
 
         // 1. VORRANGSCHALTUNG: Ausnahmen prüfen
         if (ExceptionalOpeningHours != null)

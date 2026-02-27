@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlatzPilot.Models;
@@ -38,6 +39,18 @@ public partial class MainPageViewModel : ObservableObject
     [ObservableProperty]
     private string _searchText = string.Empty;
 
+    [ObservableProperty]
+    private DateTime _selectedDate = DateTime.Now.Date;
+
+    [ObservableProperty]
+    private TimeSpan _selectedTime = DateTime.Now.TimeOfDay;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NowButtonColor))]
+    private bool _useNow = true;
+
+    public Color NowButtonColor => UseNow ? Color.FromArgb("#27ae60") : Color.FromArgb("#7f8c8d");
+
     // --- TAB-STEUERUNG UND SICHTBARKEIT ---
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsMainContentVisible))]
@@ -60,6 +73,7 @@ public partial class MainPageViewModel : ObservableObject
     private string _selectedSortOption;
 
     private List<StudySpace> _allSpaces = new();
+    private bool _suppressTimeSelectionChanged;
 
     // Die Liste wird nur gezeigt, wenn wir NICHT in den Einstellungen sind
     public bool IsDataVisible => !IsBusy && UiLocations.Count > 0 && IsMainContentVisible;
@@ -85,6 +99,21 @@ public partial class MainPageViewModel : ObservableObject
 
     [RelayCommand]
     private void ToggleFilter() => IsFilterExpanded = !IsFilterExpanded;
+
+    [RelayCommand]
+    private async Task SetNowAsync()
+    {
+        var now = DateTime.Now;
+
+        _suppressTimeSelectionChanged = true;
+        SelectedDate = now.Date;
+        SelectedTime = now.TimeOfDay;
+        _suppressTimeSelectionChanged = false;
+
+        UseNow = true;
+        ApplyFilter();
+        await LoadSpacesAsync();
+    }
 
     partial void OnSelectedSortOptionChanged(string value)
     {
@@ -163,7 +192,7 @@ public partial class MainPageViewModel : ObservableObject
         try
         {
             IsBusy = true;
-            _allSpaces = await _seatFinderService.FetchSeatDataAsync();
+            _allSpaces = await _seatFinderService.FetchSeatDataAsync(before: GetApiBeforeParameter());
             ApplyFilter();
         }
         finally
@@ -174,6 +203,25 @@ public partial class MainPageViewModel : ObservableObject
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
+
+    partial void OnSelectedDateChanged(DateTime value)
+    {
+        if (_suppressTimeSelectionChanged) return;
+        _ = HandleSelectedTimeChangedAsync();
+    }
+
+    partial void OnSelectedTimeChanged(TimeSpan value)
+    {
+        if (_suppressTimeSelectionChanged) return;
+        _ = HandleSelectedTimeChangedAsync();
+    }
+
+    private async Task HandleSelectedTimeChangedAsync()
+    {
+        UseNow = false;
+        ApplyFilter();
+        await LoadSpacesAsync();
+    }
 
     private void ApplyFilter()
     {
@@ -210,6 +258,7 @@ public partial class MainPageViewModel : ObservableObject
 
     private List<UiLocation> MapSpacesToUiLocations(IEnumerable<StudySpace> spaces)
     {
+        var referenceTime = GetReferenceDateTime();
         var savedFavs = GetFavoriteNames();
         var results = new List<UiLocation>();
         var buildingGroups = spaces.GroupBy(s => s.Building);
@@ -217,27 +266,36 @@ public partial class MainPageViewModel : ObservableObject
         foreach (var bg in buildingGroups)
         {
             var spacesInBuilding = bg.ToList();
+            foreach (var space in spacesInBuilding)
+            {
+                space.ReferenceTime = referenceTime;
+            }
+
             if (string.IsNullOrWhiteSpace(bg.Key) || spacesInBuilding.Count == 1)
-                foreach (var space in spacesInBuilding) results.Add(CreateSingleLocation(space, savedFavs));
+                foreach (var space in spacesInBuilding) results.Add(CreateSingleLocation(space, savedFavs, referenceTime));
             else
-                results.Add(CreateGroupedLocation(bg.Key, spacesInBuilding, savedFavs));
+                results.Add(CreateGroupedLocation(bg.Key, spacesInBuilding, savedFavs, referenceTime));
         }
         return results;
     }
 
-    private UiLocation CreateSingleLocation(StudySpace space, List<string> savedFavs) => new()
+    private UiLocation CreateSingleLocation(StudySpace space, List<string> savedFavs, DateTime referenceTime) => new()
     {
-        Name = space.Name, Subtitle = "1 Lernort", BuildingNumber = space.Building, TotalSeats = space.TotalSeats, FreeSeats = space.FreeSeats, OccupiedSeats = space.OccupiedSeats, IsManualCount = space.IsManualCount, SubSpaces = new List<StudySpace> { space }, IsFavorite = savedFavs.Contains(space.Name)
+        Name = space.Name, Subtitle = "1 Lernort", BuildingNumber = space.Building, TotalSeats = space.TotalSeats, FreeSeats = space.FreeSeats, OccupiedSeats = space.OccupiedSeats, IsManualCount = space.IsManualCount, SubSpaces = new List<StudySpace> { space }, IsFavorite = savedFavs.Contains(space.Name), ReferenceTime = referenceTime
     };
 
-    private UiLocation CreateGroupedLocation(string buildingKey, List<StudySpace> spaces, List<string> savedFavs)
+    private UiLocation CreateGroupedLocation(string buildingKey, List<StudySpace> spaces, List<string> savedFavs, DateTime referenceTime)
     {
         string displayName = BuildingNames.TryGetValue(buildingKey, out var mappedName) ? mappedName : $"Gebäude {buildingKey}";
         return new()
         {
-            Name = displayName, Subtitle = $"{spaces.Count} Lernorte", BuildingNumber = buildingKey, TotalSeats = spaces.Sum(s => s.TotalSeats), FreeSeats = spaces.Sum(s => s.FreeSeats), OccupiedSeats = spaces.Sum(s => s.OccupiedSeats), IsManualCount = spaces.Any(s => s.IsManualCount), SubSpaces = spaces, IsFavorite = savedFavs.Contains(displayName)
+            Name = displayName, Subtitle = $"{spaces.Count} Lernorte", BuildingNumber = buildingKey, TotalSeats = spaces.Sum(s => s.TotalSeats), FreeSeats = spaces.Sum(s => s.FreeSeats), OccupiedSeats = spaces.Sum(s => s.OccupiedSeats), IsManualCount = spaces.Any(s => s.IsManualCount), SubSpaces = spaces, IsFavorite = savedFavs.Contains(displayName), ReferenceTime = referenceTime
         };
     }
+
+    private DateTime GetReferenceDateTime() => UseNow ? DateTime.Now : SelectedDate.Date + SelectedTime;
+
+    private string GetApiBeforeParameter() => UseNow ? "now" : GetReferenceDateTime().ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
 
     [RelayCommand]
     private async Task GoToDetailAsync(UiLocation selectedLocation)
