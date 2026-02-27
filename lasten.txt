@@ -1,0 +1,62 @@
+Das ist ein hervorragender nächster Schritt! Bevor man auch nur eine Zeile Code für die eigentliche App schreibt, ist ein sauber strukturiertes Lastenheft das wichtigste Fundament.
+
+Hier ist dein Lastenheft, professionell gegliedert in Kernfunktionen (MVP - Minimum Viable Product) und Zukunfts-Visionen. Du kannst das genau so als Blaupause für die Entwicklung nehmen.
+
+📄 Lastenheft: Campus SeatFinder App (Arbeitstitel)
+1. Zielsetzung des Projekts
+Entwicklung einer mobilen Applikation (iOS & Android) für Studierende, um in Echtzeit freie Lern- und Sitzplätze auf dem Campus (Bibliotheken, Fakultätsräume) zu finden. Die App kombiniert harte API-Daten des bestehenden Bibliothek-Tickers mit nutzergenerierten "weichen" Faktoren (Community-Wissen), um Frustration bei der Platzsuche zu eliminieren.
+
+2. Funktionale Anforderungen (Kern-Features)
+2.1 Suchen, Sortieren & Filtern
+Detail-Suche: Nutzer können gezielt nach Gebäude- oder Raumkürzeln (z. B. "LSG", "BLB") suchen und sich detaillierte Informationen sowie die aktuelle Auslastung anzeigen lassen.
+
+Smartes Sortieren: Standardmäßige oder manuelle Sortierung der Liste nach den am meisten verfügbaren freien Plätzen.
+
+Intelligente Filter: Möglichkeit, die Anzeige nach bestimmten Kriterien stark einzugrenzen:
+
+Öffnungszeiten: "Nur Räume anzeigen, die noch mind. 4 Stunden geöffnet sind."
+
+Raumtyp: "Nur Gruppenarbeitsräume" oder "Nur absolute Stillarbeitsräume".
+
+2.2 Kartenansicht (Interactive Heatmap)
+Campus-Karte: Eine interaktive Kartenansicht, die alle Lernorte als Pins darstellt.
+
+Heatmap-Logik: Die Pins sind farblich codiert (Grün = Leer, Gelb = Mittel, Rot = Voll/Überfüllt), um mit einem Blick auf die Karte zu erkennen, in welche Himmelsrichtung des Campus man sich bewegen sollte.
+
+2.3 Individualisierung & Widgets
+Favoriten-System: Nutzer können bevorzugte Lernorte mit einem Stern markieren (z. B. als "Meine Standard-Lernorte"). Diese erscheinen ganz oben.
+
+Homescreen Widgets: Native Widgets für iOS und Android, die den aktuellen Status der favorisierten Orte direkt auf dem Startbildschirm des Smartphones anzeigen, ohne dass die App geöffnet werden muss.
+
+2.4 Benachrichtigungssystem (Push-Alarme)
+Sitzplatz-Radar: Nutzer können für überfüllte Wunsch-Orte einen Alarm aktivieren.
+
+Push-Notification: Sobald die API meldet, dass eine definierte Anzahl an Plätzen (z. B. "5 Plätze im LSG") wieder frei ist, erhält der Nutzer sofort eine Push-Benachrichtigung auf sein Smartphone.
+
+2.5 Datenanalyse & smarte Prognosen
+Historische Graphen: Visualisierung der Auslastung des aktuellen Tages sowie der letzten Tage als Liniendiagramm.
+
+"Beste Zeit"-Rechner: Die App berechnet auf Basis historischer Daten (z. B. der letzten vier Montage) den optimalen und den spätestmöglichen Zeitpunkt, um in einem bestimmten Raum noch einen Platz zu bekommen.
+
+Live-Predictions: Ein Algorithmus erkennt aktuelle Trends (z. B. "Ort füllt sich gerade rasant") und gibt Vorhersagen ab: "Wird in ca. 30 Minuten voll sein".
+
+2.6 Community-Wissen (Persistente User-Tags)
+Crowdsourced Info: Nutzer können feste Eigenschaften zu Räumen hinzufügen, abstimmen oder einsehen, die die offizielle Uni-Seite nicht bietet.
+
+Beispiel-Tags: "Schlecht erreichbar", "Keine / Wenige Steckdosen", "Sehr dunkel", "Stickige Luft", "Auslastungsdaten oft unzuverlässig".
+
+3. Zukünftige Erweiterungen (Future Features)
+Diese Features sind für spätere Versionen (V2.0) geplant, wenn die App bereits eine solide Nutzerbasis hat:
+
+Temporärer Vibe-Check: Flüchtige Statusmeldungen von Nutzern vor Ort, die sich nach 12-24 Stunden automatisch löschen.
+
+Beispiele: "Heute extrem laute Baustelle nebenan", "WLAN im 2. OG spinnt gerade", "Klimaanlage ist ausgefallen".
+
+"Wo sind meine Freunde?" (Social Opt-In): Ein freiwilliges Feature, bei dem Nutzer ihren aktuellen Lernort (z. B. "Ich sitze in der BLB") mit einer geschlossenen Freundesliste teilen können, um spontane Lerngruppen oder Kaffeepausen zu erleichtern.
+
+4. Technische Rahmenbedingungen (Nicht-funktionale Anforderungen)
+Serverless First: Alle Live-Auslastungen, historischen Daten und Prognosen werden direkt von den Geräten der Nutzer über die bestehende KIT-API (Limit/After/Before Parameter) abgerufen und lokal berechnet, um Serverkosten extrem gering zu halten.
+
+Backend: Ein leichtgewichtiges Backend (z. B. Firebase oder Supabase) wird ausschließlich für das Speichern der User-Tags und das Auslösen der Push-Benachrichtigungen benötigt.
+
+Plattform: Cross-Platform-Entwicklung (z. B. mit Flutter oder React Native), um mit einer einzigen Codebase iOS- und Android-Nutzer gleichzeitig zu bedienen.

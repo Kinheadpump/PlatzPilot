@@ -1,0 +1,47 @@
+using Microsoft.Maui.Graphics;
+
+namespace PlatzPilot.Models;
+
+public class StudySpace
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    
+    public int TotalSeats { get; set; }
+    public int OccupiedSeats { get; set; }
+    public int FreeSeats { get; set; }
+    
+    public string? Building { get; set; }
+    public string? Level { get; set; }
+    
+    // ---> HIER WIEDER EINGEFÜGT <---
+    public string? Room { get; set; } 
+    
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public string? Url { get; set; }
+    public string? SuperLocation { get; set; }
+    public List<string> SubLocations { get; set; } = new();
+
+    public OpeningHoursDto? OpeningHours { get; set; }
+    public bool IsOpen => OpeningHours?.IsCurrentlyOpen() ?? true;
+
+    public DateTime LastUpdated { get; set; }
+    public bool IsManualCount { get; set; }
+
+    // --- DESIGNER PROPERTIES ---
+    public string AvailabilityText => $"{FreeSeats} von {TotalSeats}";
+
+    public double OccupancyRate => TotalSeats > 0 ? (double)OccupiedSeats / TotalSeats : 0;
+
+    public Color OccupancyColor
+    {
+        get
+        {
+            if (OccupancyRate < 0.4) return Color.FromArgb("#2ecc71"); // Grün
+            if (OccupancyRate < 0.7) return Color.FromArgb("#f1c40f"); // Gelb
+            if (OccupancyRate < 0.9) return Color.FromArgb("#e67e22"); // Orange
+            return Color.FromArgb("#e74c3c"); // Rot
+        }
+    }
+}
