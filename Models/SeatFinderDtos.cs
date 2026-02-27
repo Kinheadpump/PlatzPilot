@@ -54,47 +54,83 @@ public class OpeningHoursDto
 
     public bool IsCurrentlyOpen()
     {
-        if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0) return true;
+        var now = DateTime.Now;
 
-        if (WeeklyOpeningHours.Count == 1)
+        // 1. VORRANGSCHALTUNG: Ausnahmen prüfen (Feiertage, Ferien, Schließungen)
+        if (ExceptionalOpeningHours != null)
         {
-            var block = WeeklyOpeningHours[0];
-            if (block != null && block.Count >= 2)
+            foreach (var exception in ExceptionalOpeningHours)
             {
-                return true; 
-            }
-        }
+                var start = exception.Start?.GetParsedDate();
+                var end = exception.End?.GetParsedDate();
 
-        if (WeeklyOpeningHours.Count == 7)
-        {
-            int dayIndex = ((int)DateTime.Now.DayOfWeek + 6) % 7;
-            var todaysHours = WeeklyOpeningHours[dayIndex];
-
-            if (todaysHours == null || todaysHours.Count == 0) return false;
-
-            if (todaysHours.Count >= 2)
-            {
-                var start = todaysHours[0].GetParsedDate()?.TimeOfDay;
-                var end = todaysHours[1].GetParsedDate()?.TimeOfDay;
-                var currentTime = DateTime.Now.TimeOfDay;
-
-                if (start.HasValue && end.HasValue)
+                // Wenn wir uns JETZT in einem Ausnahme-Zeitraum befinden
+                if (start.HasValue && end.HasValue && now >= start.Value && now <= end.Value)
                 {
-                    return currentTime >= start.Value && currentTime <= end.Value;
+                    // Wenn das Array leer ist, ist das Gebäude in dieser Zeit komplett geschlossen
+                    if (exception.OpeningHours == null || exception.OpeningHours.Count == 0)
+                    {
+                        return false; 
+                    }
+                    
+                    // Wenn hier doch Zeiten stehen sollten (z.B. verkürzte Öffnungszeiten an Heiligabend), 
+                    // könnte man diese hier auslesen. Da das KIT es meist für Schließungen nutzt, sind wir hier sicher.
                 }
             }
         }
-        
-        return true; 
+
+        // 2. NORMALE ZEITEN (Falls keine Ausnahme aktiv ist)
+        if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0) return true;
+
+        if (WeeklyOpeningHours.Count == 1) return true; // 24/7 Fall
+
+        var today = now.DayOfWeek;
+        var currentTime = now.TimeOfDay;
+
+        foreach (var block in WeeklyOpeningHours)
+        {
+            if (block == null || block.Count < 2) continue;
+
+            var start = block[0].GetParsedDate();
+            var end = block[1].GetParsedDate();
+
+            if (start.HasValue && end.HasValue && start.Value.DayOfWeek == today)
+            {
+                if (currentTime >= start.Value.TimeOfDay && currentTime <= end.Value.TimeOfDay)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public string GetTodayOpeningHoursText()
     {
-        if (WeeklyOpeningHours == null)
+        var now = DateTime.Now;
+
+        // 1. VORRANGSCHALTUNG: Ausnahmen prüfen
+        if (ExceptionalOpeningHours != null)
         {
-            return "Fehler: Liste Null";
+            foreach (var exception in ExceptionalOpeningHours)
+            {
+                var start = exception.Start?.GetParsedDate();
+                var end = exception.End?.GetParsedDate();
+
+                if (start.HasValue && end.HasValue && now >= start.Value && now <= end.Value)
+                {
+                    if (exception.OpeningHours == null || exception.OpeningHours.Count == 0)
+                    {
+                        return "Geschlossen (Sonderöffnungszeiten)";
+                    }
+                }
+            }
         }
-        
+
+        // 2. NORMALE ZEITEN
+        if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0) return "Unbekannt";
+
         if (WeeklyOpeningHours.Count == 1)
         {
             var block = WeeklyOpeningHours[0];
@@ -102,36 +138,35 @@ public class OpeningHoursDto
             {
                 var start = block[0].GetParsedDate();
                 var end = block[1].GetParsedDate();
-                
-                if (!start.HasValue) return "Format-Fehler Start";
-                if (!end.HasValue) return "Format-Fehler End";
-
-                return $"{start.Value:HH:mm} - {end.Value:HH:mm} Uhr";
+                if (start.HasValue && end.HasValue)
+                {
+                    if (start.Value.TimeOfDay == TimeSpan.Zero && end.Value.TimeOfDay.Hours >= 23)
+                        return "24 Stunden geöffnet";
+                    return $"{start.Value:HH:mm} - {end.Value:HH:mm} Uhr";
+                }
             }
-            return "Block defekt";
+            return "Unbekannt";
         }
 
-        if (WeeklyOpeningHours.Count == 7)
+        var today = now.DayOfWeek;
+        var todaysBlocks = new List<string>();
+
+        foreach (var block in WeeklyOpeningHours)
         {
-            int dayIndex = ((int)DateTime.Now.DayOfWeek + 6) % 7;
-            
-            var todaysHours = WeeklyOpeningHours[dayIndex];
-            if (todaysHours == null || todaysHours.Count == 0)
-            {
-                return "Geschlossen";
-            }
+            if (block == null || block.Count < 2) continue;
 
-            var start = todaysHours[0].GetParsedDate();
-            var end = todaysHours[1].GetParsedDate();
-            
-            if (start.HasValue && end.HasValue)
+            var start = block[0].GetParsedDate();
+            var end = block[1].GetParsedDate();
+
+            if (start.HasValue && end.HasValue && start.Value.DayOfWeek == today)
             {
-                return $"{start.Value:HH:mm} - {end.Value:HH:mm} Uhr";
+                todaysBlocks.Add($"{start.Value:HH:mm} - {end.Value:HH:mm}");
             }
-            return "Parsing-Fehler";
         }
 
-        return $"Unbekannt (Tage: {WeeklyOpeningHours.Count})";
+        if (todaysBlocks.Count == 0) return "Geschlossen";
+
+        return string.Join(", ", todaysBlocks) + " Uhr";
     }
 }
 
