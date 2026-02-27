@@ -1,32 +1,9 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Text.Json;
-using System.Diagnostics;
-using System.IO;
 
 namespace PlatzPilot.Models;
 
-// DTO = Data Transfer Object. Diese Klassen existieren NUR, 
-// um das chaotische JSON der API 1:1 abbilden zu können.
-public static class FileLogger
-{
-    public static void Log(string message)
-    {
-        try
-        {
-            // Holt sich den Pfad zu deinem Windows-Desktop
-            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            string filePath = Path.Combine(desktopPath, "PlatzPilot_Log.txt");
-            
-            // Schreibt die Nachricht mit Uhrzeit in die Datei (erstellt sie, falls sie nicht existiert)
-            File.AppendAllText(filePath, $"{DateTime.Now:HH:mm:ss.fff} {message}\n");
-        }
-        catch 
-        { 
-            // Falls Windows kurz blockiert, stürzt die App nicht ab
-        }
-    }
-}
 public class TimestampDto
 {
     [JsonPropertyName("date")]
@@ -40,22 +17,14 @@ public class TimestampDto
 
     public DateTime? GetParsedDate()
     {
-        FileLogger.Log($"[4. PARSER] ⏱️ Versuche zu parsen: '{Date}'");
         if (string.IsNullOrWhiteSpace(Date)) return null;
 
         if (DateTime.TryParseExact(Date, "yyyy-MM-dd HH:mm:ss.ffffff", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime exactDate))
-        {
-            FileLogger.Log($"[4. PARSER] ✅ Perfekter Match (mit Nullen): {exactDate}");
             return exactDate;
-        }
 
         if (DateTime.TryParse(Date, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
-        {
-            FileLogger.Log($"[4. PARSER] ✅ Fallback Match: {parsedDate}");
             return parsedDate;
-        }
         
-        FileLogger.Log($"[4. PARSER] ❌ KOMPLETTER FEHLSCHLAG FÜR: '{Date}'");
         return null; 
     }
 }
@@ -87,24 +56,21 @@ public class OpeningHoursDto
     {
         if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0) return true;
 
-        // FALL B: Die API schickt nur 1 Block für die ganze Woche (meistens 24/7 offen)
         if (WeeklyOpeningHours.Count == 1)
         {
             var block = WeeklyOpeningHours[0];
             if (block != null && block.Count >= 2)
             {
-                // Wenn ein Gebäude einen Block für die ganze Woche hat, gehen wir davon aus, dass es offen ist.
                 return true; 
             }
         }
 
-        // FALL A: Die API schickt 7 einzelne Tage
         if (WeeklyOpeningHours.Count == 7)
         {
             int dayIndex = ((int)DateTime.Now.DayOfWeek + 6) % 7;
             var todaysHours = WeeklyOpeningHours[dayIndex];
 
-            if (todaysHours == null || todaysHours.Count == 0) return false; // Heute kein Eintrag -> Geschlossen
+            if (todaysHours == null || todaysHours.Count == 0) return false;
 
             if (todaysHours.Count >= 2)
             {
@@ -124,18 +90,13 @@ public class OpeningHoursDto
 
     public string GetTodayOpeningHoursText()
     {
-        FileLogger.Log("[3. LOGIK] 🧠 Logik gestartet...");
         if (WeeklyOpeningHours == null)
         {
-            FileLogger.Log("[3. LOGIK] ❌ Abbruch: WeeklyOpeningHours ist NULL.");
             return "Fehler: Liste Null";
         }
         
-        FileLogger.Log($"[3. LOGIK] 📊 Anzahl der Tage/Blöcke in der Liste: {WeeklyOpeningHours.Count}");
-
         if (WeeklyOpeningHours.Count == 1)
         {
-            FileLogger.Log("[3. LOGIK] 🔍 24/7 Block erkannt (Nur 1 Eintrag).");
             var block = WeeklyOpeningHours[0];
             if (block != null && block.Count >= 2)
             {
@@ -153,12 +114,10 @@ public class OpeningHoursDto
         if (WeeklyOpeningHours.Count == 7)
         {
             int dayIndex = ((int)DateTime.Now.DayOfWeek + 6) % 7;
-            FileLogger.Log($"[3. LOGIK] 📅 Suche Daten für heutigen Wochentag (Index {dayIndex}).");
             
             var todaysHours = WeeklyOpeningHours[dayIndex];
             if (todaysHours == null || todaysHours.Count == 0)
             {
-                FileLogger.Log("[3. LOGIK] 🛑 Heute kein Eintrag -> Geschlossen.");
                 return "Geschlossen";
             }
 
@@ -167,14 +126,11 @@ public class OpeningHoursDto
             
             if (start.HasValue && end.HasValue)
             {
-                FileLogger.Log($"[3. LOGIK] ✅ Zeiten berechnet: {start.Value:HH:mm} bis {end.Value:HH:mm}");
                 return $"{start.Value:HH:mm} - {end.Value:HH:mm} Uhr";
             }
-            FileLogger.Log("[3. LOGIK] ❌ Konnte Start oder Ende nicht parsen.");
             return "Parsing-Fehler";
         }
 
-        FileLogger.Log($"[3. LOGIK] ❌ Unbekannte Anzahl an Wochentagen: {WeeklyOpeningHours.Count}");
         return $"Unbekannt (Tage: {WeeklyOpeningHours.Count})";
     }
 }
@@ -226,50 +182,32 @@ public class LocationMetadataDto
    // Der interne Speicher für die fertigen Daten
     private OpeningHoursDto? _openingHours;
 
-    // 1. Der Empfänger (Hier schlagen die Daten auf)
     [JsonPropertyName("opening_hours")]
     public JsonElement? OpeningHoursRaw 
     { 
-        get => null; // Wird nicht benötigt
+        get => null; 
         set
         {
-            FileLogger.Log($"\n[1. API IN] 📥 JSON-Daten empfangen. Typ: {value?.ValueKind}");
-            
-            // WIR ÜBERSETZEN SOFORT BEIM EINTREFFEN DER DATEN!
             if (value.HasValue && value.Value.ValueKind == JsonValueKind.Object)
             {
                 try
                 {
                     var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                     _openingHours = value.Value.Deserialize<OpeningHoursDto>(options);
-                    FileLogger.Log($"[2. MAPPER] ✅ SOFORT umgewandelt! Anzahl Tage: {_openingHours?.WeeklyOpeningHours?.Count}");
                 }
-                catch (Exception ex)
+                catch 
                 {
-                    FileLogger.Log($"[2. MAPPER] 🚨 CRASH BEIM ÜBERSETZEN: {ex.Message}");
+                    _openingHours = null; // Stilles Fehlschlagen, Fallback greift
                 }
-            }
-            else
-            {
-                FileLogger.Log($"[2. MAPPER] ⚠️ Ignoriert, da es kein Objekt ist.");
             }
         }
     }
 
-    // 2. Die saubere Schnittstelle für die App
     [JsonIgnore]
     public OpeningHoursDto? OpeningHours
     {
-        get
-        {
-            FileLogger.Log("[3. GETTER] 📞 Die UI (oder der Mapper) ruft die OpeningHours ab!");
-            return _openingHours;
-        }
-        set 
-        { 
-            // Sehr wichtig, falls dein SeatFinderService die Daten manuell kopiert!
-            _openingHours = value; 
-        }
+        get => _openingHours;
+        set => _openingHours = value; 
     }
 
     [JsonPropertyName("super_location")]
