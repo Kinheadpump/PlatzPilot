@@ -1,7 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Microsoft.Maui.Graphics;
-using System.Diagnostics;
-using System.IO;
 
 namespace PlatzPilot.Models;
 
@@ -38,23 +35,19 @@ public partial class UiLocation : ObservableObject
     {
         get
         {
-            FileLogger.Log($"\n[5. UI] 🟢 TodayOpeningHours für Gebäude '{Name}' wird abgefragt...");
             var firstSpace = SubSpaces.FirstOrDefault();
             
             if (firstSpace == null)
             {
-                FileLogger.Log("[5. UI] ❌ Abbruch: Das Gebäude hat überhaupt keine SubSpaces (Räume).");
                 return "Keine Räume";
             }
 
             if (firstSpace.OpeningHours == null)
             {
-                FileLogger.Log("[5. UI] ❌ Abbruch: firstSpace.OpeningHours ist NULL!");
                 return "Unbekannt (Objekt Null)";
             }
 
             var text = firstSpace.OpeningHours.GetTodayOpeningHoursText();
-            FileLogger.Log($"[5. UI] ✅ Ergebnis von GetTodayOpeningHoursText: {text}");
             return text;
         }
     }
