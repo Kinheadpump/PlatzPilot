@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
-using System.Text.Json;
 using System.Globalization;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlatzPilot.Models;
@@ -11,9 +11,23 @@ namespace PlatzPilot.ViewModels;
 public partial class MainPageViewModel : ObservableObject
 {
     private readonly SeatFinderService _seatFinderService;
+
     private const string FavoritesKey = "PlatzPilot_Favorites";
     private const string SortModeKey = "PlatzPilot_SortMode";
     private const string TabModeKey = "PlatzPilot_CurrentTab";
+    private const string ThemeKey = "PlatzPilot_Theme";
+
+    private const string ThemeLight = "Light";
+    private const string ThemeDark = "Dark";
+
+    private const string TabHome = "Home";
+    private const string TabFavorites = "Favorites";
+    private const string TabSettings = "Settings";
+
+    private const string SortByRelevance = "Relevanz";
+    private const string SortByMostFree = "Meiste freie Plätze";
+    private const string SortByMostTotal = "Meiste Plätze insgesamt";
+    private const string SortByAlphabetical = "Alphabetisch (A-Z)";
 
     private static readonly Dictionary<string, string> BuildingNames = new()
     {
@@ -55,25 +69,25 @@ public partial class MainPageViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsMainContentVisible))]
     [NotifyPropertyChangedFor(nameof(IsSettingsContentVisible))]
-    private string _currentTab = "Home";
+    private string _currentTab = TabHome;
 
     // Diese Variablen steuern, was auf dem Bildschirm angezeigt wird
-    public bool IsMainContentVisible => CurrentTab != "Settings";
-    public bool IsSettingsContentVisible => CurrentTab == "Settings";
+    public bool IsMainContentVisible => CurrentTab != TabSettings;
+    public bool IsSettingsContentVisible => CurrentTab == TabSettings;
 
     public List<string> SortOptions { get; } = new()
     {
-        "Relevanz",
-        "Meiste freie Plätze",
-        "Meiste Plätze insgesamt",
-        "Alphabetisch (A-Z)"
+        SortByRelevance,
+        SortByMostFree,
+        SortByMostTotal,
+        SortByAlphabetical
     };
 
     [ObservableProperty]
     private string _selectedSortOption;
 
     private List<StudySpace> _allSpaces = new();
-    private bool _suppressTimeSelectionChanged;
+    private bool _isUpdatingDateTimeSelection;
 
     // Die Liste wird nur gezeigt, wenn wir NICHT in den Einstellungen sind
     public bool IsDataVisible => !IsBusy && UiLocations.Count > 0 && IsMainContentVisible;
@@ -82,19 +96,15 @@ public partial class MainPageViewModel : ObservableObject
     public MainPageViewModel(SeatFinderService seatFinderService)
     {
         _seatFinderService = seatFinderService;
-        _selectedSortOption = Preferences.Default.Get(SortModeKey, "Relevanz");
-        _currentTab = Preferences.Default.Get(TabModeKey, "Home");
-        if (_currentTab == "Settings")
+        _selectedSortOption = Preferences.Default.Get(SortModeKey, SortByRelevance);
+        _currentTab = ResolveInitialTab(Preferences.Default.Get(TabModeKey, TabHome));
+
+        if (!SortOptions.Contains(_selectedSortOption))
         {
-            _currentTab = "Home";
+            _selectedSortOption = SortByRelevance;
         }
 
-        var savedTheme = Preferences.Default.Get("PlatzPilot_Theme", "System");
-        if (Application.Current != null)
-        {
-            if (savedTheme == "Light") Application.Current.UserAppTheme = AppTheme.Light;
-            else if (savedTheme == "Dark") Application.Current.UserAppTheme = AppTheme.Dark;
-        }
+        ApplySavedTheme();
     }
 
     [RelayCommand]
@@ -105,10 +115,10 @@ public partial class MainPageViewModel : ObservableObject
     {
         var now = DateTime.Now;
 
-        _suppressTimeSelectionChanged = true;
+        _isUpdatingDateTimeSelection = true;
         SelectedDate = now.Date;
         SelectedTime = now.TimeOfDay;
-        _suppressTimeSelectionChanged = false;
+        _isUpdatingDateTimeSelection = false;
 
         UseNow = true;
         ApplyFilter();
@@ -117,6 +127,11 @@ public partial class MainPageViewModel : ObservableObject
 
     partial void OnSelectedSortOptionChanged(string value)
     {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
         Preferences.Default.Set(SortModeKey, value);
         ApplyFilter();
     }
@@ -124,6 +139,7 @@ public partial class MainPageViewModel : ObservableObject
     [RelayCommand]
     private void SwitchTab(string tabName)
     {
+        tabName = NormalizeTab(tabName);
         CurrentTab = tabName;
         Preferences.Default.Set(TabModeKey, tabName);
 
@@ -149,40 +165,32 @@ public partial class MainPageViewModel : ObservableObject
     private void ToggleFavorite(UiLocation location)
     {
         if (location == null) return;
+
         location.IsFavorite = !location.IsFavorite;
-        
+
         var favs = GetFavoriteNames();
         if (location.IsFavorite && !favs.Contains(location.Name)) favs.Add(location.Name);
         else if (!location.IsFavorite) favs.Remove(location.Name);
-        
+
         SaveFavoriteNames(favs);
 
-        if (CurrentTab == "Favorites" && !location.IsFavorite)
+        if (CurrentTab == TabFavorites && !location.IsFavorite)
         {
             UiLocations.Remove(location);
-            OnPropertyChanged(nameof(IsDataVisible));
-            OnPropertyChanged(nameof(IsListEmpty));
+            NotifyCollectionVisibilityChanged();
         }
     }
-    // NEU: Der Befehl für den Dark/Light Mode Schalter
+
     [RelayCommand]
     private void ToggleTheme()
     {
         if (Application.Current == null) return;
 
-        // Prüfen, was gerade aktiv ist (Hell oder Dunkel)
         var currentTheme = Application.Current.RequestedTheme;
+        var nextTheme = currentTheme == AppTheme.Dark ? AppTheme.Light : AppTheme.Dark;
 
-        if (currentTheme == AppTheme.Dark)
-        {
-            Application.Current.UserAppTheme = AppTheme.Light;
-            Preferences.Default.Set("PlatzPilot_Theme", "Light");
-        }
-        else
-        {
-            Application.Current.UserAppTheme = AppTheme.Dark;
-            Preferences.Default.Set("PlatzPilot_Theme", "Dark");
-        }
+        Application.Current.UserAppTheme = nextTheme;
+        Preferences.Default.Set(ThemeKey, nextTheme == AppTheme.Light ? ThemeLight : ThemeDark);
     }
 
     [RelayCommand]
@@ -206,13 +214,13 @@ public partial class MainPageViewModel : ObservableObject
 
     partial void OnSelectedDateChanged(DateTime value)
     {
-        if (_suppressTimeSelectionChanged) return;
+        if (_isUpdatingDateTimeSelection) return;
         _ = HandleSelectedTimeChangedAsync();
     }
 
     partial void OnSelectedTimeChanged(TimeSpan value)
     {
-        if (_suppressTimeSelectionChanged) return;
+        if (_isUpdatingDateTimeSelection) return;
         _ = HandleSelectedTimeChangedAsync();
     }
 
@@ -225,33 +233,71 @@ public partial class MainPageViewModel : ObservableObject
 
     private void ApplyFilter()
     {
-        if (_allSpaces == null || !_allSpaces.Any()) return;
+        if (_allSpaces.Count == 0)
+        {
+            UiLocations.Clear();
+            NotifyCollectionVisibilityChanged();
+            return;
+        }
 
-        var filteredSpaces = string.IsNullOrWhiteSpace(SearchText) 
-            ? _allSpaces 
-            : _allSpaces.Where(s => s.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) || s.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
-
+        var filteredSpaces = FilterSpacesBySearch(_allSpaces);
         var results = MapSpacesToUiLocations(filteredSpaces);
 
-        if (CurrentTab == "Favorites")
+        if (CurrentTab == TabFavorites)
         {
             results = results.Where(r => r.IsFavorite).ToList();
         }
 
-        results = SelectedSortOption switch
-        {
-            "Meiste freie Plätze" => results.OrderByDescending(r => r.FreeSeats).ToList(),
-            "Meiste Plätze insgesamt" => results.OrderByDescending(r => r.TotalSeats).ToList(),
-            "Alphabetisch (A-Z)" => results.OrderBy(r => r.Name).ToList(),
-            
-            // "Relevanz" und jeder andere Wert: 
-            // Wir machen KEIN OrderBy, dadurch bleibt die JSON-Reihenfolge exakt erhalten!
-            _ => results
-        };
+        var sortedResults = SortLocations(results);
+        ReplaceUiLocations(sortedResults);
+    }
 
+    private IEnumerable<StudySpace> FilterSpacesBySearch(IEnumerable<StudySpace> spaces)
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            return spaces;
+        }
+
+        var search = SearchText.Trim();
+        return spaces.Where(space => MatchesSearch(space, search));
+    }
+
+    private static bool MatchesSearch(StudySpace space, string search)
+    {
+        return ContainsIgnoreCase(space.Name, search) || ContainsIgnoreCase(space.Id, search);
+    }
+
+    private static bool ContainsIgnoreCase(string? text, string search)
+    {
+        return !string.IsNullOrWhiteSpace(text) &&
+               text.Contains(search, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private List<UiLocation> SortLocations(List<UiLocation> locations)
+    {
+        return SelectedSortOption switch
+        {
+            SortByMostFree => locations.OrderByDescending(r => r.FreeSeats).ToList(),
+            SortByMostTotal => locations.OrderByDescending(r => r.TotalSeats).ToList(),
+            SortByAlphabetical => locations.OrderBy(r => r.Name).ToList(),
+            _ => locations
+        };
+    }
+
+    private void ReplaceUiLocations(IEnumerable<UiLocation> locations)
+    {
         UiLocations.Clear();
-        foreach (var location in results) UiLocations.Add(location);
-        
+        foreach (var location in locations)
+        {
+            UiLocations.Add(location);
+        }
+
+        NotifyCollectionVisibilityChanged();
+    }
+
+    private void NotifyCollectionVisibilityChanged()
+    {
         OnPropertyChanged(nameof(IsDataVisible));
         OnPropertyChanged(nameof(IsListEmpty));
     }
@@ -259,7 +305,7 @@ public partial class MainPageViewModel : ObservableObject
     private List<UiLocation> MapSpacesToUiLocations(IEnumerable<StudySpace> spaces)
     {
         var referenceTime = GetReferenceDateTime();
-        var savedFavs = GetFavoriteNames();
+        var favoriteNames = GetFavoriteNames();
         var results = new List<UiLocation>();
         var buildingGroups = spaces.GroupBy(s => s.Building);
 
@@ -272,24 +318,49 @@ public partial class MainPageViewModel : ObservableObject
             }
 
             if (string.IsNullOrWhiteSpace(bg.Key) || spacesInBuilding.Count == 1)
-                foreach (var space in spacesInBuilding) results.Add(CreateSingleLocation(space, savedFavs, referenceTime));
-            else
-                results.Add(CreateGroupedLocation(bg.Key, spacesInBuilding, savedFavs, referenceTime));
+            {
+                results.AddRange(spacesInBuilding.Select(space => CreateSingleLocation(space, favoriteNames, referenceTime)));
+                continue;
+            }
+
+            results.Add(CreateGroupedLocation(bg.Key, spacesInBuilding, favoriteNames, referenceTime));
         }
+
         return results;
     }
 
-    private UiLocation CreateSingleLocation(StudySpace space, List<string> savedFavs, DateTime referenceTime) => new()
+    private static UiLocation CreateSingleLocation(StudySpace space, List<string> favoriteNames, DateTime referenceTime) => new()
     {
-        Name = space.Name, Subtitle = "1 Lernort", BuildingNumber = space.Building, TotalSeats = space.TotalSeats, FreeSeats = space.FreeSeats, OccupiedSeats = space.OccupiedSeats, IsManualCount = space.IsManualCount, SubSpaces = new List<StudySpace> { space }, IsFavorite = savedFavs.Contains(space.Name), ReferenceTime = referenceTime
+        Name = space.Name,
+        Subtitle = "1 Lernort",
+        BuildingNumber = space.Building,
+        TotalSeats = space.TotalSeats,
+        FreeSeats = space.FreeSeats,
+        OccupiedSeats = space.OccupiedSeats,
+        IsManualCount = space.IsManualCount,
+        SubSpaces = new List<StudySpace> { space },
+        IsFavorite = favoriteNames.Contains(space.Name),
+        ReferenceTime = referenceTime
     };
 
-    private UiLocation CreateGroupedLocation(string buildingKey, List<StudySpace> spaces, List<string> savedFavs, DateTime referenceTime)
+    private static UiLocation CreateGroupedLocation(string buildingKey, List<StudySpace> spaces, List<string> favoriteNames, DateTime referenceTime)
     {
-        string displayName = BuildingNames.TryGetValue(buildingKey, out var mappedName) ? mappedName : $"Gebäude {buildingKey}";
+        string displayName = BuildingNames.TryGetValue(buildingKey, out var mappedName)
+            ? mappedName
+            : $"Gebäude {buildingKey}";
+
         return new()
         {
-            Name = displayName, Subtitle = $"{spaces.Count} Lernorte", BuildingNumber = buildingKey, TotalSeats = spaces.Sum(s => s.TotalSeats), FreeSeats = spaces.Sum(s => s.FreeSeats), OccupiedSeats = spaces.Sum(s => s.OccupiedSeats), IsManualCount = spaces.Any(s => s.IsManualCount), SubSpaces = spaces, IsFavorite = savedFavs.Contains(displayName), ReferenceTime = referenceTime
+            Name = displayName,
+            Subtitle = $"{spaces.Count} Lernorte",
+            BuildingNumber = buildingKey,
+            TotalSeats = spaces.Sum(s => s.TotalSeats),
+            FreeSeats = spaces.Sum(s => s.FreeSeats),
+            OccupiedSeats = spaces.Sum(s => s.OccupiedSeats),
+            IsManualCount = spaces.Any(s => s.IsManualCount),
+            SubSpaces = spaces,
+            IsFavorite = favoriteNames.Contains(displayName),
+            ReferenceTime = referenceTime
         };
     }
 
@@ -301,6 +372,40 @@ public partial class MainPageViewModel : ObservableObject
     private async Task GoToDetailAsync(UiLocation selectedLocation)
     {
         if (selectedLocation == null) return;
+
         await Shell.Current.GoToAsync("DetailPage", new Dictionary<string, object> { { "LocationData", selectedLocation } });
+    }
+
+    private static string NormalizeTab(string tabName)
+    {
+        return tabName switch
+        {
+            TabHome => TabHome,
+            TabFavorites => TabFavorites,
+            TabSettings => TabSettings,
+            _ => TabHome
+        };
+    }
+
+    private static string ResolveInitialTab(string tabName)
+    {
+        var normalizedTab = NormalizeTab(tabName);
+        return normalizedTab == TabSettings ? TabHome : normalizedTab;
+    }
+
+    private static void ApplySavedTheme()
+    {
+        if (Application.Current == null)
+        {
+            return;
+        }
+
+        var savedTheme = Preferences.Default.Get(ThemeKey, "System");
+        Application.Current.UserAppTheme = savedTheme switch
+        {
+            ThemeLight => AppTheme.Light,
+            ThemeDark => AppTheme.Dark,
+            _ => AppTheme.Unspecified
+        };
     }
 }

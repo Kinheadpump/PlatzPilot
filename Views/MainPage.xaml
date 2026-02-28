@@ -5,7 +5,8 @@
              xmlns:models="clr-namespace:PlatzPilot.Models"
              x:Class="PlatzPilot.Views.MainPage"
              x:DataType="viewmodels:MainPageViewModel"
-             Shell.NavBarIsVisible="False">
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{AppThemeBinding Light=White, Dark=#1f1f1f}">
     <Grid RowDefinitions="Auto, Auto, *, Auto">
         
         <Border Grid.Row="0"
@@ -58,17 +59,19 @@
                 <Border Grid.Column="2"
                         StrokeThickness="0"
                         BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
-                        StrokeShape="RoundRectangle 9"
-                        HeightRequest="32"
-                        WidthRequest="32"
-                        Padding="6"
+                        StrokeShape="RoundRectangle 12"
+                        HeightRequest="44"
+                        WidthRequest="44"
+                        Padding="0"
                         VerticalOptions="Center"
                         HorizontalOptions="End">
                     <ImageButton Command="{Binding ToggleFilterCommand}"
                                  Source="{AppThemeBinding Light=icon_filter.png, Dark=icon_filter_white.png}"
-                                 WidthRequest="16"
-                                 HeightRequest="16"
-                                 Padding="0"
+                                 WidthRequest="44"
+                                 HeightRequest="44"
+                                 MinimumWidthRequest="44"
+                                 MinimumHeightRequest="44"
+                                 Padding="12"
                                  Aspect="AspectFit"
                                  BackgroundColor="Transparent"
                                  HorizontalOptions="Center"
