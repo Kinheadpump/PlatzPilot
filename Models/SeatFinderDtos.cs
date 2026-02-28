@@ -54,56 +54,24 @@ public class OpeningHoursDto
 
     public bool IsCurrentlyOpen(DateTime? referenceTime = null)
     {
-        var now = referenceTime ?? DateTime.Now;
+        var reference = referenceTime ?? DateTime.Now;
 
-        // 1. VORRANGSCHALTUNG: Ausnahmen prüfen (Feiertage, Ferien, Schließungen)
-        if (ExceptionalOpeningHours != null)
+        if (IsClosedByException(reference))
         {
-            foreach (var exception in ExceptionalOpeningHours)
-            {
-                var start = exception.Start?.GetParsedDate();
-                var end = exception.End?.GetParsedDate();
-
-                // Wenn wir uns JETZT in einem Ausnahme-Zeitraum befinden
-                if (start.HasValue && end.HasValue && now >= start.Value && now <= end.Value)
-                {
-                    // Wenn das Array leer ist, ist das Gebäude in dieser Zeit komplett geschlossen
-                    if (exception.OpeningHours == null || exception.OpeningHours.Count == 0)
-                    {
-                        return false; 
-                    }
-                    
-                    // Wenn hier doch Zeiten stehen sollten (z.B. verkürzte Öffnungszeiten an Heiligabend), 
-                    // könnte man diese hier auslesen. Da das KIT es meist für Schließungen nutzt, sind wir hier sicher.
-                }
-            }
+            return false;
         }
 
-        // 2. NORMALE ZEITEN (Falls keine Ausnahme aktiv ist)
-        if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0) return true;
-
-        if (WeeklyOpeningHours.Count == 1) return true; // 24/7 Fall
-
-        var today = now.DayOfWeek;
-        var currentTime = now.TimeOfDay;
-
-        foreach (var block in WeeklyOpeningHours)
+        if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0)
         {
-            if (block == null || block.Count < 2) continue;
-
-            var start = block[0].GetParsedDate();
-            var end = block[1].GetParsedDate();
-
-            if (start.HasValue && end.HasValue && start.Value.DayOfWeek == today)
-            {
-                if (currentTime >= start.Value.TimeOfDay && currentTime <= end.Value.TimeOfDay)
-                {
-                    return true;
-                }
-            }
+            return true;
         }
 
-        return false;
+        if (WeeklyOpeningHours.Count == 1)
+        {
+            return true;
+        }
+
+        return TryGetCurrentOpeningIntervalEnd(reference, out _);
     }
 
     public string GetTodayOpeningHoursText(DateTime? referenceTime = null)
@@ -167,6 +135,144 @@ public class OpeningHoursDto
         if (todaysBlocks.Count == 0) return "Geschlossen";
 
         return string.Join(", ", todaysBlocks) + " Uhr";
+    }
+
+    public double GetRemainingOpenHours(DateTime? referenceTime = null)
+    {
+        var reference = referenceTime ?? DateTime.Now;
+
+        if (IsClosedByException(reference))
+        {
+            return 0;
+        }
+
+        if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0)
+        {
+            return 0;
+        }
+
+        if (WeeklyOpeningHours.Count == 1)
+        {
+            return 24;
+        }
+
+        if (!TryGetCurrentOpeningIntervalEnd(reference, out var intervalEnd))
+        {
+            return 0;
+        }
+
+        return Math.Max(0, (intervalEnd - reference).TotalHours);
+    }
+
+    public bool IsOpenUntil(DateTime referenceTime, DateTime requiredOpenUntil)
+    {
+        if (requiredOpenUntil <= referenceTime)
+        {
+            return IsCurrentlyOpen(referenceTime);
+        }
+
+        var requiredHours = (requiredOpenUntil - referenceTime).TotalHours;
+        return GetRemainingOpenHours(referenceTime) >= requiredHours;
+    }
+
+    private bool IsClosedByException(DateTime referenceTime)
+    {
+        if (ExceptionalOpeningHours == null)
+        {
+            return false;
+        }
+
+        foreach (var exception in ExceptionalOpeningHours)
+        {
+            var start = exception.Start?.GetParsedDate();
+            var end = exception.End?.GetParsedDate();
+
+            if (!start.HasValue || !end.HasValue)
+            {
+                continue;
+            }
+
+            if (referenceTime < start.Value || referenceTime > end.Value)
+            {
+                continue;
+            }
+
+            if (exception.OpeningHours == null || exception.OpeningHours.Count == 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetCurrentOpeningIntervalEnd(DateTime referenceTime, out DateTime intervalEnd)
+    {
+        intervalEnd = DateTime.MinValue;
+
+        if (WeeklyOpeningHours == null)
+        {
+            return false;
+        }
+
+        foreach (var block in WeeklyOpeningHours)
+        {
+            if (block == null || block.Count < 2)
+            {
+                continue;
+            }
+
+            var start = block[0].GetParsedDate();
+            var end = block[1].GetParsedDate();
+
+            if (!start.HasValue || !end.HasValue)
+            {
+                continue;
+            }
+
+            var startTime = start.Value.TimeOfDay;
+            var endTime = end.Value.TimeOfDay;
+            var startDay = start.Value.DayOfWeek;
+
+            if (!TryGetContainingIntervalEnd(referenceTime, startDay, startTime, endTime, out var currentBlockEnd))
+            {
+                continue;
+            }
+
+            if (currentBlockEnd > intervalEnd)
+            {
+                intervalEnd = currentBlockEnd;
+            }
+        }
+
+        return intervalEnd != DateTime.MinValue;
+    }
+
+    private static bool TryGetContainingIntervalEnd(DateTime referenceTime, DayOfWeek startDay, TimeSpan startTime, TimeSpan endTime, out DateTime intervalEnd)
+    {
+        intervalEnd = DateTime.MinValue;
+
+        var daysUntilStartDay = ((int)startDay - (int)referenceTime.DayOfWeek + 7) % 7;
+        var thisWeekStart = referenceTime.Date.AddDays(daysUntilStartDay).Add(startTime);
+
+        if (IsReferenceInsideBlock(referenceTime, thisWeekStart, endTime, out intervalEnd))
+        {
+            return true;
+        }
+
+        var previousWeekStart = thisWeekStart.AddDays(-7);
+        return IsReferenceInsideBlock(referenceTime, previousWeekStart, endTime, out intervalEnd);
+    }
+
+    private static bool IsReferenceInsideBlock(DateTime referenceTime, DateTime blockStart, TimeSpan endTime, out DateTime blockEnd)
+    {
+        blockEnd = blockStart.Date.Add(endTime);
+        if (blockEnd <= blockStart)
+        {
+            blockEnd = blockEnd.AddDays(1);
+        }
+
+        return referenceTime >= blockStart && referenceTime <= blockEnd;
     }
 }
 

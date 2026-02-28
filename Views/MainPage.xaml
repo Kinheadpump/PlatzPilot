@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:PlatzPilot.ViewModels"
@@ -7,54 +7,51 @@
              x:DataType="viewmodels:MainPageViewModel"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{AppThemeBinding Light=White, Dark=#1f1f1f}">
-    <Grid RowDefinitions="Auto, Auto, *, Auto">
-        
+    <Grid RowDefinitions="Auto, *, Auto">
         <Border Grid.Row="0"
                 IsVisible="{Binding IsMainContentVisible}"
                 BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1E1E}"
                 Stroke="{AppThemeBinding Light=#ececec, Dark=#2a2a2a}"
                 StrokeThickness="1"
-                Margin="15,15,15,5"
+                Margin="15,15,15,8"
                 Padding="10,8"
                 StrokeShape="RoundRectangle 14">
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" VerticalOptions="Center">
-                <Button Grid.Column="0"
-                        Text="Jetzt"
-                        Command="{Binding SetNowCommand}"
-                        BackgroundColor="{Binding NowButtonColor}"
-                        TextColor="White"
-                        CornerRadius="15"
-                        HeightRequest="30"
-                        Padding="12,0"
-                        FontSize="13"
-                        FontAttributes="Bold"/>
+            <Grid ColumnDefinitions="*,Auto,Auto"
+                  ColumnSpacing="8"
+                  VerticalOptions="Center">
+                <Label Grid.Column="0"
+                       Text="Lernorte"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"
+                       IsVisible="{Binding IsSearchInactive}" />
 
-                <HorizontalStackLayout Grid.Column="1"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center"
-                                       Spacing="8">
-                    <Border StrokeThickness="0"
-                            BackgroundColor="{AppThemeBinding Light=#f7f8fa, Dark=#262626}"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="10,5">
-                        <DatePicker Date="{Binding SelectedDate}"
-                                    Format="dd.MM.yyyy"
-                                    FontSize="13"
-                                    TextColor="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"
-                                    FontAttributes="Bold"/>
-                    </Border>
+                <SearchBar Grid.Column="0"
+                           Placeholder="Nach Bib oder Kürzel suchen..."
+                           Text="{Binding SearchText}"
+                           IsVisible="{Binding IsSearchActive}"
+                           BackgroundColor="Transparent" />
 
-                    <Border StrokeThickness="0"
-                            BackgroundColor="{AppThemeBinding Light=#f7f8fa, Dark=#262626}"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="10,5">
-                        <TimePicker Time="{Binding SelectedTime}"
-                                    Format="HH:mm"
-                                    FontSize="13"
-                                    TextColor="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"
-                                    FontAttributes="Bold"/>
-                    </Border>
-                </HorizontalStackLayout>
+                <Border Grid.Column="1"
+                        StrokeThickness="0"
+                        BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
+                        StrokeShape="RoundRectangle 12"
+                        HeightRequest="44"
+                        WidthRequest="44"
+                        Padding="0"
+                        VerticalOptions="Center">
+                    <ImageButton Command="{Binding ToggleSearchCommand}"
+                                 Source="{AppThemeBinding Light=icon_search.png, Dark=icon_search_white.png}"
+                                 WidthRequest="44"
+                                 HeightRequest="44"
+                                 MinimumWidthRequest="44"
+                                 MinimumHeightRequest="44"
+                                 Padding="12"
+                                 Aspect="AspectFit"
+                                 BackgroundColor="Transparent"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center" />
+                </Border>
 
                 <Border Grid.Column="2"
                         StrokeThickness="0"
@@ -63,8 +60,7 @@
                         HeightRequest="44"
                         WidthRequest="44"
                         Padding="0"
-                        VerticalOptions="Center"
-                        HorizontalOptions="End">
+                        VerticalOptions="Center">
                     <ImageButton Command="{Binding ToggleFilterCommand}"
                                  Source="{AppThemeBinding Light=icon_filter.png, Dark=icon_filter_white.png}"
                                  WidthRequest="44"
@@ -75,61 +71,77 @@
                                  Aspect="AspectFit"
                                  BackgroundColor="Transparent"
                                  HorizontalOptions="Center"
-                                 VerticalOptions="Center"/>
+                                 VerticalOptions="Center" />
                 </Border>
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" 
-                IsVisible="{Binding IsFilterExpanded}"
-                BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#1e1e1e}"
-                StrokeThickness="0" Margin="0,10,0,10" Padding="15">
-            <VerticalStackLayout Spacing="15">
-                <SearchBar Placeholder="Nach Bib oder Kürzel suchen..." Text="{Binding SearchText}" BackgroundColor="Transparent" />
-                <Grid ColumnDefinitions="Auto, *">
-                    <Label Text="Sortieren nach:" VerticalOptions="Center" FontAttributes="Bold" />
-                    <Picker Grid.Column="1" Margin="10,0,0,0" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}" />
-                </Grid>
-            </VerticalStackLayout>
-        </Border>
-
-            <RefreshView Grid.Row="2" IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}" Command="{Binding LoadSpacesCommand}" IsVisible="{Binding IsMainContentVisible}">            <Grid>
-                <CollectionView ItemsSource="{Binding UiLocations}" SelectionMode="None" Margin="10,0,10,10">
+        <RefreshView Grid.Row="1"
+                     IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}"
+                     Command="{Binding LoadSpacesCommand}"
+                     IsVisible="{Binding IsMainContentVisible}">
+            <Grid>
+                <CollectionView ItemsSource="{Binding UiLocations}"
+                                SelectionMode="None"
+                                Margin="10,0,10,10">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:UiLocation">
-                            <Border Margin="0,5,0,5" 
-                                    Padding="15" 
-                                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}" 
-                                    Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#333333}" 
-                                    StrokeShape="RoundRectangle 10" 
+                            <Border Margin="0,5,0,5"
+                                    Padding="15"
+                                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
+                                    Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                                    StrokeShape="RoundRectangle 10"
                                     StrokeThickness="1">
-                                
                                 <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainPageViewModel}}, Path=GoToDetailCommand}" CommandParameter="{Binding .}" />
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainPageViewModel}}, Path=GoToDetailCommand}"
+                                                          CommandParameter="{Binding .}" />
                                 </Border.GestureRecognizers>
-                                <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
-                                    <HorizontalStackLayout Grid.Row="0" Spacing="6">
-                                        <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
+
+                                <Grid RowDefinitions="Auto,Auto,Auto"
+                                      ColumnDefinitions="*,Auto">
+                                    <HorizontalStackLayout Grid.Row="0"
+                                                           Spacing="6">
+                                        <Label Text="{Binding Name}"
+                                               FontAttributes="Bold"
+                                               FontSize="16" />
                                         <Label Text="Geschlossen"
                                                FontSize="12"
                                                TextColor="#e74c3c"
                                                IsVisible="False"
                                                VerticalOptions="Center">
                                             <Label.Triggers>
-                                                <DataTrigger TargetType="Label" Binding="{Binding IsOpen}" Value="False">
-                                                    <Setter Property="IsVisible" Value="True" />
+                                                <DataTrigger TargetType="Label"
+                                                             Binding="{Binding IsOpen}"
+                                                             Value="False">
+                                                    <Setter Property="IsVisible"
+                                                            Value="True" />
                                                 </DataTrigger>
                                             </Label.Triggers>
                                         </Label>
                                     </HorizontalStackLayout>
-                                    <Label Grid.Row="1" Text="{Binding Subtitle}" FontSize="12" TextColor="Gray" />
-                                    <HorizontalStackLayout Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" VerticalOptions="Center" Spacing="10">
-                                        <Label Text="{Binding FavoriteIcon}" TextColor="{Binding FavoriteColor}" FontSize="28" VerticalOptions="Center">
+
+                                    <Label Grid.Row="1"
+                                           Text="{Binding Subtitle}"
+                                           FontSize="12"
+                                           TextColor="Gray" />
+
+                                    <HorizontalStackLayout Grid.Row="0"
+                                                           Grid.RowSpan="2"
+                                                           Grid.Column="1"
+                                                           VerticalOptions="Center"
+                                                           Spacing="10">
+                                        <Label Text="{Binding FavoriteIcon}"
+                                               TextColor="{Binding FavoriteColor}"
+                                               FontSize="28"
+                                               VerticalOptions="Center">
                                             <Label.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainPageViewModel}}, Path=ToggleFavoriteCommand}" CommandParameter="{Binding .}" />
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainPageViewModel}}, Path=ToggleFavoriteCommand}"
+                                                                      CommandParameter="{Binding .}" />
                                             </Label.GestureRecognizers>
                                         </Label>
-                                        <VerticalStackLayout Spacing="0" HorizontalOptions="End" VerticalOptions="Center">
+                                        <VerticalStackLayout Spacing="0"
+                                                             HorizontalOptions="End"
+                                                             VerticalOptions="Center">
                                             <Label Text="{Binding AvailabilityText}"
                                                    FontAttributes="Bold"
                                                    FontSize="18"
@@ -141,12 +153,26 @@
                                                    TextColor="Gray" />
                                         </VerticalStackLayout>
                                     </HorizontalStackLayout>
-                                    <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" Margin="0,15,0,0">
+
+                                    <VerticalStackLayout Grid.Row="2"
+                                                         Grid.ColumnSpan="2"
+                                                         Margin="0,15,0,0">
                                         <Grid ColumnDefinitions="*, Auto">
-                                            <Label Text="Auslastung" FontSize="12" TextColor="Gray" VerticalOptions="Center" />
-                                            <Label Grid.Column="1" Text="Manuell gezählt" FontSize="10" TextColor="DarkOrange" IsVisible="{Binding IsManualCount}" VerticalOptions="Center" />
+                                            <Label Text="Auslastung"
+                                                   FontSize="12"
+                                                   TextColor="Gray"
+                                                   VerticalOptions="Center" />
+                                            <Label Grid.Column="1"
+                                                   Text="Manuell gezählt"
+                                                   FontSize="10"
+                                                   TextColor="DarkOrange"
+                                                   IsVisible="{Binding IsManualCount}"
+                                                   VerticalOptions="Center" />
                                         </Grid>
-                                        <ProgressBar Progress="{Binding OccupancyRate}" ProgressColor="{Binding OccupancyColor}" HeightRequest="6" Margin="0,5,0,0" />
+                                        <ProgressBar Progress="{Binding OccupancyRate}"
+                                                     ProgressColor="{Binding OccupancyColor}"
+                                                     HeightRequest="6"
+                                                     Margin="0,5,0,0" />
                                     </VerticalStackLayout>
                                 </Grid>
                             </Border>
@@ -154,87 +180,448 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10" IsVisible="{Binding IsListEmpty}">
-                    <Label Text="Nichts zu finden 🕵️" FontSize="18" HorizontalOptions="Center" />
+                <VerticalStackLayout VerticalOptions="Center"
+                                     HorizontalOptions="Center"
+                                     Spacing="10"
+                                     IsVisible="{Binding IsListEmpty}">
+                    <Label Text="Nichts zu finden 🕵️"
+                           FontSize="18"
+                           HorizontalOptions="Center" />
                 </VerticalStackLayout>
             </Grid>
         </RefreshView>
 
-        <ScrollView Grid.Row="0" Grid.RowSpan="3" IsVisible="{Binding IsSettingsContentVisible}" Margin="15,30,15,15">
+        <ScrollView Grid.Row="0"
+                    Grid.RowSpan="2"
+                    IsVisible="{Binding IsSettingsContentVisible}"
+                    Margin="15,30,15,15">
             <VerticalStackLayout Spacing="25">
-                <Label Text="Einstellungen" FontAttributes="Bold" FontSize="28" Margin="0,10,0,10" />
+                <Label Text="Einstellungen"
+                       FontAttributes="Bold"
+                       FontSize="28"
+                       Margin="0,10,0,10" />
 
-                <Border Padding="15" BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}" StrokeShape="RoundRectangle 10" StrokeThickness="0">
+                <Border Padding="15"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
+                        StrokeShape="RoundRectangle 10"
+                        StrokeThickness="0">
                     <Grid ColumnDefinitions="*, Auto">
-                        <Label Text="Design (Hell / Dunkel)" VerticalOptions="Center" FontAttributes="Bold" />
-                        
-                        <ImageButton Grid.Column="1" 
-                                     Source="{AppThemeBinding Light=icon_dark_mode.png, Dark=icon_dark_mode_white.png}" 
-                                     Command="{Binding ToggleThemeCommand}" 
+                        <Label Text="Design (Hell / Dunkel)"
+                               VerticalOptions="Center"
+                               FontAttributes="Bold" />
+
+                        <ImageButton Grid.Column="1"
+                                     Source="{AppThemeBinding Light=icon_dark_mode.png, Dark=icon_dark_mode_white.png}"
+                                     Command="{Binding ToggleThemeCommand}"
                                      BackgroundColor="Transparent"
-                                     HeightRequest="40" WidthRequest="40" 
+                                     HeightRequest="40"
+                                     WidthRequest="40"
                                      Padding="8" />
                     </Grid>
                 </Border>
-                
-                <Border Padding="15" BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}" StrokeShape="RoundRectangle 10" StrokeThickness="0">
-                    <VerticalStackLayout Spacing="5" HorizontalOptions="Center">
-                        <Image Source="logo_ui.png" HeightRequest="60" WidthRequest="60" Margin="0,0,0,10" HorizontalOptions="Center"/>
-                        <Label Text="Version 1.0.0" FontSize="12" TextColor="Gray" HorizontalOptions="Center" />
+
+                <Border Padding="15"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
+                        StrokeShape="RoundRectangle 10"
+                        StrokeThickness="0">
+                    <VerticalStackLayout Spacing="5"
+                                         HorizontalOptions="Center">
+                        <Image Source="logo_ui.png"
+                               HeightRequest="60"
+                               WidthRequest="60"
+                               Margin="0,0,0,10"
+                               HorizontalOptions="Center" />
+                        <Label Text="Version 1.0.0"
+                               FontSize="12"
+                               TextColor="Gray"
+                               HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </Border>
-
             </VerticalStackLayout>
         </ScrollView>
 
-        <Border Grid.Row="3" BackgroundColor="{AppThemeBinding Light=White, Dark=#151515}" StrokeThickness="0" Padding="0,5,0,25">
+        <Border Grid.Row="2"
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#151515}"
+                StrokeThickness="0"
+                Padding="0,5,0,25">
             <Border.Shadow>
-                <Shadow Brush="Black" Opacity="0.1" Offset="0,-3" Radius="10" />
+                <Shadow Brush="Black"
+                        Opacity="0.1"
+                        Offset="0,-3"
+                        Radius="10" />
             </Border.Shadow>
 
             <Grid ColumnDefinitions="*,*,*">
-                
-                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Fill" BackgroundColor="Transparent" Padding="0,10" Spacing="4">
+                <VerticalStackLayout Grid.Column="0"
+                                     HorizontalOptions="Fill"
+                                     BackgroundColor="Transparent"
+                                     Padding="0,10"
+                                     Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding SwitchTabCommand}" CommandParameter="Home" />
+                        <TapGestureRecognizer Command="{Binding SwitchTabCommand}"
+                                              CommandParameter="Home" />
                     </VerticalStackLayout.GestureRecognizers>
-                    <Image Source="{AppThemeBinding Light=icon_home.png, Dark=icon_home_white.png}" HeightRequest="24" WidthRequest="24" HorizontalOptions="Center" />
-                    <Label Text="Home" FontSize="10" HorizontalOptions="Center" FontAttributes="Bold" />
+                    <Image Source="{AppThemeBinding Light=icon_home.png, Dark=icon_home_white.png}"
+                           HeightRequest="24"
+                           WidthRequest="24"
+                           HorizontalOptions="Center" />
+                    <Label Text="Home"
+                           FontSize="10"
+                           HorizontalOptions="Center"
+                           FontAttributes="Bold" />
                     <VerticalStackLayout.Triggers>
-                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding CurrentTab}" Value="Home"><Setter Property="Opacity" Value="1.0" /></DataTrigger>
-                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding CurrentTab}" Value="Favorites"><Setter Property="Opacity" Value="0.3" /></DataTrigger>
-                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding CurrentTab}" Value="Settings"><Setter Property="Opacity" Value="0.3" /></DataTrigger>
+                        <DataTrigger TargetType="VerticalStackLayout"
+                                     Binding="{Binding CurrentTab}"
+                                     Value="Home">
+                            <Setter Property="Opacity"
+                                    Value="1.0" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="VerticalStackLayout"
+                                     Binding="{Binding CurrentTab}"
+                                     Value="Favorites">
+                            <Setter Property="Opacity"
+                                    Value="0.3" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="VerticalStackLayout"
+                                     Binding="{Binding CurrentTab}"
+                                     Value="Settings">
+                            <Setter Property="Opacity"
+                                    Value="0.3" />
+                        </DataTrigger>
                     </VerticalStackLayout.Triggers>
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Fill" BackgroundColor="Transparent" Padding="0,10" Spacing="4">
+                <VerticalStackLayout Grid.Column="1"
+                                     HorizontalOptions="Fill"
+                                     BackgroundColor="Transparent"
+                                     Padding="0,10"
+                                     Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding SwitchTabCommand}" CommandParameter="Favorites" />
+                        <TapGestureRecognizer Command="{Binding SwitchTabCommand}"
+                                              CommandParameter="Favorites" />
                     </VerticalStackLayout.GestureRecognizers>
-                    <Image Source="{AppThemeBinding Light=icon_favorite.png, Dark=icon_favorite_white.png}" HeightRequest="24" WidthRequest="24" HorizontalOptions="Center" />
-                    <Label Text="Favoriten" FontSize="10" HorizontalOptions="Center" FontAttributes="Bold" />
+                    <Image Source="{AppThemeBinding Light=icon_favorite.png, Dark=icon_favorite_white.png}"
+                           HeightRequest="24"
+                           WidthRequest="24"
+                           HorizontalOptions="Center" />
+                    <Label Text="Favoriten"
+                           FontSize="10"
+                           HorizontalOptions="Center"
+                           FontAttributes="Bold" />
                     <VerticalStackLayout.Triggers>
-                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding CurrentTab}" Value="Favorites"><Setter Property="Opacity" Value="1.0" /></DataTrigger>
-                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding CurrentTab}" Value="Home"><Setter Property="Opacity" Value="0.3" /></DataTrigger>
-                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding CurrentTab}" Value="Settings"><Setter Property="Opacity" Value="0.3" /></DataTrigger>
+                        <DataTrigger TargetType="VerticalStackLayout"
+                                     Binding="{Binding CurrentTab}"
+                                     Value="Favorites">
+                            <Setter Property="Opacity"
+                                    Value="1.0" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="VerticalStackLayout"
+                                     Binding="{Binding CurrentTab}"
+                                     Value="Home">
+                            <Setter Property="Opacity"
+                                    Value="0.3" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="VerticalStackLayout"
+                                     Binding="{Binding CurrentTab}"
+                                     Value="Settings">
+                            <Setter Property="Opacity"
+                                    Value="0.3" />
+                        </DataTrigger>
                     </VerticalStackLayout.Triggers>
                 </VerticalStackLayout>
 
-                <VerticalStackLayout Grid.Column="2" HorizontalOptions="Fill" BackgroundColor="Transparent" Padding="0,10" Spacing="4">
+                <VerticalStackLayout Grid.Column="2"
+                                     HorizontalOptions="Fill"
+                                     BackgroundColor="Transparent"
+                                     Padding="0,10"
+                                     Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding SwitchTabCommand}" CommandParameter="Settings" />
+                        <TapGestureRecognizer Command="{Binding SwitchTabCommand}"
+                                              CommandParameter="Settings" />
                     </VerticalStackLayout.GestureRecognizers>
-                    <Image Source="{AppThemeBinding Light=icon_settings.png, Dark=icon_settings_white.png}" HeightRequest="24" WidthRequest="24" HorizontalOptions="Center" />
-                    <Label Text="Einstellungen" FontSize="10" HorizontalOptions="Center" FontAttributes="Bold" />
+                    <Image Source="{AppThemeBinding Light=icon_settings.png, Dark=icon_settings_white.png}"
+                           HeightRequest="24"
+                           WidthRequest="24"
+                           HorizontalOptions="Center" />
+                    <Label Text="Einstellungen"
+                           FontSize="10"
+                           HorizontalOptions="Center"
+                           FontAttributes="Bold" />
                     <VerticalStackLayout.Triggers>
-                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding CurrentTab}" Value="Settings"><Setter Property="Opacity" Value="1.0" /></DataTrigger>
-                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding CurrentTab}" Value="Home"><Setter Property="Opacity" Value="0.3" /></DataTrigger>
-                        <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding CurrentTab}" Value="Favorites"><Setter Property="Opacity" Value="0.3" /></DataTrigger>
+                        <DataTrigger TargetType="VerticalStackLayout"
+                                     Binding="{Binding CurrentTab}"
+                                     Value="Settings">
+                            <Setter Property="Opacity"
+                                    Value="1.0" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="VerticalStackLayout"
+                                     Binding="{Binding CurrentTab}"
+                                     Value="Home">
+                            <Setter Property="Opacity"
+                                    Value="0.3" />
+                        </DataTrigger>
+                        <DataTrigger TargetType="VerticalStackLayout"
+                                     Binding="{Binding CurrentTab}"
+                                     Value="Favorites">
+                            <Setter Property="Opacity"
+                                    Value="0.3" />
+                        </DataTrigger>
                     </VerticalStackLayout.Triggers>
                 </VerticalStackLayout>
-
             </Grid>
         </Border>
 
+        <Grid Grid.RowSpan="3"
+              IsVisible="{Binding IsFilterExpanded}"
+              ZIndex="20">
+            <BoxView Color="#7A000000">
+                <BoxView.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding CloseFilterSheetCommand}" />
+                </BoxView.GestureRecognizers>
+            </BoxView>
+
+            <Border VerticalOptions="End"
+                    StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#151515}"
+                    StrokeShape="RoundRectangle 22,22,0,0"
+                    HeightRequest="640">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Grid Grid.Row="0"
+                          Padding="20,12,20,8"
+                          ColumnDefinitions="*,Auto">
+                        <VerticalStackLayout Spacing="6">
+                            <BoxView WidthRequest="46"
+                                     HeightRequest="5"
+                                     HorizontalOptions="Center"
+                                     Color="{AppThemeBinding Light=#d7d7d7, Dark=#3b3b3b}"
+                                     CornerRadius="4" />
+                            <Label Text="Filter"
+                                   FontSize="22"
+                                   FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                        <HorizontalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Button Text="Reset"
+                                    Command="{Binding ResetFiltersCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#e9f0ff, Dark=#24324d}"
+                                    TextColor="{AppThemeBinding Light=#1f4db8, Dark=#9ec1ff}"
+                                    CornerRadius="8"
+                                    FontSize="14"
+                                    Padding="8,0"
+                                    HeightRequest="36" />
+                            <Button Text="✕"
+                                    Command="{Binding CloseFilterSheetCommand}"
+                                    BackgroundColor="Transparent"
+                                    FontSize="20"
+                                    WidthRequest="44"
+                                    HeightRequest="44"
+                                    Padding="0" />
+                        </HorizontalStackLayout>
+                    </Grid>
+
+                    <ScrollView Grid.Row="1">
+                        <VerticalStackLayout Padding="20,0,20,20"
+                                             Spacing="18">
+                            <Border StrokeThickness="0"
+                                    BackgroundColor="{AppThemeBinding Light=#f7f8fa, Dark=#1f1f1f}"
+                                    Padding="14"
+                                    StrokeShape="RoundRectangle 12">
+                                <VerticalStackLayout Spacing="12">
+                                    <Label Text="Wann?"
+                                           FontAttributes="Bold"
+                                           FontSize="16" />
+
+                                    <Grid ColumnDefinitions="*,*"
+                                          ColumnSpacing="8">
+                                        <Button Grid.Column="0"
+                                                Text="Jetzt"
+                                                Command="{Binding SetWhenNowCommand}"
+                                                CornerRadius="10"
+                                                Padding="10,8">
+                                            <Button.Triggers>
+                                                <DataTrigger TargetType="Button"
+                                                             Binding="{Binding UseNow}"
+                                                             Value="True">
+                                                    <Setter Property="BackgroundColor"
+                                                            Value="#1f6feb" />
+                                                    <Setter Property="TextColor"
+                                                            Value="White" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Button"
+                                                             Binding="{Binding UseNow}"
+                                                             Value="False">
+                                                    <Setter Property="BackgroundColor"
+                                                            Value="{AppThemeBinding Light=White, Dark=#2a2a2a}" />
+                                                    <Setter Property="TextColor"
+                                                            Value="{AppThemeBinding Light=Black, Dark=White}" />
+                                                </DataTrigger>
+                                            </Button.Triggers>
+                                        </Button>
+                                        <Button Grid.Column="1"
+                                                Text="Vorher"
+                                                Command="{Binding SetWhenBeforeCommand}"
+                                                CornerRadius="10"
+                                                Padding="10,8">
+                                            <Button.Triggers>
+                                                <DataTrigger TargetType="Button"
+                                                             Binding="{Binding UseNow}"
+                                                             Value="False">
+                                                    <Setter Property="BackgroundColor"
+                                                            Value="#1f6feb" />
+                                                    <Setter Property="TextColor"
+                                                            Value="White" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Button"
+                                                             Binding="{Binding UseNow}"
+                                                             Value="True">
+                                                    <Setter Property="BackgroundColor"
+                                                            Value="{AppThemeBinding Light=White, Dark=#2a2a2a}" />
+                                                    <Setter Property="TextColor"
+                                                            Value="{AppThemeBinding Light=Black, Dark=White}" />
+                                                </DataTrigger>
+                                            </Button.Triggers>
+                                        </Button>
+                                    </Grid>
+
+                                    <Border x:Name="PastTimeFilterPanel"
+                                            IsVisible="{Binding IsBeforeMode}"
+                                            StrokeThickness="0"
+                                            BackgroundColor="{AppThemeBinding Light=White, Dark=#202020}"
+                                            Padding="12"
+                                            StrokeShape="RoundRectangle 10">
+                                        <Grid ColumnDefinitions="*,*"
+                                              ColumnSpacing="10">
+                                            <DatePicker Grid.Column="0"
+                                                        Date="{Binding SelectedDate}"
+                                                        MaximumDate="{Binding MaxSelectableDate}"
+                                                        Format="dd.MM.yyyy" />
+                                            <TimePicker Grid.Column="1"
+                                                        Time="{Binding SelectedTime}"
+                                                        Format="HH:mm" />
+                                        </Grid>
+                                    </Border>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border StrokeThickness="0"
+                                    BackgroundColor="{AppThemeBinding Light=#f7f8fa, Dark=#1f1f1f}"
+                                    Padding="14"
+                                    StrokeShape="RoundRectangle 12">
+                                <VerticalStackLayout Spacing="10">
+                                    <Label Text="Raumtyp"
+                                           FontAttributes="Bold"
+                                           FontSize="16" />
+                                    <Grid ColumnDefinitions="Auto,*"
+                                          ColumnSpacing="10">
+                                        <CheckBox IsChecked="{Binding IsGroupRoomSelected}" />
+                                        <Label Grid.Column="1"
+                                               Text="Gruppenraum"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="Auto,*"
+                                          ColumnSpacing="10">
+                                        <CheckBox IsChecked="{Binding IsSilentStudySelected}" />
+                                        <Label Grid.Column="1"
+                                               Text="Silent Study"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="Auto,*"
+                                          ColumnSpacing="10">
+                                        <CheckBox IsChecked="{Binding IsPcPoolSelected}" />
+                                        <Label Grid.Column="1"
+                                               Text="PC-Pool"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border StrokeThickness="0"
+                                    BackgroundColor="{AppThemeBinding Light=#f7f8fa, Dark=#1f1f1f}"
+                                    Padding="14"
+                                    StrokeShape="RoundRectangle 12">
+                                <VerticalStackLayout Spacing="10">
+                                    <Label Text="Ausstattung"
+                                           FontAttributes="Bold"
+                                           FontSize="16" />
+
+                                    <Grid ColumnDefinitions="Auto,*"
+                                          ColumnSpacing="10">
+                                        <CheckBox IsChecked="{Binding RequireFreeWifi}" />
+                                        <Label Grid.Column="1"
+                                               Text="Free WiFi"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="Auto,*"
+                                          ColumnSpacing="10">
+                                        <CheckBox IsChecked="{Binding RequirePowerOutlets}" />
+                                        <Label Grid.Column="1"
+                                               Text="Steckdosen am Platz"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="Auto,*"
+                                          ColumnSpacing="10">
+                                        <CheckBox IsChecked="{Binding RequireWhiteboard}" />
+                                        <Label Grid.Column="1"
+                                               Text="Whiteboard vorhanden"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border StrokeThickness="0"
+                                    BackgroundColor="{AppThemeBinding Light=#f7f8fa, Dark=#1f1f1f}"
+                                    Padding="14"
+                                    StrokeShape="RoundRectangle 12">
+                                <VerticalStackLayout Spacing="10">
+                                    <Label Text="Öffnungszeiten"
+                                           FontAttributes="Bold"
+                                           FontSize="16" />
+                                    <Label Text="{Binding MinimumOpenHoursText}"
+                                           FontSize="13"
+                                           TextColor="Gray" />
+                                    <Slider Minimum="0"
+                                            Maximum="12"
+                                            x:Name="OpeningHoursSlider"
+                                            ValueChanged="OnOpeningHoursSliderValueChanged"
+                                            Value="{Binding MinimumOpenHours}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border StrokeThickness="0"
+                                    BackgroundColor="{AppThemeBinding Light=#f7f8fa, Dark=#1f1f1f}"
+                                    Padding="14"
+                                    StrokeShape="RoundRectangle 12">
+                                <VerticalStackLayout Spacing="10">
+                                    <Label Text="Sortierung"
+                                           FontAttributes="Bold"
+                                           FontSize="16" />
+                                    <Grid ColumnDefinitions="Auto,*"
+                                          ColumnSpacing="10">
+                                        <Label Text="Sortieren nach:"
+                                               VerticalOptions="Center" />
+                                        <Picker Grid.Column="1"
+                                                ItemsSource="{Binding SortOptions}"
+                                                SelectedItem="{Binding SelectedSortOption}" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Border>
+                        </VerticalStackLayout>
+                    </ScrollView>
+
+                    <Border Grid.Row="2"
+                            StrokeThickness="0"
+                            Padding="16,10,16,16"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#151515}">
+                        <Button Text="{Binding ShowResultsButtonText}"
+                                Command="{Binding ApplySheetFiltersCommand}"
+                                FontAttributes="Bold"
+                                FontSize="16"
+                                HeightRequest="52"
+                                CornerRadius="14"
+                                BackgroundColor="#1f6feb"
+                                TextColor="White" />
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </ContentPage>

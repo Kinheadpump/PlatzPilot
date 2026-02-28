@@ -1,0 +1,158 @@
+{
+  "spaces": [
+    {
+      "id": "LSG",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "LSM",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "LST",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "LSN",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "LSW",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "LBS",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "BIB-N",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "L3",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "L2",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "SAR",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "L1",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "LEG",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "FBC",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "FBP",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "LAF",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "FBA",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "FBI",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "FBM",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "FBH",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "FBD",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "BLB",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    },
+    {
+      "id": "WIS",
+      "roomTypes": [],
+      "freeWifi": false,
+      "powerOutlets": false,
+      "whiteboard": false
+    }
+  ]
+}
