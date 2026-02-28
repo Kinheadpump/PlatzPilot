@@ -7,7 +7,8 @@
              x:DataType="viewmodels:MainPageViewModel"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{AppThemeBinding Light=White, Dark=#1f1f1f}">
-    <Grid RowDefinitions="Auto, *, Auto">
+    <Grid RowDefinitions="Auto, *, Auto"
+          BackgroundColor="{AppThemeBinding Light=White, Dark=#1f1f1f}">
         <Border Grid.Row="0"
                 IsVisible="{Binding IsMainContentVisible}"
                 BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1E1E1E}"
@@ -79,10 +80,12 @@
         <RefreshView Grid.Row="1"
                      IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}"
                      Command="{Binding LoadSpacesCommand}"
-                     IsVisible="{Binding IsMainContentVisible}">
+                     IsVisible="{Binding IsMainContentVisible}"
+                     BackgroundColor="Transparent">
             <Grid>
                 <CollectionView ItemsSource="{Binding UiLocations}"
                                 SelectionMode="None"
+                                BackgroundColor="Transparent"
                                 Margin="10,0,10,10">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:UiLocation">
@@ -402,14 +405,16 @@
             </Grid>
         </Border>
 
-        <Grid Grid.RowSpan="3"
+        <Grid Grid.Row="1"
+              Grid.RowSpan="2"
               IsVisible="{Binding IsFilterExpanded}"
               ZIndex="20">
-            <BoxView Color="{AppThemeBinding Light=#33000000, Dark=#55000000}">
-                <BoxView.GestureRecognizers>
+            <Border StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=#1A000000, Dark=#33000000}">
+                <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding CloseFilterSheetCommand}" />
-                </BoxView.GestureRecognizers>
-            </BoxView>
+                </Border.GestureRecognizers>
+            </Border>
 
             <Border VerticalOptions="End"
                     StrokeThickness="0"
@@ -449,7 +454,8 @@
                         </HorizontalStackLayout>
                     </Grid>
 
-                    <ScrollView Grid.Row="1">
+                    <ScrollView x:Name="FilterSheetScroll"
+                                Grid.Row="1">
                         <VerticalStackLayout Padding="20,0,20,20"
                                              Spacing="18">
                             <Border StrokeThickness="0"

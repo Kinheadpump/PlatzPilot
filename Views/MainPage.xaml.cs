@@ -35,6 +35,16 @@ public partial class MainPage : ContentPage
 
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(MainPageViewModel.IsFilterExpanded) &&
+            _viewModel.IsFilterExpanded &&
+            FilterSheetScroll != null)
+        {
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                await FilterSheetScroll.ScrollToAsync(0, 0, false);
+            });
+        }
+
         if (e.PropertyName != nameof(MainPageViewModel.IsBeforeMode) || !_viewModel.IsBeforeMode || PastTimeFilterPanel == null)
         {
             return;
