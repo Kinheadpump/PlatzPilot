@@ -44,14 +44,18 @@ Danach wird geglaettet (Moving Average, Fenster=5).
 Frueh gewichteter Peak
 ----------------------
 Statt reinem Durchschnittspeak:
-1. Fuer jeden Tag wird der Tagespeak als Bin mit minimalen freien Plaetzen
-   bestimmt (bei Gleichstand der fruehere Bin).
-2. Jeder Tagespeak bekommt Gewicht:
+1. Pro Tag wird zuerst die maximale Belegung gesucht (peak_occupancy).
+2. Der Tagespeak ist der **erste** Zeitpunkt, an dem eine Schwelle des
+   Tagespeaks erreicht wird:
+   threshold = peak_occupancy * daily_peak_threshold_ratio (Standard 0.85)
+   Wir waehlen den fruehesten Bin mit belegten Plaetzen >= threshold.
+   (Fallback: falls kein Bin die Schwelle erreicht, den Max-Peak nehmen.)
+3. Jeder Tagespeak bekommt Gewicht:
    - recency_weight = exp(-days_ago / tau)
    - early_weight   = 1 + early_peak_bias * (1 - bin/max_bin)
    - total_weight   = recency_weight * early_weight
-3. Peak ⌀ wird als gewichtetes Quantil ueber die Tagespeaks berechnet
-   (early_peak_quantile, Standard 0.35).
+4. Peak ⌀ wird als gewichtetes Quantil ueber die Tagespeaks berechnet
+   (early_peak_quantile, Standard 0.45).
 
 Interpretation:
 - fruehere Peaks sind bewusst staerker gewichtet

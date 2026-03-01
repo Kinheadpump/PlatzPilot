@@ -23,6 +23,7 @@ public sealed class SafeArrivalForecastService
     public double MinWeightedSamplesForCandidate { get; set; } = 0.2;
     public double EarlyPeakQuantile { get; set; } = 0.45;
     public double EarlyPeakBias { get; set; } = 0.7;
+    public double DailyPeakThresholdRatio { get; set; } = 0.85;
     public int LeadTimeBeforePeakMinutes { get; set; } = 15;
     public int MinCoveredDaysForConfidence { get; set; } = 2;
     public double MinWeightedSamplesForConfidence { get; set; } = 1.0;
@@ -224,6 +225,7 @@ public sealed class SafeArrivalForecastService
     {
         var dailyPeaksForQuantile = new List<(int Bin, double Weight)>();
         var dailyPeaksForTrend = new List<(double DayPosition, int Bin, double Weight)>();
+        var thresholdRatio = Math.Clamp(DailyPeakThresholdRatio, 0.6, 0.98);
 
         foreach (var dayGroup in history.GroupBy(point => point.Timestamp.Date))
         {
@@ -233,21 +235,39 @@ public sealed class SafeArrivalForecastService
                 continue;
             }
 
-            var dayPeak = dayGroup
+            var dayPoints = dayGroup
                 .Select(point => new
                 {
                     Bin = GetBinIndex(point.Timestamp),
                     FreeSeats = Math.Clamp(point.FreeSeats, 0, capacity)
                 })
                 .Where(point => openBins[point.Bin])
-                .OrderBy(point => point.FreeSeats)
-                .ThenBy(point => point.Bin)
-                .FirstOrDefault();
+                .Select(point => new
+                {
+                    point.Bin,
+                    OccupiedSeats = Math.Max(0, capacity - point.FreeSeats)
+                })
+                .ToList();
 
-            if (dayPeak == null)
+            if (dayPoints.Count == 0)
             {
                 continue;
             }
+
+            var peakOccupancy = dayPoints.Max(point => point.OccupiedSeats);
+            if (peakOccupancy <= 0)
+            {
+                continue;
+            }
+
+            var threshold = peakOccupancy * thresholdRatio;
+            var dayPeak = dayPoints
+                .OrderBy(point => point.Bin)
+                .FirstOrDefault(point => point.OccupiedSeats >= threshold)
+                ?? dayPoints
+                    .OrderByDescending(point => point.OccupiedSeats)
+                    .ThenBy(point => point.Bin)
+                    .First();
 
             var recencyWeight = Math.Exp(-daysAgo / TauDays);
             var earlyWeight = 1.0 + EarlyPeakBias * (1.0 - (double)dayPeak.Bin / (BinsPerDay - 1));
