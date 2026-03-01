@@ -4,10 +4,9 @@ Wir freuen uns sehr über Ihr Interesse an unserer App "PlatzPilot". Der Datensc
 
 **1. Verantwortlicher**
 Verantwortlich für die App im Sinne der Datenschutz-Grundverordnung (DSGVO) ist:
-[DEIN VOR- UND NACHNAME]
-[DEINE STRASSE UND HAUSNUMMER]
-[DEINE PLZ UND WOHNORT]
-E-Mail: [DEINE E-MAIL ADRESSE]
+Noah Alonso Perez
+53121 Bonn
+E-Mail: platzpilot.app@gmail.com
 
 **2. Erhebung und Verarbeitung personenbezogener Daten**
 Die App "PlatzPilot" erhebt, speichert oder verarbeitet **keine** personenbezogenen Daten (wie Namen, E-Mail-Adressen oder Passwörter). Es müssen keine Benutzerkonten angelegt werden. Alle persönlichen Einstellungen (wie z.B. markierte Favoriten oder Theme-Einstellungen) werden ausschließlich lokal auf Ihrem Endgerät gespeichert und niemals an uns oder Dritte übertragen.
