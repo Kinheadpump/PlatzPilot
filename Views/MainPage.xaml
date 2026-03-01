@@ -260,7 +260,7 @@
                         StrokeThickness="0">
                     <VerticalStackLayout Spacing="5"
                                          HorizontalOptions="Center">
-                        <Image Source="logo_ui.png"
+                        <Image Source="app_logo_settings.png"
                                HeightRequest="60"
                                WidthRequest="60"
                                Margin="0,0,0,10"
@@ -269,6 +269,14 @@
                                FontSize="12"
                                TextColor="Gray"
                                HorizontalOptions="Center" />
+                        <Button Text="Github"
+                                Command="{Binding OpenGithubCommand}"
+                                Margin="0,6,0,0"
+                                BackgroundColor="{AppThemeBinding Light=#e9f0ff, Dark=#24324d}"
+                                TextColor="{AppThemeBinding Light=#1f4db8, Dark=#9ec1ff}"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                Padding="14,8" />
                     </VerticalStackLayout>
                 </Border>
             </VerticalStackLayout>
@@ -424,7 +432,7 @@
                 <Grid RowDefinitions="Auto,*,Auto">
                     <Grid Grid.Row="0"
                           Padding="20,12,20,8"
-                          ColumnDefinitions="*,Auto">
+                          ColumnDefinitions="*">
                         <VerticalStackLayout Spacing="6">
                             <BoxView WidthRequest="46"
                                      HeightRequest="5"
@@ -435,23 +443,16 @@
                                    FontSize="22"
                                    FontAttributes="Bold" />
                         </VerticalStackLayout>
-                        <HorizontalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                            <Button Text="Reset"
-                                    Command="{Binding ResetFiltersCommand}"
-                                    BackgroundColor="{AppThemeBinding Light=#e9f0ff, Dark=#24324d}"
-                                    TextColor="{AppThemeBinding Light=#1f4db8, Dark=#9ec1ff}"
-                                    CornerRadius="8"
-                                    FontSize="14"
-                                    Padding="8,0"
-                                    HeightRequest="36" />
-                            <Button Text="✕"
-                                    Command="{Binding CloseFilterSheetCommand}"
-                                    BackgroundColor="Transparent"
-                                    FontSize="20"
-                                    WidthRequest="44"
-                                    HeightRequest="44"
-                                    Padding="0" />
-                        </HorizontalStackLayout>
+                        <Button Text="Reset"
+                                Command="{Binding ResetFiltersCommand}"
+                                BackgroundColor="{AppThemeBinding Light=#e9f0ff, Dark=#24324d}"
+                                TextColor="{AppThemeBinding Light=#1f4db8, Dark=#9ec1ff}"
+                                CornerRadius="8"
+                                FontSize="14"
+                                Padding="8,0"
+                                HeightRequest="36"
+                                HorizontalOptions="End"
+                                VerticalOptions="Center" />
                     </Grid>
 
                     <ScrollView x:Name="FilterSheetScroll"

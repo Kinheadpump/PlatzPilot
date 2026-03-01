@@ -4,6 +4,7 @@
 ## Get latest from `dotnet new gitignore`
 
 auslastung.json
+lasten.txt
 
 # dotenv files
 .env

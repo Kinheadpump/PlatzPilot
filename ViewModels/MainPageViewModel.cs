@@ -329,6 +329,13 @@ public partial class MainPageViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task OpenGithubAsync()
+    {
+        const string repositoryUrl = "https://github.com/Kinheadpump/PlatzPilot";
+        await Browser.Default.OpenAsync(repositoryUrl, BrowserLaunchMode.SystemPreferred);
+    }
+
+    [RelayCommand]
     public async Task LoadSpacesAsync()
     {
         if (IsBusy)

@@ -40,14 +40,16 @@
 
 	<ItemGroup>
 		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\app_logo.png" 
-              Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'windows'" />
+		<MauiIcon Include="Resources\AppIcon\app_logo.png"
+			  Color="#FFFFFF"
+			  Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'windows'" />
 
 		<MauiIcon Include="Resources\AppIcon\app_logo_win.ico" 
 				Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" />
 
 		<MauiImage Remove="Resources\AppIcon\app_logo.png" />
 		<MauiImage Remove="Resources\AppIcon\app_logo_win.ico" />
+		<MauiImage Include="Resources\AppIcon\app_logo.png" Link="app_logo_settings.png" />
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\images\logo_ui.png" Color="#000000" BaseSize="128,128" />
 
