@@ -264,6 +264,36 @@
                         BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
                         StrokeShape="RoundRectangle 10"
                         StrokeThickness="0">
+                    <VerticalStackLayout Spacing="10">
+                        <Button Text="Impressum"
+                                Command="{Binding ShowImpressumCommand}"
+                                BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                FontAttributes="Bold"
+                                CornerRadius="8"
+                                Padding="10" />
+                        <Button Text="Datenschutz"
+                                Command="{Binding ShowPrivacyCommand}"
+                                BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                FontAttributes="Bold"
+                                CornerRadius="8"
+                                Padding="10" />
+                        <Button Text="Lizenzen"
+                                Command="{Binding ShowLicensesCommand}"
+                                BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                FontAttributes="Bold"
+                                CornerRadius="8"
+                                Padding="10" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Padding="15"
+                        Margin="0,50,0,0"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
+                        StrokeShape="RoundRectangle 10"
+                        StrokeThickness="0">
                     <VerticalStackLayout Spacing="5"
                                          HorizontalOptions="Center">
                         <Image Source="app_logo_settings.png"
