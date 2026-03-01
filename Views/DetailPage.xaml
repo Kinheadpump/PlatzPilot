@@ -55,16 +55,35 @@
                     </Grid>
 
                     <Border BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#1e1e1e}" Padding="15" StrokeShape="RoundRectangle 10" StrokeThickness="0">
-                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*">
+                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="12">
                             <Label Grid.Row="0" Grid.Column="0" Text="Gebäude:" FontAttributes="Bold" Margin="0,0,10,10"/>
                             <Label Grid.Row="0" Grid.Column="1" Text="{Binding LocationData.BuildingDisplayText}" Margin="0,0,0,10" />
                             
                             <Label Grid.Row="1" Grid.Column="0" Text="Öffnungszeit:" FontAttributes="Bold" Margin="0,0,10,10"/>
                             <Label Grid.Row="1" Grid.Column="1" Text="{Binding LocationData.TodayOpeningHours}" TextColor="{AppThemeBinding Light=#2c3e50, Dark=#bdc3c7}" Margin="0,0,0,10" />
 
-                            <Label Grid.Row="2" Grid.Column="0" Text="Status:" FontAttributes="Bold" />
+                            <Label Grid.Row="2" Grid.Column="0" Text="Letzte Zählung:" FontAttributes="Bold" />
                             <Label Grid.Row="2" Grid.Column="1" Text="{Binding LocationData.LastUpdatedText}" TextColor="{AppThemeBinding Light=#2c3e50, Dark=#bdc3c7}" />
                         </Grid>
+                    </Border>
+
+                    <Border BackgroundColor="{AppThemeBinding Light=#f8f9fb, Dark=#1a1f28}"
+                            Stroke="{AppThemeBinding Light=#d8dde6, Dark=#2e3540}"
+                            StrokeThickness="1"
+                            Padding="12"
+                            StrokeShape="RoundRectangle 10">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="{Binding LocationData.PeakAverageText}"
+                                   FontSize="13"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#2c3e50, Dark=#d5dbe5}" />
+                            <Label Text="{Binding LocationData.SafetyLevelText}"
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light=#4a5568, Dark=#aeb7c5}" />
+                            <Label Text="{Binding LocationData.PeakTrendText}"
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light=#4a5568, Dark=#aeb7c5}" />
+                        </VerticalStackLayout>
                     </Border>
 
                     <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#e0e0e0, Dark=#333333}" />
@@ -109,7 +128,14 @@
                                        TextColor="Gray" />
                             </VerticalStackLayout>
                             <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" Margin="0,15,0,0">
-                                <Grid ColumnDefinitions="*, Auto"><Label Text="Auslastung" FontSize="11" TextColor="Gray" VerticalOptions="Center" /><Label Grid.Column="1" Text="Manuell gezählt" FontSize="9" TextColor="DarkOrange" IsVisible="{Binding IsManualCount}" VerticalOptions="Center" /></Grid>
+                                <Label Text="Auslastungsinformation"
+                                       FontSize="12"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#2c3e50, Dark=#d5dbe5}" />
+                                <Grid ColumnDefinitions="*, Auto">
+                                    <Label Text="Auslastung" FontSize="11" TextColor="Gray" VerticalOptions="Center" />
+                                    <Label Grid.Column="1" Text="Manuell gezählt" FontSize="9" TextColor="DarkOrange" IsVisible="{Binding IsManualCount}" VerticalOptions="Center" />
+                                </Grid>
                                 <ProgressBar Progress="{Binding OccupancyRate}" ProgressColor="{Binding OccupancyColor}" HeightRequest="6" Margin="0,5,0,0" />
                             </VerticalStackLayout>
                         </Grid>

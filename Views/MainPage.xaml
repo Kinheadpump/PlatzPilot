@@ -117,11 +117,19 @@
                                                TextColor="Gray"
                                                MaxLines="1"
                                                LineBreakMode="TailTruncation" />
-                                        <Label Text="Geschlossen"
+                                        <Label Text="{Binding BestArrivalText}"
+                                               FontSize="11"
+                                               TextColor="{AppThemeBinding Light=#53627c, Dark=#9ca9bc}"
+                                               IsVisible="{Binding ShowBestArrivalInTile}"
+                                               MaxLines="2"
+                                               LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding ClosedStatusText}"
                                                FontSize="11"
                                                TextColor="#e74c3c"
                                                IsVisible="False"
-                                               MaxLines="1">
+                                               MaxLines="2"
+                                               LineBreakMode="TailTruncation"
+                                               Margin="{Binding ClosedLabelMargin}">
                                             <Label.Triggers>
                                                 <DataTrigger TargetType="Label"
                                                              Binding="{Binding IsOpen}"
@@ -131,12 +139,6 @@
                                                 </DataTrigger>
                                             </Label.Triggers>
                                         </Label>
-                                        <Label Text="{Binding BestArrivalText}"
-                                               FontSize="11"
-                                               TextColor="{AppThemeBinding Light=#53627c, Dark=#9ca9bc}"
-                                               IsVisible="{Binding IsOpen}"
-                                               MaxLines="2"
-                                               LineBreakMode="TailTruncation" />
                                     </VerticalStackLayout>
 
                                     <Grid Grid.Row="0"
@@ -180,19 +182,41 @@
                                         </ImageButton>
 
                                         <Label Grid.Row="1"
-                                               Text="{Binding FreeSeats}"
+                                               Text="{Binding HomeAvailabilityText}"
                                                FontAttributes="Bold"
                                                FontSize="20"
                                                Margin="0,2,0,0"
                                                HorizontalOptions="End"
                                                HorizontalTextAlignment="End"
-                                               TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                               TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                               MaxLines="2"
+                                               LineBreakMode="TailTruncation">
+                                            <Label.Triggers>
+                                                <DataTrigger TargetType="Label"
+                                                             Binding="{Binding IsOpen}"
+                                                             Value="False">
+                                                    <Setter Property="FontSize"
+                                                            Value="12" />
+                                                    <Setter Property="TextColor"
+                                                            Value="Gray" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Label"
+                                                             Binding="{Binding IsOpen}"
+                                                             Value="True">
+                                                    <Setter Property="FontSize"
+                                                            Value="20" />
+                                                    <Setter Property="TextColor"
+                                                            Value="{AppThemeBinding Light=Black, Dark=White}" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+                                        </Label>
                                         <Label Grid.Row="2"
-                                               Text="{Binding TotalSeats, StringFormat='von {0} frei'}"
+                                               Text="{Binding HomeAvailabilitySubText}"
                                                FontSize="11"
                                                HorizontalOptions="End"
                                                HorizontalTextAlignment="End"
-                                               TextColor="Gray" />
+                                               TextColor="Gray"
+                                               IsVisible="{Binding IsHomeAvailabilitySubVisible}" />
                                     </Grid>
 
                                     <VerticalStackLayout Grid.Row="1"
@@ -209,8 +233,8 @@
                                                    IsVisible="{Binding IsManualCount}"
                                                    VerticalOptions="Center" />
                                         </Grid>
-                                        <ProgressBar Progress="{Binding OccupancyRate}"
-                                                     ProgressColor="{Binding OccupancyColor}"
+                                        <ProgressBar Progress="{Binding HomeOccupancyRate}"
+                                                     ProgressColor="{Binding HomeOccupancyColor}"
                                                      HeightRequest="6"
                                                      Margin="0,5,0,0" />
                                     </VerticalStackLayout>
@@ -224,7 +248,7 @@
                                      HorizontalOptions="Center"
                                      Spacing="10"
                                      IsVisible="{Binding IsListEmpty}">
-                    <Label Text="Nichts zu finden 🕵️"
+                    <Label Text="Noch keine Daten gefunden 🕵️"
                            FontSize="18"
                            HorizontalOptions="Center" />
                 </VerticalStackLayout>
@@ -512,6 +536,25 @@
                                     BackgroundColor="{AppThemeBinding Light=#f7f8fa, Dark=#1f1f1f}"
                                     Padding="14"
                                     StrokeShape="RoundRectangle 12">
+                                <VerticalStackLayout Spacing="10">
+                                    <Label Text="Sortierung"
+                                           FontAttributes="Bold"
+                                           FontSize="16" />
+                                    <Grid ColumnDefinitions="Auto,*"
+                                          ColumnSpacing="10">
+                                        <Label Text="Sortieren nach:"
+                                               VerticalOptions="Center" />
+                                        <Picker Grid.Column="1"
+                                                ItemsSource="{Binding SortOptions}"
+                                                SelectedItem="{Binding SelectedSortOption}" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border StrokeThickness="0"
+                                    BackgroundColor="{AppThemeBinding Light=#f7f8fa, Dark=#1f1f1f}"
+                                    Padding="14"
+                                    StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="12">
                                     <Label Text="Wann?"
                                            FontAttributes="Bold"
@@ -608,14 +651,14 @@
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding IsSilentStudySelected}" />
                                         <Label Grid.Column="1"
-                                               Text="Silent Study"
+                                               Text="Stillarbeitsraum"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
-                                        <CheckBox IsChecked="{Binding IsPcPoolSelected}" />
+                                        <CheckBox IsChecked="{Binding IsNoReservationSelected}" />
                                         <Label Grid.Column="1"
-                                               Text="PC-Pool"
+                                               Text="Ohne Reservierung"
                                                VerticalOptions="Center" />
                                     </Grid>
                                 </VerticalStackLayout>
@@ -670,25 +713,6 @@
                                             x:Name="OpeningHoursSlider"
                                             ValueChanged="OnOpeningHoursSliderValueChanged"
                                             Value="{Binding MinimumOpenHours}" />
-                                </VerticalStackLayout>
-                            </Border>
-
-                            <Border StrokeThickness="0"
-                                    BackgroundColor="{AppThemeBinding Light=#f7f8fa, Dark=#1f1f1f}"
-                                    Padding="14"
-                                    StrokeShape="RoundRectangle 12">
-                                <VerticalStackLayout Spacing="10">
-                                    <Label Text="Sortierung"
-                                           FontAttributes="Bold"
-                                           FontSize="16" />
-                                    <Grid ColumnDefinitions="Auto,*"
-                                          ColumnSpacing="10">
-                                        <Label Text="Sortieren nach:"
-                                               VerticalOptions="Center" />
-                                        <Picker Grid.Column="1"
-                                                ItemsSource="{Binding SortOptions}"
-                                                SelectedItem="{Binding SelectedSortOption}" />
-                                    </Grid>
                                 </VerticalStackLayout>
                             </Border>
                         </VerticalStackLayout>

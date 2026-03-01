@@ -5,6 +5,7 @@
 ## 🚀 Features (MVP)
 
 * **Live-Auslastung:** Abruf von Schätzwerten und manuellen Zählungen der KIT-Bibliotheken in Echtzeit.
+* **Platz bekommen:** Empfehlungen zur Ankunftszeit, um noch einen Platz zu erhalten, basierend auf den Daten der letzten Tagen.
 * **Historische Graphen:** Visualisierung der Auslastung der letzten 24 Stunden durch flüssige Spline-Charts (powered by Microcharts).
 * **"Zeitreise":** Nutzer können Datum und Uhrzeit verstellen, um zu schauen wie sich die Auslastung in den letzten Tagen verändert hat.
 * **Intelligente Sortierung:** Gebäude lassen sich nach Relevanz, meisten freien Plätzen oder Alphabet sortieren.
