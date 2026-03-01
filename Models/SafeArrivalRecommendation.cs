@@ -7,4 +7,9 @@ public sealed class SafeArrivalRecommendation
     public double Probability { get; init; }
     public double ExpectedFreeSeats { get; init; }
     public bool ConfidenceFlag { get; init; }
+    public bool HasPeakData { get; init; }
+    public TimeSpan PeakTime { get; init; }
+    public double PeakExpectedFreeSeats { get; init; }
+    public double PeakOccupancyRate { get; init; }
+    public double PeakTrendMinutesPerDay { get; init; }
 }

@@ -35,8 +35,10 @@ public partial class MainPageViewModel : ObservableObject
     private const string SortByAlphabetical = "Alphabetisch (A-Z)";
 
     private const string RoomTypeGroup = "gruppenraum";
-    private const string RoomTypeSilent = "silent study";
-    private const string RoomTypePcPool = "pc-pool";
+    private const string RoomTypeSilentStudy = "stillarbeitsraum";
+    private const string RoomTypeSilentStudyLegacy = "silent study";
+    private const string RoomTypeNoReservation = "ohne reservierung";
+    private const string RoomTypeNoReservationLegacy = "pc-pool";
 
     private const int MinOpeningHoursSliderValue = 0;
     private const int MaxOpeningHoursSliderValue = 12;
@@ -88,7 +90,7 @@ public partial class MainPageViewModel : ObservableObject
     private bool _isSilentStudySelected;
 
     [ObservableProperty]
-    private bool _isPcPoolSelected;
+    private bool _isNoReservationSelected;
 
     [ObservableProperty]
     private bool _requireFreeWifi;
@@ -117,9 +119,13 @@ public partial class MainPageViewModel : ObservableObject
 
     private readonly Dictionary<string, StudySpaceFeatureEntry> _spaceFeaturesById = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, List<SeatHistoryPoint>> _historicalSeatDataByLocation = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, SafeArrivalRecommendation?> _spaceSafeArrivalCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, SafeArrivalRecommendation?> _buildingSafeArrivalCache = new(StringComparer.OrdinalIgnoreCase);
     private List<StudySpace> _allSpaces = [];
     private bool _spaceFeaturesLoaded;
     private bool _hasLoadedWeeklyHistory;
+    private bool _hasComputedSafeArrival;
+    private DateTime _safeArrivalReferenceDate = DateTime.MinValue;
     private bool _isUpdatingDateTimeSelection;
     private string _lastLoadedBeforeParameter = string.Empty;
     private DateTime _lastLiveSnapshotFetchUtc = DateTime.MinValue;
@@ -194,7 +200,7 @@ public partial class MainPageViewModel : ObservableObject
 
         IsGroupRoomSelected = false;
         IsSilentStudySelected = false;
-        IsPcPoolSelected = false;
+        IsNoReservationSelected = false;
         RequireFreeWifi = false;
         RequirePowerOutlets = false;
         RequireWhiteboard = false;
@@ -388,7 +394,8 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
             await EnsureSpaceFeaturesLoadedAsync();
 
             var forceWeeklyReload = IsRefreshing;
-            if (!_hasLoadedWeeklyHistory || forceWeeklyReload)
+            var shouldReloadWeeklyHistory = !_hasLoadedWeeklyHistory || forceWeeklyReload;
+            if (shouldReloadWeeklyHistory)
             {
                 _allSpaces = await _seatFinderService.FetchSeatDataAsync(limit: WeeklyHistoryPoints, before: "now");
                 ReplaceHistoricalSeatData(_allSpaces);
@@ -400,7 +407,14 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
                 AppendLatestSeatDataToHistory(_allSpaces);
             }
 
-            UpdateSafeArrivalRecommendations(GetReferenceDateTime());
+            if (shouldReloadWeeklyHistory || !_hasComputedSafeArrival)
+            {
+                UpdateSafeArrivalRecommendations();
+            }
+            else
+            {
+                ApplyCachedSafeArrivalRecommendations();
+            }
             _lastLoadedBeforeParameter = GetApiBeforeParameter();
             _lastLiveSnapshotFetchUtc = DateTime.UtcNow;
             ApplyFilter();
@@ -434,7 +448,10 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
 
-    partial void OnUseNowChanged(bool value) => UpdateFilteredLocationPreviewCount();
+    partial void OnUseNowChanged(bool value)
+    {
+        UpdateFilteredLocationPreviewCount();
+    }
 
     partial void OnSelectedDateChanged(DateTime value)
     {
@@ -478,7 +495,7 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
 
     partial void OnIsGroupRoomSelectedChanged(bool value) => UpdateFilteredLocationPreviewCount();
     partial void OnIsSilentStudySelectedChanged(bool value) => UpdateFilteredLocationPreviewCount();
-    partial void OnIsPcPoolSelectedChanged(bool value) => UpdateFilteredLocationPreviewCount();
+    partial void OnIsNoReservationSelectedChanged(bool value) => UpdateFilteredLocationPreviewCount();
     partial void OnRequireFreeWifiChanged(bool value) => UpdateFilteredLocationPreviewCount();
     partial void OnRequirePowerOutletsChanged(bool value) => UpdateFilteredLocationPreviewCount();
     partial void OnRequireWhiteboardChanged(bool value) => UpdateFilteredLocationPreviewCount();
@@ -585,8 +602,12 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
         }
     }
 
-    private void UpdateSafeArrivalRecommendations(DateTime referenceTime)
+    private void UpdateSafeArrivalRecommendations()
     {
+        _safeArrivalReferenceDate = DateTime.Today;
+        _spaceSafeArrivalCache.Clear();
+        _buildingSafeArrivalCache.Clear();
+
         foreach (var space in _allSpaces)
         {
             if (!_historicalSeatDataByLocation.TryGetValue(space.Id, out var history) || history.Count == 0)
@@ -595,7 +616,39 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
                 continue;
             }
 
-            space.SafeArrivalRecommendation = _safeArrivalForecastService.Calculate(space, history, referenceTime);
+            space.SafeArrivalRecommendation = _safeArrivalForecastService.Calculate(space, history, _safeArrivalReferenceDate);
+            _spaceSafeArrivalCache[space.Id] = space.SafeArrivalRecommendation;
+        }
+
+        foreach (var group in _allSpaces.GroupBy(space => space.Building))
+        {
+            var buildingKey = group.Key?.Trim();
+            var spacesInBuilding = group.ToList();
+
+            if (string.IsNullOrWhiteSpace(buildingKey) || spacesInBuilding.Count <= 1)
+            {
+                continue;
+            }
+
+            _buildingSafeArrivalCache[buildingKey] = CalculateBuildingRecommendation(spacesInBuilding);
+        }
+
+        _hasComputedSafeArrival = true;
+    }
+
+    private void ApplyCachedSafeArrivalRecommendations()
+    {
+        if (!_hasComputedSafeArrival || _spaceSafeArrivalCache.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var space in _allSpaces)
+        {
+            if (_spaceSafeArrivalCache.TryGetValue(space.Id, out var recommendation))
+            {
+                space.SafeArrivalRecommendation = recommendation;
+            }
         }
     }
 
@@ -690,7 +743,7 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
 
     private bool IsRoomTypeFilterActive()
     {
-        return IsGroupRoomSelected || IsSilentStudySelected || IsPcPoolSelected;
+        return IsGroupRoomSelected || IsSilentStudySelected || IsNoReservationSelected;
     }
 
     private HashSet<string> GetSelectedRoomTypes()
@@ -704,12 +757,14 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
 
         if (IsSilentStudySelected)
         {
-            selectedRoomTypes.Add(RoomTypeSilent);
+            selectedRoomTypes.Add(RoomTypeSilentStudy);
+            selectedRoomTypes.Add(RoomTypeSilentStudyLegacy);
         }
 
-        if (IsPcPoolSelected)
+        if (IsNoReservationSelected)
         {
-            selectedRoomTypes.Add(RoomTypePcPool);
+            selectedRoomTypes.Add(RoomTypeNoReservation);
+            selectedRoomTypes.Add(RoomTypeNoReservationLegacy);
         }
 
         return selectedRoomTypes;
@@ -777,7 +832,27 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
             SortByMostTotal => locations.OrderByDescending(location => location.TotalSeats).ToList(),
             SortByAlphabetical => locations.OrderBy(location => location.Name).ToList(),
             _ => locations
+                .Select((location, index) => new { location, index })
+                .OrderBy(item => GetRelevanceRank(item.location))
+                .ThenBy(item => item.index)
+                .Select(item => item.location)
+                .ToList()
         };
+    }
+
+    private static int GetRelevanceRank(UiLocation location)
+    {
+        if (location.IsOpen)
+        {
+            return 0;
+        }
+
+        if (location.IsStudentOnlyClosed)
+        {
+            return 1;
+        }
+
+        return 2;
     }
 
     private void ReplaceUiLocations(IEnumerable<UiLocation> locations)
@@ -825,32 +900,46 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
         return results;
     }
 
-    private static UiLocation CreateSingleLocation(StudySpace space, List<string> favoriteNames, DateTime referenceTime) => new()
+    private static UiLocation CreateSingleLocation(StudySpace space, List<string> favoriteNames, DateTime referenceTime)
     {
-        Name = space.Name,
-        Subtitle = "1 Lernort",
-        BuildingNumber = space.Building,
-        TotalSeats = space.TotalSeats,
-        FreeSeats = space.FreeSeats,
-        OccupiedSeats = space.OccupiedSeats,
-        IsManualCount = space.IsManualCount,
-        SubSpaces = [space],
-        IsFavorite = favoriteNames.Contains(space.Name),
-        ReferenceTime = referenceTime,
-        BestArrivalText = FormatBestArrivalText(space.SafeArrivalRecommendation)
-    };
+        var insight = BuildArrivalInsight(space.SafeArrivalRecommendation);
 
-    private static UiLocation CreateGroupedLocation(string buildingKey, List<StudySpace> spaces, List<string> favoriteNames, DateTime referenceTime)
+        return new UiLocation
+        {
+            Name = space.Name,
+            Subtitle = "1 Lernort",
+            BuildingNumber = space.Building,
+            TotalSeats = space.TotalSeats,
+            FreeSeats = space.FreeSeats,
+            OccupiedSeats = space.OccupiedSeats,
+            IsManualCount = space.IsManualCount,
+            SubSpaces = [space],
+            IsFavorite = favoriteNames.Contains(space.Name),
+            ReferenceTime = referenceTime,
+            BestArrivalText = insight.RecommendedArrivalText,
+            HasArrivalInsights = insight.HasInsights,
+            PeakAverageText = insight.PeakAverageText,
+            SafetyLevelText = insight.SafetyLevelText,
+            PeakTrendText = insight.PeakTrendText
+        };
+    }
+
+    private UiLocation CreateGroupedLocation(string buildingKey, List<StudySpace> spaces, List<string> favoriteNames, DateTime referenceTime)
     {
-        var displayName = BuildingNames.TryGetValue(buildingKey, out var mappedName)
+        var normalizedBuildingKey = buildingKey.Trim();
+        var displayName = BuildingNames.TryGetValue(normalizedBuildingKey, out var mappedName)
             ? mappedName
-            : $"Geb√§ude {buildingKey}";
+            : $"Geb√§ude {normalizedBuildingKey}";
+
+        var buildingRecommendation = GetCachedBuildingRecommendation(normalizedBuildingKey);
+
+        var insight = BuildArrivalInsight(buildingRecommendation);
 
         return new UiLocation
         {
             Name = displayName,
             Subtitle = $"{spaces.Count} Lernorte",
-            BuildingNumber = buildingKey,
+            BuildingNumber = normalizedBuildingKey,
             TotalSeats = spaces.Sum(space => space.TotalSeats),
             FreeSeats = spaces.Sum(space => space.FreeSeats),
             OccupiedSeats = spaces.Sum(space => space.OccupiedSeats),
@@ -858,33 +947,164 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
             SubSpaces = spaces,
             IsFavorite = favoriteNames.Contains(displayName),
             ReferenceTime = referenceTime,
-            BestArrivalText = FormatBestArrivalText(SelectBestRecommendation(spaces))
+            BestArrivalText = insight.RecommendedArrivalText,
+            HasArrivalInsights = insight.HasInsights,
+            PeakAverageText = insight.PeakAverageText,
+            SafetyLevelText = insight.SafetyLevelText,
+            PeakTrendText = insight.PeakTrendText
         };
     }
 
-    private static SafeArrivalRecommendation? SelectBestRecommendation(IEnumerable<StudySpace> spaces)
+    private SafeArrivalRecommendation? GetCachedBuildingRecommendation(string buildingKey)
     {
-        return spaces
-            .Select(space => space.SafeArrivalRecommendation)
-            .Where(recommendation => recommendation?.HasRecommendation == true)
-            .OrderBy(recommendation => recommendation!.LatestSafeTime)
-            .ThenBy(recommendation => recommendation!.Probability)
-            .LastOrDefault();
-    }
-
-    private static string FormatBestArrivalText(SafeArrivalRecommendation? recommendation)
-    {
-        if (recommendation == null || !recommendation.HasRecommendation)
+        if (string.IsNullOrWhiteSpace(buildingKey))
         {
-            return "Beste Ankunft: keine sichere Zeit";
+            return null;
         }
 
-        var timeText = recommendation.LatestSafeTime.ToString(@"hh\:mm", CultureInfo.InvariantCulture);
-        var probabilityText = recommendation.Probability.ToString("P0", CultureInfo.CurrentCulture);
-        var confidenceText = recommendation.ConfidenceFlag ? string.Empty : " (unsicher)";
-
-        return $"Beste Ankunft bis {timeText} ({probabilityText}){confidenceText}";
+        return _buildingSafeArrivalCache.TryGetValue(buildingKey, out var recommendation)
+            ? recommendation
+            : null;
     }
+
+    private SafeArrivalRecommendation? CalculateBuildingRecommendation(List<StudySpace> spaces)
+    {
+        if (spaces.Count == 0)
+        {
+            return null;
+        }
+
+        var totalCapacity = spaces.Sum(space => Math.Max(space.TotalSeats, 0));
+        if (totalCapacity <= 0)
+        {
+            return null;
+        }
+
+        var aggregatedHistory = spaces
+            .SelectMany(space =>
+            {
+                return _historicalSeatDataByLocation.TryGetValue(space.Id, out var history)
+                    ? history
+                    : [];
+            })
+            .GroupBy(point => NormalizeToFiveMinuteBin(point.Timestamp))
+            .Select(group =>
+            {
+                var sumFreeSeats = group.Sum(point => point.FreeSeats);
+                var clampedFreeSeats = Math.Clamp(sumFreeSeats, 0, totalCapacity);
+                return new SeatHistoryPoint
+                {
+                    Timestamp = group.Key,
+                    FreeSeats = clampedFreeSeats,
+                    OccupiedSeats = Math.Max(0, totalCapacity - clampedFreeSeats),
+                    IsManualCount = false
+                };
+            })
+            .OrderByDescending(point => point.Timestamp)
+            .ToList();
+
+        if (aggregatedHistory.Count == 0)
+        {
+            return null;
+        }
+
+        var representativeOpeningHours = spaces
+            .Select(space => space.OpeningHours)
+            .FirstOrDefault(openingHours => openingHours != null);
+
+        var buildingSpace = new StudySpace
+        {
+            Id = $"building:{string.Join("|", spaces.Select(space => space.Id).OrderBy(id => id))}",
+            Name = "Geb√§ude aggregiert",
+            TotalSeats = totalCapacity,
+            Building = spaces.FirstOrDefault()?.Building,
+            OpeningHours = representativeOpeningHours,
+            ReferenceTime = _safeArrivalReferenceDate
+        };
+
+        return _safeArrivalForecastService.Calculate(buildingSpace, aggregatedHistory, _safeArrivalReferenceDate);
+    }
+
+    private static DateTime NormalizeToFiveMinuteBin(DateTime timestamp)
+    {
+        var minutes = (timestamp.Hour * 60) + timestamp.Minute;
+        var normalizedMinutes = (minutes / 5) * 5;
+        return timestamp.Date.AddMinutes(normalizedMinutes);
+    }
+
+    private static ArrivalInsight BuildArrivalInsight(SafeArrivalRecommendation? recommendation)
+    {
+        if (recommendation == null)
+        {
+            return new ArrivalInsight(
+                RecommendedArrivalText: "Empfohlene Ankunft: keine sichere Zeit",
+                HasInsights: false,
+                PeakAverageText: "Auslastungs Peak ‚åÄ: keine Daten",
+                SafetyLevelText: "Empfehlungsqualit√§t: Niedrig",
+                PeakTrendText: "Peak-Trend: bleibt gleich");
+        }
+
+        var recommendedArrivalText = recommendation.HasRecommendation
+            ? $"Empfohlene Ankunft bis {recommendation.LatestSafeTime:hh\\:mm}"
+            : "Empfohlene Ankunft: keine sichere Zeit";
+
+        var hasInsights = recommendation.HasPeakData;
+        var peakAverageText = recommendation.HasPeakData
+            ? $"Auslastungs Peak ‚åÄ: {recommendation.PeakTime:hh\\:mm} Uhr"
+            : "Auslastungs Peak ‚åÄ: keine Daten";
+        var safetyLevelText = $"Empfehlungsqualit√§t: {GetSafetyLevel(recommendation)}";
+        var peakTrendText = $"Peak-Trend: {GetPeakTrendLabel(recommendation.PeakTrendMinutesPerDay)}";
+
+        return new ArrivalInsight(
+            RecommendedArrivalText: recommendedArrivalText,
+            HasInsights: hasInsights,
+            PeakAverageText: peakAverageText,
+            SafetyLevelText: safetyLevelText,
+            PeakTrendText: peakTrendText);
+    }
+
+    private static string GetSafetyLevel(SafeArrivalRecommendation recommendation)
+    {
+        if (!recommendation.HasRecommendation)
+        {
+            return "Niedrig";
+        }
+
+        if (recommendation.ConfidenceFlag && recommendation.Probability >= 0.90)
+        {
+            return "Hoch";
+        }
+
+        if (recommendation.Probability >= 0.80)
+        {
+            return "Mittel";
+        }
+
+        return "Niedrig";
+    }
+
+    private static string GetPeakTrendLabel(double trendMinutesPerDay)
+    {
+        const double FlatThreshold = 2.0;
+        if (trendMinutesPerDay > FlatThreshold)
+        {
+            return "wird sp√§ter";
+        }
+
+        if (trendMinutesPerDay < -FlatThreshold)
+        {
+            return "wird fr√ºher";
+        }
+
+        return "bleibt gleich";
+    }
+
+    private readonly record struct ArrivalInsight(
+        string RecommendedArrivalText,
+        bool HasInsights,
+        string PeakAverageText,
+        string SafetyLevelText,
+        string PeakTrendText);
 
     private DateTime GetReferenceDateTime()
     {
