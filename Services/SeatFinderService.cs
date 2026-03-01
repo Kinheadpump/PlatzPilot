@@ -21,7 +21,7 @@ public class SeatFinderService
         _httpClient = new HttpClient();
     }
 
-    public async Task<List<StudySpace>> FetchSeatDataAsync(int limit = -1, string after = "", string before = "now")
+    public async Task<List<StudySpace>> FetchSeatDataAsync(int limit = 1, string after = "", string before = "now")
     {
         var resultList = new List<StudySpace>();
         string locationString = string.Join(",", _locations);
@@ -93,7 +93,8 @@ public class SeatFinderService
                 };
 
                 ParseCoordinates(metaInfo.GeoCoordinates, space);
-                AssignFreshestSeatData(locationId, liveData, space);
+                space.SeatHistory = BuildHistoricalEstimateHistory(locationId, liveData);
+                AssignCurrentSeatData(locationId, liveData, space);
 
                 resultList.Add(space);
             }
@@ -113,30 +114,74 @@ public class SeatFinderService
         return string.Join("&", encodedParams);
     }
 
-    static private void AssignFreshestSeatData(string locationId, SeatFinderResponseDto liveData, StudySpace space)
+    static private List<SeatHistoryPoint> BuildHistoricalEstimateHistory(string locationId, SeatFinderResponseDto liveData)
     {
-        SeatRecordDto? latestEstimate = liveData.SeatEstimates != null && liveData.SeatEstimates.TryGetValue(locationId, out var eList) && eList.Count > 0 ? eList[0] : null;
-        SeatRecordDto? latestManual = liveData.ManualCounts != null && liveData.ManualCounts.TryGetValue(locationId, out var mList) && mList.Count > 0 ? mList[0] : null;
-
-        DateTime estTime = ParseDtoDate(latestEstimate);
-        DateTime manTime = ParseDtoDate(latestManual);
-
-        bool useManual = latestManual != null && (latestEstimate == null || manTime >= estTime);
-        SeatRecordDto? bestRecord = useManual ? latestManual : latestEstimate;
-
-        if (bestRecord != null)
+        if (liveData.SeatEstimates != null &&
+            liveData.SeatEstimates.TryGetValue(locationId, out var estimateRecords) &&
+            estimateRecords.Count > 0)
         {
-            space.FreeSeats = bestRecord.FreeSeats;
-            space.OccupiedSeats = bestRecord.OccupiedSeats;
-            space.LastUpdated = useManual ? manTime : estTime;
-            space.IsManualCount = useManual;
+            return MapRecords(estimateRecords, isManual: false);
         }
+
+        return [];
     }
 
-    static private DateTime ParseDtoDate(SeatRecordDto? record)
+    static private void AssignCurrentSeatData(string locationId, SeatFinderResponseDto liveData, StudySpace space)
     {
-        if (record?.Timestamp?.Date == null) return DateTime.MinValue;
-        return DateTime.TryParse(record.Timestamp.Date, out DateTime dt) ? dt : DateTime.MinValue;
+        var latestEstimate = GetLatestRecord(locationId, liveData.SeatEstimates, isManual: false);
+        var latestManual = GetLatestRecord(locationId, liveData.ManualCounts, isManual: true);
+
+        var preferredRecord = latestManual != null &&
+                              (latestEstimate == null || latestManual.Timestamp >= latestEstimate.Timestamp)
+            ? latestManual
+            : latestEstimate;
+
+        if (preferredRecord == null)
+        {
+            return;
+        }
+
+        space.FreeSeats = preferredRecord.FreeSeats;
+        space.OccupiedSeats = preferredRecord.OccupiedSeats;
+        space.LastUpdated = preferredRecord.Timestamp;
+        space.IsManualCount = preferredRecord.IsManualCount;
+    }
+
+    static private SeatHistoryPoint? GetLatestRecord(string locationId, Dictionary<string, List<SeatRecordDto>>? source, bool isManual)
+    {
+        if (source == null || !source.TryGetValue(locationId, out var records) || records.Count == 0)
+        {
+            return null;
+        }
+
+        return MapRecords(records, isManual).FirstOrDefault();
+    }
+
+    static private List<SeatHistoryPoint> MapRecords(List<SeatRecordDto> records, bool isManual)
+    {
+        return records
+            .Select(record =>
+            {
+                var timestamp = record.Timestamp?.GetParsedDate();
+                if (!timestamp.HasValue)
+                {
+                    return null;
+                }
+
+                return new SeatHistoryPoint
+                {
+                    Timestamp = timestamp.Value,
+                    FreeSeats = Math.Max(0, record.FreeSeats),
+                    OccupiedSeats = Math.Max(0, record.OccupiedSeats),
+                    IsManualCount = isManual
+                };
+            })
+            .Where(point => point != null)
+            .Cast<SeatHistoryPoint>()
+            .GroupBy(point => point.Timestamp)
+            .Select(group => group.First())
+            .OrderByDescending(point => point.Timestamp)
+            .ToList();
     }
 
     static private void ParseCoordinates(string? geoString, StudySpace space)

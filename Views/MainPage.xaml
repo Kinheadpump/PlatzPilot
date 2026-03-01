@@ -112,6 +112,11 @@
                                                FontSize="16"
                                                MaxLines="1"
                                                LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding Subtitle}"
+                                               FontSize="12"
+                                               TextColor="Gray"
+                                               MaxLines="1"
+                                               LineBreakMode="TailTruncation" />
                                         <Label Text="Geschlossen"
                                                FontSize="11"
                                                TextColor="#e74c3c"
@@ -126,10 +131,11 @@
                                                 </DataTrigger>
                                             </Label.Triggers>
                                         </Label>
-                                        <Label Text="{Binding Subtitle}"
-                                               FontSize="12"
-                                               TextColor="Gray"
-                                               MaxLines="1"
+                                        <Label Text="{Binding BestArrivalText}"
+                                               FontSize="11"
+                                               TextColor="{AppThemeBinding Light=#53627c, Dark=#9ca9bc}"
+                                               IsVisible="{Binding IsOpen}"
+                                               MaxLines="2"
                                                LineBreakMode="TailTruncation" />
                                     </VerticalStackLayout>
 
@@ -272,11 +278,11 @@
                         <Button Text="Github"
                                 Command="{Binding OpenGithubCommand}"
                                 Margin="0,6,0,0"
-                                BackgroundColor="{AppThemeBinding Light=#e9f0ff, Dark=#24324d}"
-                                TextColor="{AppThemeBinding Light=#1f4db8, Dark=#9ec1ff}"
+                                BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
                                 FontAttributes="Bold"
-                                CornerRadius="10"
-                                Padding="14,8" />
+                                CornerRadius="8"
+                                Padding="10" />
                     </VerticalStackLayout>
                 </Border>
             </VerticalStackLayout>

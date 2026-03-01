@@ -14,7 +14,9 @@ public partial class UiLocation : ObservableObject
     public List<StudySpace> SubSpaces { get; set; } = new();
     public string? MainUrl => SubSpaces.FirstOrDefault()?.Url;
     public string? BuildingNumber { get; set; }
+    public string BuildingDisplayText => string.IsNullOrWhiteSpace(BuildingNumber) ? "Keine Info" : BuildingNumber;
     public DateTime ReferenceTime { get; set; } = DateTime.Now;
+    public string BestArrivalText { get; set; } = "Beste Ankunft: keine sichere Zeit";
 
     public DateTime? LastUpdated => SubSpaces.Max(s => s.LastUpdated);
     
@@ -49,6 +51,22 @@ public partial class UiLocation : ObservableObject
             }
 
             var text = firstSpace.OpeningHours.GetTodayOpeningHoursText(ReferenceTime);
+            if (text.StartsWith("Geschlossen", StringComparison.OrdinalIgnoreCase) &&
+                firstSpace.OpeningHours.TryGetNextOpeningTime(ReferenceTime, out var nextOpening))
+            {
+                if (nextOpening.Date == ReferenceTime.Date)
+                {
+                    return $"Geschlossen - öffnet heute um {nextOpening:HH:mm} Uhr";
+                }
+
+                if (nextOpening.Date == ReferenceTime.Date.AddDays(1))
+                {
+                    return $"Geschlossen - öffnet morgen um {nextOpening:HH:mm} Uhr";
+                }
+
+                return $"Geschlossen - öffnet am {nextOpening:dd.MM.} um {nextOpening:HH:mm} Uhr";
+            }
+
             return text;
         }
     }

@@ -28,6 +28,7 @@ public static class MauiProgram
         // AddSingleton: Es wird nur EINE einzige Instanz für die gesamte App-Laufzeit erstellt.
         // Das spart Arbeitsspeicher und verhindert, dass wir zu viele HttpClients öffnen.
         builder.Services.AddSingleton<SeatFinderService>();
+        builder.Services.AddSingleton<SafeArrivalForecastService>();
 
 
         // ==========================================

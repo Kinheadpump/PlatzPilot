@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using System.Globalization; // WICHTIG für die Formatierung der Koordinaten!
+using System.Text.RegularExpressions;
 using Microsoft.Maui.ApplicationModel;
 using PlatzPilot.Models;
 
@@ -9,12 +10,21 @@ namespace PlatzPilot.Views;
 public partial class DetailPage : ContentPage
 {
     private UiLocation? _locationData;
+    private static readonly Regex FirstIntegerRegex = new(@"-?\d+", RegexOptions.Compiled);
 
     public UiLocation? LocationData
     {
         get => _locationData;
-        set { _locationData = value; OnPropertyChanged(); }
+        set
+        {
+            _locationData = value;
+            SortedSubSpaces = SortByLevel(value?.SubSpaces);
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(SortedSubSpaces));
+        }
     }
+
+    public List<StudySpace> SortedSubSpaces { get; private set; } = [];
 
     public ICommand OpenUrlCommand { get; }
     public ICommand OpenMapCommand { get; }
@@ -97,5 +107,34 @@ public partial class DetailPage : ContentPage
         {
             // Letztes Sicherheitsnetz
         }
+    }
+
+    private static List<StudySpace> SortByLevel(IEnumerable<StudySpace>? spaces)
+    {
+        if (spaces == null)
+        {
+            return [];
+        }
+
+        return spaces
+            .OrderBy(space => ExtractLevelOrder(space.Level))
+            .ThenBy(space => space.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    private static int ExtractLevelOrder(string? level)
+    {
+        if (string.IsNullOrWhiteSpace(level))
+        {
+            return int.MaxValue;
+        }
+
+        var match = FirstIntegerRegex.Match(level);
+        if (!match.Success || !int.TryParse(match.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedLevel))
+        {
+            return int.MaxValue - 1;
+        }
+
+        return parsedLevel;
     }
 }

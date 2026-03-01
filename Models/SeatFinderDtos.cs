@@ -175,6 +175,72 @@ public class OpeningHoursDto
         return GetRemainingOpenHours(referenceTime) >= requiredHours;
     }
 
+    public bool TryGetNextOpeningTime(DateTime referenceTime, out DateTime nextOpeningTime)
+    {
+        nextOpeningTime = DateTime.MinValue;
+
+        if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0)
+        {
+            return false;
+        }
+
+        // "Immer offen"-Sonderfall: Nur durch Ausnahmezeiten geschlossen.
+        if (WeeklyOpeningHours.Count == 1)
+        {
+            return TryGetCurrentClosureEnd(referenceTime, out nextOpeningTime);
+        }
+
+        var candidates = new List<DateTime>();
+
+        foreach (var block in WeeklyOpeningHours)
+        {
+            if (block == null || block.Count < 2)
+            {
+                continue;
+            }
+
+            var start = block[0].GetParsedDate();
+            if (!start.HasValue)
+            {
+                continue;
+            }
+
+            var startDay = start.Value.DayOfWeek;
+            var startTime = start.Value.TimeOfDay;
+
+            var daysUntilStart = ((int)startDay - (int)referenceTime.DayOfWeek + 7) % 7;
+            var firstCandidate = referenceTime.Date.AddDays(daysUntilStart).Add(startTime);
+            if (firstCandidate <= referenceTime)
+            {
+                firstCandidate = firstCandidate.AddDays(7);
+            }
+
+            // Bis zu 3 Wochen vorausschauen, um längere Ausnahme-Schließungen zu überbrücken.
+            for (var weekOffset = 0; weekOffset < 3; weekOffset++)
+            {
+                candidates.Add(firstCandidate.AddDays(weekOffset * 7));
+            }
+        }
+
+        foreach (var candidate in candidates.Distinct().OrderBy(value => value))
+        {
+            if (candidate <= referenceTime)
+            {
+                continue;
+            }
+
+            if (IsClosedByException(candidate))
+            {
+                continue;
+            }
+
+            nextOpeningTime = candidate;
+            return true;
+        }
+
+        return false;
+    }
+
     private bool IsClosedByException(DateTime referenceTime)
     {
         if (ExceptionalOpeningHours == null)
@@ -204,6 +270,53 @@ public class OpeningHoursDto
         }
 
         return false;
+    }
+
+    private bool TryGetCurrentClosureEnd(DateTime referenceTime, out DateTime closureEnd)
+    {
+        closureEnd = DateTime.MinValue;
+
+        if (ExceptionalOpeningHours == null || ExceptionalOpeningHours.Count == 0)
+        {
+            return false;
+        }
+
+        DateTime? bestMatch = null;
+
+        foreach (var exception in ExceptionalOpeningHours)
+        {
+            var start = exception.Start?.GetParsedDate();
+            var end = exception.End?.GetParsedDate();
+
+            if (!start.HasValue || !end.HasValue)
+            {
+                continue;
+            }
+
+            var isClosure = exception.OpeningHours == null || exception.OpeningHours.Count == 0;
+            if (!isClosure)
+            {
+                continue;
+            }
+
+            if (referenceTime < start.Value || referenceTime > end.Value)
+            {
+                continue;
+            }
+
+            if (!bestMatch.HasValue || end.Value < bestMatch.Value)
+            {
+                bestMatch = end.Value;
+            }
+        }
+
+        if (!bestMatch.HasValue)
+        {
+            return false;
+        }
+
+        closureEnd = bestMatch.Value;
+        return true;
     }
 
     private bool TryGetCurrentOpeningIntervalEnd(DateTime referenceTime, out DateTime intervalEnd)
