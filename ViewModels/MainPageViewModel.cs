@@ -20,6 +20,7 @@ public partial class MainPageViewModel : ObservableObject
     private const string ThemeKey = "PlatzPilot_Theme";
     private const string SpaceFeaturesFileName = "study_space_features.json";
     private const string PrivacyPageUrl = "https://kinheadpump.github.io/PlatzPilot/privacy";
+    private const string ImpressumPageUrl = "https://kinheadpump.github.io/PlatzPilot/impressum";
 
     private const string ThemeLight = "Light";
     private const string ThemeDark = "Dark";
@@ -345,7 +346,7 @@ public partial class MainPageViewModel : ObservableObject
     [RelayCommand]
     private async Task ShowImpressumAsync()
     {
-        await Browser.Default.OpenAsync(PrivacyPageUrl, BrowserLaunchMode.SystemPreferred);
+        await Browser.Default.OpenAsync(ImpressumPageUrl, BrowserLaunchMode.SystemPreferred);
     }
 
     [RelayCommand]
