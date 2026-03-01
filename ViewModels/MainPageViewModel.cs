@@ -19,8 +19,8 @@ public partial class MainPageViewModel : ObservableObject
     private const string TabModeKey = "PlatzPilot_CurrentTab";
     private const string ThemeKey = "PlatzPilot_Theme";
     private const string SpaceFeaturesFileName = "study_space_features.json";
-    private const string PrivacyPageUrl = "https://kinheadpump.github.io/PlatzPilot/privacy";
-    private const string ImpressumPageUrl = "https://kinheadpump.github.io/PlatzPilot/impressum";
+    private const string PrivacyPageUrl = "https://kinheadpump.github.io/PlatzPilot/privacy.html";
+    private const string ImpressumPageUrl = "https://kinheadpump.github.io/PlatzPilot/impressum.html";
 
     private const string ThemeLight = "Light";
     private const string ThemeDark = "Dark";
