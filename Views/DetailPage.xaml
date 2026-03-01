@@ -21,7 +21,7 @@
         </Grid>
 
         <CollectionView Grid.Row="1" 
-                        ItemsSource="{Binding LocationData.SubSpaces}" 
+                        ItemsSource="{Binding SortedSubSpaces}" 
                         SelectionMode="None" 
                         Margin="15,0,15,0"
                         BackgroundColor="{AppThemeBinding Light=White, Dark=#1f1f1f}">
@@ -35,13 +35,13 @@
                     </VerticalStackLayout>
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
-                        <Button Grid.Column="0" Text="📍 Auf Karte" 
+                        <Button Grid.Column="0" Text="Auf Karte" 
                                 Command="{Binding OpenMapCommand}" 
                                 IsVisible="{Binding LocationData.HasLocation}" 
                                 BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}" 
                                 TextColor="{AppThemeBinding Light=Black, Dark=White}" FontAttributes="Bold" CornerRadius="8" Padding="10"/>
 
-                        <Button Grid.Column="1" Text="🌐 Website" 
+                        <Button Grid.Column="1" Text="Website" 
                                 Command="{Binding OpenUrlCommand}" 
                                 CommandParameter="{Binding LocationData.MainUrl}"
                                 BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}" 
@@ -56,13 +56,13 @@
 
                     <Border BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#1e1e1e}" Padding="15" StrokeShape="RoundRectangle 10" StrokeThickness="0">
                         <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*">
-                            <Label Grid.Row="0" Grid.Column="0" Text="🏢 Gebäude:" FontAttributes="Bold" Margin="0,0,10,10"/>
-                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding LocationData.BuildingNumber}" Margin="0,0,0,10" />
+                            <Label Grid.Row="0" Grid.Column="0" Text="Gebäude:" FontAttributes="Bold" Margin="0,0,10,10"/>
+                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding LocationData.BuildingDisplayText}" Margin="0,0,0,10" />
                             
-                            <Label Grid.Row="1" Grid.Column="0" Text="🕒 Heute:" FontAttributes="Bold" Margin="0,0,10,10"/>
+                            <Label Grid.Row="1" Grid.Column="0" Text="Öffnungszeit:" FontAttributes="Bold" Margin="0,0,10,10"/>
                             <Label Grid.Row="1" Grid.Column="1" Text="{Binding LocationData.TodayOpeningHours}" TextColor="{AppThemeBinding Light=#2c3e50, Dark=#bdc3c7}" Margin="0,0,0,10" />
 
-                            <Label Grid.Row="2" Grid.Column="0" Text="⏱️ Status:" FontAttributes="Bold" />
+                            <Label Grid.Row="2" Grid.Column="0" Text="Status:" FontAttributes="Bold" />
                             <Label Grid.Row="2" Grid.Column="1" Text="{Binding LocationData.LastUpdatedText}" TextColor="{AppThemeBinding Light=#2c3e50, Dark=#bdc3c7}" />
                         </Grid>
                     </Border>
@@ -78,10 +78,12 @@
                         <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
                             <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="6">
                                 <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                                <Label Text="Geschlossen"
+                                <Label Text="{Binding ClosedStatusText}"
                                        FontSize="12"
                                        TextColor="#e74c3c"
                                        IsVisible="False"
+                                       MaxLines="2"
+                                       LineBreakMode="TailTruncation"
                                        VerticalOptions="Center">
                                     <Label.Triggers>
                                         <DataTrigger TargetType="Label" Binding="{Binding IsOpen}" Value="False">
@@ -92,20 +94,8 @@
                             </HorizontalStackLayout>
                             
                             <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8" Margin="0,2,0,0">
-                                <Label Text="{Binding Level, StringFormat='Ebene {0}'}" FontSize="12" TextColor="Gray">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding Level}" Value="{x:Null}">
-                                            <Setter Property="IsVisible" Value="False" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                                <Label Text="{Binding Room, StringFormat='Raum {0}'}" FontSize="12" TextColor="Gray">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding Room}" Value="{x:Null}">
-                                            <Setter Property="IsVisible" Value="False" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
+                                <Label Text="{Binding LevelDisplayText}" FontSize="12" TextColor="Gray" IsVisible="{Binding HasLevel}" />
+                                <Label Text="{Binding RoomDisplayText}" FontSize="12" TextColor="Gray" IsVisible="{Binding HasRoom}" />
                             </HorizontalStackLayout>
                             <VerticalStackLayout Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Spacing="0" HorizontalOptions="End" VerticalOptions="Center">
                                 <Label Text="{Binding AvailabilityText}"

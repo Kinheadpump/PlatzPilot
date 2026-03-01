@@ -26,9 +26,42 @@ public class StudySpace
     public OpeningHoursDto? OpeningHours { get; set; }
     public DateTime ReferenceTime { get; set; } = DateTime.Now;
     public bool IsOpen => OpeningHours?.IsCurrentlyOpen(ReferenceTime) ?? true;
+    public bool HasLevel => !string.IsNullOrWhiteSpace(Level);
+    public bool HasRoom => !string.IsNullOrWhiteSpace(Room);
+    public string LevelDisplayText => $"Ebene {Level}";
+    public string RoomDisplayText => $"Raum {Room}";
+    public string ClosedStatusText
+    {
+        get
+        {
+            if (IsOpen)
+            {
+                return string.Empty;
+            }
+
+            if (OpeningHours?.TryGetNextOpeningTime(ReferenceTime, out var nextOpening) == true)
+            {
+                if (nextOpening.Date == ReferenceTime.Date)
+                {
+                    return $"Geschlossen - öffnet heute um {nextOpening:HH:mm} Uhr";
+                }
+
+                if (nextOpening.Date == ReferenceTime.Date.AddDays(1))
+                {
+                    return $"Geschlossen - öffnet morgen um {nextOpening:HH:mm} Uhr";
+                }
+
+                return $"Geschlossen - öffnet am {nextOpening:dd.MM.} um {nextOpening:HH:mm} Uhr";
+            }
+
+            return "Geschlossen";
+        }
+    }
 
     public DateTime LastUpdated { get; set; }
     public bool IsManualCount { get; set; }
+    public List<SeatHistoryPoint> SeatHistory { get; set; } = [];
+    public SafeArrivalRecommendation? SafeArrivalRecommendation { get; set; }
 
     // --- DESIGNER PROPERTIES ---
     public string AvailabilityText => $"{FreeSeats} von {TotalSeats}";

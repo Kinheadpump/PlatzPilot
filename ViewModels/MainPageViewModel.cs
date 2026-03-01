@@ -12,6 +12,7 @@ namespace PlatzPilot.ViewModels;
 public partial class MainPageViewModel : ObservableObject
 {
     private readonly SeatFinderService _seatFinderService;
+    private readonly SafeArrivalForecastService _safeArrivalForecastService;
 
     private const string FavoritesKey = "PlatzPilot_Favorites";
     private const string SortModeKey = "PlatzPilot_SortMode";
@@ -37,6 +38,8 @@ public partial class MainPageViewModel : ObservableObject
 
     private const int MinOpeningHoursSliderValue = 0;
     private const int MaxOpeningHoursSliderValue = 12;
+    private const int WeeklyHistoryPoints = 2016;
+    private const int LiveRefreshIntervalMinutes = 5;
 
     private static readonly Dictionary<string, string> BuildingNames = new()
     {
@@ -111,10 +114,13 @@ public partial class MainPageViewModel : ObservableObject
     private string _selectedSortOption;
 
     private readonly Dictionary<string, StudySpaceFeatureEntry> _spaceFeaturesById = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, List<SeatHistoryPoint>> _historicalSeatDataByLocation = new(StringComparer.OrdinalIgnoreCase);
     private List<StudySpace> _allSpaces = [];
     private bool _spaceFeaturesLoaded;
+    private bool _hasLoadedWeeklyHistory;
     private bool _isUpdatingDateTimeSelection;
     private string _lastLoadedBeforeParameter = string.Empty;
+    private DateTime _lastLiveSnapshotFetchUtc = DateTime.MinValue;
 
     public bool IsMainContentVisible => CurrentTab != TabSettings;
     public bool IsSettingsContentVisible => CurrentTab == TabSettings;
@@ -134,9 +140,10 @@ public partial class MainPageViewModel : ObservableObject
         SortByAlphabetical
     ];
 
-    public MainPageViewModel(SeatFinderService seatFinderService)
+    public MainPageViewModel(SeatFinderService seatFinderService, SafeArrivalForecastService safeArrivalForecastService)
     {
         _seatFinderService = seatFinderService;
+        _safeArrivalForecastService = safeArrivalForecastService;
         _selectedSortOption = Preferences.Default.Get(SortModeKey, SortByRelevance);
         _currentTab = ResolveInitialTab(Preferences.Default.Get(TabModeKey, TabHome));
 
@@ -198,8 +205,7 @@ public partial class MainPageViewModel : ObservableObject
     private async Task ApplySheetFiltersAsync()
     {
         var requestedBeforeParameter = GetApiBeforeParameter();
-        var shouldRefreshData = UseNow ||
-                                !string.Equals(requestedBeforeParameter, _lastLoadedBeforeParameter, StringComparison.Ordinal);
+        var shouldRefreshData = ShouldRefreshSnapshot(requestedBeforeParameter);
 
         if (shouldRefreshData)
         {
@@ -347,8 +353,23 @@ public partial class MainPageViewModel : ObservableObject
         {
             IsBusy = true;
             await EnsureSpaceFeaturesLoadedAsync();
-            _allSpaces = await _seatFinderService.FetchSeatDataAsync(before: GetApiBeforeParameter());
+
+            var forceWeeklyReload = IsRefreshing;
+            if (!_hasLoadedWeeklyHistory || forceWeeklyReload)
+            {
+                _allSpaces = await _seatFinderService.FetchSeatDataAsync(limit: WeeklyHistoryPoints, before: "now");
+                ReplaceHistoricalSeatData(_allSpaces);
+                _hasLoadedWeeklyHistory = true;
+            }
+            else
+            {
+                _allSpaces = await _seatFinderService.FetchSeatDataAsync(limit: 1, before: GetApiBeforeParameter());
+                AppendLatestSeatDataToHistory(_allSpaces);
+            }
+
+            UpdateSafeArrivalRecommendations(GetReferenceDateTime());
             _lastLoadedBeforeParameter = GetApiBeforeParameter();
+            _lastLiveSnapshotFetchUtc = DateTime.UtcNow;
             ApplyFilter();
         }
         finally
@@ -356,6 +377,26 @@ public partial class MainPageViewModel : ObservableObject
             IsBusy = false;
             IsRefreshing = false;
         }
+    }
+
+    private bool ShouldRefreshSnapshot(string requestedBeforeParameter)
+    {
+        if (!_hasLoadedWeeklyHistory)
+        {
+            return true;
+        }
+
+        if (!string.Equals(requestedBeforeParameter, "now", StringComparison.Ordinal))
+        {
+            return !string.Equals(requestedBeforeParameter, _lastLoadedBeforeParameter, StringComparison.Ordinal);
+        }
+
+        if (_lastLiveSnapshotFetchUtc == DateTime.MinValue)
+        {
+            return true;
+        }
+
+        return DateTime.UtcNow - _lastLiveSnapshotFetchUtc >= TimeSpan.FromMinutes(LiveRefreshIntervalMinutes);
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
@@ -457,6 +498,71 @@ public partial class MainPageViewModel : ObservableObject
         catch (Exception ex)
         {
             Debug.WriteLine($"Konnte {SpaceFeaturesFileName} nicht laden: {ex.Message}");
+        }
+    }
+
+    private void ReplaceHistoricalSeatData(IEnumerable<StudySpace> spaces)
+    {
+        _historicalSeatDataByLocation.Clear();
+
+        foreach (var space in spaces)
+        {
+            if (space.SeatHistory.Count == 0)
+            {
+                continue;
+            }
+
+            _historicalSeatDataByLocation[space.Id] = space.SeatHistory
+                .OrderByDescending(point => point.Timestamp)
+                .ToList();
+        }
+    }
+
+    private void AppendLatestSeatDataToHistory(IEnumerable<StudySpace> spaces)
+    {
+        foreach (var space in spaces)
+        {
+            if (space.SeatHistory.Count == 0)
+            {
+                continue;
+            }
+
+            if (!_historicalSeatDataByLocation.TryGetValue(space.Id, out var history))
+            {
+                history = [];
+                _historicalSeatDataByLocation[space.Id] = history;
+            }
+
+            var knownTimestamps = new HashSet<DateTime>(history.Select(point => point.Timestamp));
+            foreach (var point in space.SeatHistory)
+            {
+                if (!knownTimestamps.Add(point.Timestamp))
+                {
+                    continue;
+                }
+
+                history.Add(point);
+            }
+
+            history.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
+            if (history.Count > WeeklyHistoryPoints)
+            {
+                history.RemoveRange(WeeklyHistoryPoints, history.Count - WeeklyHistoryPoints);
+            }
+        }
+    }
+
+    private void UpdateSafeArrivalRecommendations(DateTime referenceTime)
+    {
+        foreach (var space in _allSpaces)
+        {
+            if (!_historicalSeatDataByLocation.TryGetValue(space.Id, out var history) || history.Count == 0)
+            {
+                space.SafeArrivalRecommendation = null;
+                continue;
+            }
+
+            space.SafeArrivalRecommendation = _safeArrivalForecastService.Calculate(space, history, referenceTime);
         }
     }
 
@@ -697,7 +803,8 @@ public partial class MainPageViewModel : ObservableObject
         IsManualCount = space.IsManualCount,
         SubSpaces = [space],
         IsFavorite = favoriteNames.Contains(space.Name),
-        ReferenceTime = referenceTime
+        ReferenceTime = referenceTime,
+        BestArrivalText = FormatBestArrivalText(space.SafeArrivalRecommendation)
     };
 
     private static UiLocation CreateGroupedLocation(string buildingKey, List<StudySpace> spaces, List<string> favoriteNames, DateTime referenceTime)
@@ -717,8 +824,33 @@ public partial class MainPageViewModel : ObservableObject
             IsManualCount = spaces.Any(space => space.IsManualCount),
             SubSpaces = spaces,
             IsFavorite = favoriteNames.Contains(displayName),
-            ReferenceTime = referenceTime
+            ReferenceTime = referenceTime,
+            BestArrivalText = FormatBestArrivalText(SelectBestRecommendation(spaces))
         };
+    }
+
+    private static SafeArrivalRecommendation? SelectBestRecommendation(IEnumerable<StudySpace> spaces)
+    {
+        return spaces
+            .Select(space => space.SafeArrivalRecommendation)
+            .Where(recommendation => recommendation?.HasRecommendation == true)
+            .OrderBy(recommendation => recommendation!.LatestSafeTime)
+            .ThenBy(recommendation => recommendation!.Probability)
+            .LastOrDefault();
+    }
+
+    private static string FormatBestArrivalText(SafeArrivalRecommendation? recommendation)
+    {
+        if (recommendation == null || !recommendation.HasRecommendation)
+        {
+            return "Beste Ankunft: keine sichere Zeit";
+        }
+
+        var timeText = recommendation.LatestSafeTime.ToString(@"hh\:mm", CultureInfo.InvariantCulture);
+        var probabilityText = recommendation.Probability.ToString("P0", CultureInfo.CurrentCulture);
+        var confidenceText = recommendation.ConfidenceFlag ? string.Empty : " (unsicher)";
+
+        return $"Beste Ankunft bis {timeText} ({probabilityText}){confidenceText}";
     }
 
     private DateTime GetReferenceDateTime()
