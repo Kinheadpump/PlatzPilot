@@ -261,40 +261,11 @@
                 </Border>
 
                 <Border Padding="15"
-                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
-                        StrokeShape="RoundRectangle 10"
-                        StrokeThickness="0">
-                    <VerticalStackLayout Spacing="10">
-                        <Button Text="Impressum"
-                                Command="{Binding ShowImpressumCommand}"
-                                BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
-                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                                FontAttributes="Bold"
-                                CornerRadius="8"
-                                Padding="10" />
-                        <Button Text="Datenschutz"
-                                Command="{Binding ShowPrivacyCommand}"
-                                BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
-                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                                FontAttributes="Bold"
-                                CornerRadius="8"
-                                Padding="10" />
-                        <Button Text="Lizenzen"
-                                Command="{Binding ShowLicensesCommand}"
-                                BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
-                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                                FontAttributes="Bold"
-                                CornerRadius="8"
-                                Padding="10" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Padding="15"
                         Margin="0,50,0,0"
                         BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
                         StrokeShape="RoundRectangle 10"
                         StrokeThickness="0">
-                    <VerticalStackLayout Spacing="5"
+                    <VerticalStackLayout Spacing="8"
                                          HorizontalOptions="Center">
                         <Image Source="app_logo_settings.png"
                                HeightRequest="60"
@@ -305,14 +276,56 @@
                                FontSize="12"
                                TextColor="Gray"
                                HorizontalOptions="Center" />
-                        <Button Text="Github"
-                                Command="{Binding OpenGithubCommand}"
-                                Margin="0,6,0,0"
-                                BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
-                                TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                                FontAttributes="Bold"
-                                CornerRadius="8"
-                                Padding="10" />
+                        <Label Text="Diese App ist ein studentisches Projekt und steht in keiner offiziellen Verbindung zum Karlsruher Institut für Technologie (KIT) oder der KIT-Bibliothek."
+                               Margin="0,8,0,0"
+                               FontSize="11"
+                               TextColor="Gray"
+                               HorizontalTextAlignment="Center" />
+                        <Grid Margin="0,10,0,0"
+                              ColumnDefinitions="*,*,*,*"
+                              ColumnSpacing="6"
+                              HorizontalOptions="Fill">
+                            <Button Grid.Column="0"
+                                    Text="Github"
+                                    Command="{Binding OpenGithubCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                    FontAttributes="Bold"
+                                    FontSize="11"
+                                    CornerRadius="8"
+                                    HeightRequest="40"
+                                    Padding="6,8" />
+                            <Button Grid.Column="1"
+                                    Text="Impressum"
+                                    Command="{Binding ShowImpressumCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                    FontAttributes="Bold"
+                                    FontSize="11"
+                                    CornerRadius="8"
+                                    HeightRequest="40"
+                                    Padding="6,8" />
+                            <Button Grid.Column="2"
+                                    Text="Datenschutz"
+                                    Command="{Binding ShowPrivacyCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                    FontAttributes="Bold"
+                                    FontSize="11"
+                                    CornerRadius="8"
+                                    HeightRequest="40"
+                                    Padding="6,8" />
+                            <Button Grid.Column="3"
+                                    Text="Lizenzen"
+                                    Command="{Binding ShowLicensesCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                    FontAttributes="Bold"
+                                    FontSize="11"
+                                    CornerRadius="8"
+                                    HeightRequest="40"
+                                    Padding="6,8" />
+                        </Grid>
                     </VerticalStackLayout>
                 </Border>
             </VerticalStackLayout>
