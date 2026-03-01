@@ -3,8 +3,13 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# eigene Dateien
 auslastung.json
 lasten.txt
+
+# keystore files
+*.keystore
+*.jks
 
 # dotenv files
 .env
