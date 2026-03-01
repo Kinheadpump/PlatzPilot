@@ -19,6 +19,7 @@ public partial class MainPageViewModel : ObservableObject
     private const string TabModeKey = "PlatzPilot_CurrentTab";
     private const string ThemeKey = "PlatzPilot_Theme";
     private const string SpaceFeaturesFileName = "study_space_features.json";
+    private const string PrivacyPageUrl = "https://kinheadpump.github.io/PlatzPilot/privacy";
 
     private const string ThemeLight = "Light";
     private const string ThemeDark = "Dark";
@@ -339,6 +340,37 @@ public partial class MainPageViewModel : ObservableObject
     {
         const string repositoryUrl = "https://github.com/Kinheadpump/PlatzPilot";
         await Browser.Default.OpenAsync(repositoryUrl, BrowserLaunchMode.SystemPreferred);
+    }
+
+    [RelayCommand]
+    private async Task ShowImpressumAsync()
+    {
+        await Browser.Default.OpenAsync(PrivacyPageUrl, BrowserLaunchMode.SystemPreferred);
+    }
+
+    [RelayCommand]
+    private async Task ShowPrivacyAsync()
+    {
+        await Browser.Default.OpenAsync(PrivacyPageUrl, BrowserLaunchMode.SystemPreferred);
+    }
+
+    [RelayCommand]
+    private async Task ShowLicensesAsync()
+    {
+        const string licenseText = """
+Diese App verwendet folgende Open-Source-Bibliotheken unter der MIT-Lizenz:
+
+1. .NET MAUI Community Toolkit
+Copyright (c) .NET Foundation and Contributors
+
+2. Microcharts
+Copyright (c) 2017 Aloïs Deniel
+
+Die vollständige MIT-Lizenz lautet:
+Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugehörigen Dokumentation zu nutzen, zu kopieren, zu ändern und zu vertreiben, wird unter der Bedingung erteilt, dass der obige Urheberrechtshinweis in allen Kopien enthalten ist. DIE SOFTWARE WIRD OHNE JEDE AUSDRÜCKLICHE ODER IMPLIZIERTE GARANTIE BEREITGESTELLT.
+""";
+
+        await ShowDialogAsync("Open-Source-Lizenzen", licenseText);
     }
 
     [RelayCommand]
@@ -908,5 +940,19 @@ public partial class MainPageViewModel : ObservableObject
             ThemeDark => AppTheme.Dark,
             _ => AppTheme.Unspecified
         };
+    }
+
+    private static async Task ShowDialogAsync(string title, string message)
+    {
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page == null)
+        {
+            return;
+        }
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            await page.DisplayAlertAsync(title, message, "OK");
+        });
     }
 }
