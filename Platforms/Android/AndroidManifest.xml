@@ -5,6 +5,8 @@
         android:icon="@mipmap/app_logo" 
         android:roundIcon="@mipmap/app_logo" 
         android:supportsRtl="true">
-    </application>	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	</application>
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.VIBRATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
 </manifest>

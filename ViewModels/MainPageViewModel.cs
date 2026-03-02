@@ -23,6 +23,10 @@ public partial class MainPageViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsListEmpty))]
     [NotifyPropertyChangedFor(nameof(IsHomeEmpty))]
     [NotifyPropertyChangedFor(nameof(IsFavoritesEmpty))]
+    [NotifyPropertyChangedFor(nameof(IsNoResultsEmpty))]
+    [NotifyPropertyChangedFor(nameof(EmptyStateTitle))]
+    [NotifyPropertyChangedFor(nameof(EmptyStateSubtitle))]
+    [NotifyPropertyChangedFor(nameof(IsEmptySubtitleVisible))]
     private ObservableCollection<UiLocation> _uiLocations = [];
 
     [ObservableProperty]
@@ -95,6 +99,10 @@ public partial class MainPageViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsSettingsContentVisible))]
     [NotifyPropertyChangedFor(nameof(IsHomeEmpty))]
     [NotifyPropertyChangedFor(nameof(IsFavoritesEmpty))]
+    [NotifyPropertyChangedFor(nameof(IsNoResultsEmpty))]
+    [NotifyPropertyChangedFor(nameof(EmptyStateTitle))]
+    [NotifyPropertyChangedFor(nameof(EmptyStateSubtitle))]
+    [NotifyPropertyChangedFor(nameof(IsEmptySubtitleVisible))]
     private string _currentTab = string.Empty;
 
     [ObservableProperty]
@@ -124,6 +132,10 @@ public partial class MainPageViewModel : ObservableObject
     public bool IsListEmpty => UiLocations.Count == 0 && IsMainContentVisible;
     public bool IsHomeEmpty => UiLocations.Count == 0 && CurrentTab == _config.Tabs.Home;
     public bool IsFavoritesEmpty => !IsBusy && UiLocations.Count == 0 && CurrentTab == _config.Tabs.Favorites;
+    public bool IsNoResultsEmpty => UiLocations.Count == 0 && _allSpaces.Count > 0 && CurrentTab == _config.Tabs.Home && IsMainContentVisible;
+    public string EmptyStateTitle => IsNoResultsEmpty ? _config.UiText.NoResultsTitle : _config.UiText.EmptyListText;
+    public string EmptyStateSubtitle => IsNoResultsEmpty ? _config.UiText.NoResultsSubtitle : string.Empty;
+    public bool IsEmptySubtitleVisible => IsNoResultsEmpty;
     public bool IsBeforeMode => !UseNow;
     public bool IsSearchInactive => !IsSearchActive;
     public DateTime MaxSelectableDate => DateTime.Today;
@@ -198,8 +210,10 @@ public partial class MainPageViewModel : ObservableObject
     private void CloseFilterSheet() => IsFilterExpanded = false;
 
     [RelayCommand]
-    private void ResetFilters()
+    private async Task ResetFiltersAsync()
     {
+        var hadActiveFilters = IsAnyFilterActive();
+
         SyncSelectedDateTimeToNow();
         UseNow = true;
 
@@ -212,6 +226,41 @@ public partial class MainPageViewModel : ObservableObject
         MinimumOpenHours = _config.UiNumbers.MinOpeningHours;
 
         UpdateFilteredLocationPreviewCount();
+
+        if (!hadActiveFilters)
+        {
+            return;
+        }
+
+        var requestedBeforeParameter = GetApiBeforeParameter();
+        if (ShouldRefreshSnapshot(requestedBeforeParameter))
+        {
+            await LoadSpacesAsync();
+        }
+        else
+        {
+            ApplyFilter();
+        }
+    }
+
+    private bool IsAnyFilterActive()
+    {
+        if (!UseNow)
+        {
+            return true;
+        }
+
+        if (IsGroupRoomSelected || IsSilentStudySelected || IsNoReservationSelected)
+        {
+            return true;
+        }
+
+        if (RequireFreeWifi || RequirePowerOutlets || RequireWhiteboard)
+        {
+            return true;
+        }
+
+        return MinimumOpenHours > _config.UiNumbers.MinOpeningHours;
     }
 
     [RelayCommand]
@@ -438,9 +487,11 @@ public partial class MainPageViewModel : ObservableObject
             var requestedBeforeParameter = GetApiBeforeParameter();
             if (shouldReloadWeeklyHistory)
             {
+                var historyWindow = GetWeeklyHistoryWindow();
                 _allSpaces = await _seatFinderService.FetchSeatDataAsync(
                     limit: _config.SeatFinder.WeeklyHistoryPoints,
-                    before: _config.SeatFinder.NowToken);
+                    after: historyWindow.After,
+                    before: historyWindow.Before);
             }
             else
             {
@@ -477,7 +528,9 @@ public partial class MainPageViewModel : ObservableObject
                 }
             });
 
-            _lastLoadedBeforeParameter = requestedBeforeParameter;
+            _lastLoadedBeforeParameter = shouldReloadWeeklyHistory
+                ? _config.SeatFinder.NowToken
+                : requestedBeforeParameter;
             _lastLiveSnapshotFetchUtc = DateTime.UtcNow;
         }
         finally
@@ -499,6 +552,11 @@ public partial class MainPageViewModel : ObservableObject
         if (!string.Equals(requestedBeforeParameter, _config.SeatFinder.NowToken, StringComparison.Ordinal))
         {
             return !string.Equals(requestedBeforeParameter, _lastLoadedBeforeParameter, StringComparison.Ordinal);
+        }
+
+        if (!string.Equals(_lastLoadedBeforeParameter, _config.SeatFinder.NowToken, StringComparison.Ordinal))
+        {
+            return true;
         }
 
         if (_lastLiveSnapshotFetchUtc == DateTime.MinValue)
@@ -1119,6 +1177,10 @@ public partial class MainPageViewModel : ObservableObject
         OnPropertyChanged(nameof(IsListEmpty));
         OnPropertyChanged(nameof(IsHomeEmpty));
         OnPropertyChanged(nameof(IsFavoritesEmpty));
+        OnPropertyChanged(nameof(IsNoResultsEmpty));
+        OnPropertyChanged(nameof(EmptyStateTitle));
+        OnPropertyChanged(nameof(EmptyStateSubtitle));
+        OnPropertyChanged(nameof(IsEmptySubtitleVisible));
     }
 
     private List<UiLocation> MapSpacesToUiLocations(IEnumerable<StudySpace> spaces)
@@ -1387,6 +1449,15 @@ public partial class MainPageViewModel : ObservableObject
             : GetReferenceDateTime().ToString(_config.Internal.ApiDateTimeFormat, CultureInfo.InvariantCulture);
     }
 
+    private (string After, string Before) GetWeeklyHistoryWindow()
+    {
+        var now = DateTime.Now;
+        var start = now.Date.AddDays(-7);
+        return (
+            start.ToString(_config.Internal.ApiDateTimeFormat, CultureInfo.InvariantCulture),
+            now.ToString(_config.Internal.ApiDateTimeFormat, CultureInfo.InvariantCulture));
+    }
+
     private bool HasInternetAccess()
     {
         return Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
@@ -1401,7 +1472,16 @@ public partial class MainPageViewModel : ObservableObject
 
         try
         {
-            HapticFeedback.Default.Perform(HapticFeedbackType.Click);
+            if (HapticFeedback.Default.IsSupported)
+            {
+                HapticFeedback.Default.Perform(HapticFeedbackType.Click);
+                return;
+            }
+
+            if (Vibration.Default.IsSupported)
+            {
+                Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(20));
+            }
         }
         catch (Exception)
         {

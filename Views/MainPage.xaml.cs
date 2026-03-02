@@ -34,6 +34,23 @@ public partial class MainPage : ContentPage
         }
     }
 
+    protected override bool OnBackButtonPressed()
+    {
+        if (_viewModel.IsFilterExpanded)
+        {
+            _viewModel.IsFilterExpanded = false;
+            return true;
+        }
+
+        if (_viewModel.IsSearchActive)
+        {
+            _viewModel.IsSearchActive = false;
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
+    }
+
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainPageViewModel.IsFilterExpanded) &&

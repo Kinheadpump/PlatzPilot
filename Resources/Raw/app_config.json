@@ -4,6 +4,8 @@
     "homeTabLabel": "Home",
     "searchPlaceholder": "Nach Bib oder Kürzel suchen...",
     "emptyListText": "Herzlich Willkommen",
+    "noResultsTitle": "Verstecken sich die Plätze?",
+    "noResultsSubtitle": "Wir konnten leider nichts finden.",
     "favoritesEmptyText": "Hier ist noch nichts los! Tippe auf den Stern bei einem Gebäude, um es hier zu sehen.",
     "offlineBannerText": "Keine Internetverbindung, veraltete Daten",
     "closedLabel": "Geschlossen",
@@ -139,7 +141,7 @@
       "BLB",
       "WIS"
     ],
-    "weeklyHistoryPoints": 2016,
+    "weeklyHistoryPoints": 2304,
     "liveSnapshotPoints": 1,
     "liveRefreshIntervalMinutes": 5,
     "metadataLimit": 1,
