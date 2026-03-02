@@ -4,6 +4,8 @@ using System.Globalization;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Devices;
+using Microsoft.Maui.Networking;
 using PlatzPilot.Configuration;
 using PlatzPilot.Models;
 using PlatzPilot.Services;
@@ -19,6 +21,8 @@ public partial class MainPageViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDataVisible))]
     [NotifyPropertyChangedFor(nameof(IsListEmpty))]
+    [NotifyPropertyChangedFor(nameof(IsHomeEmpty))]
+    [NotifyPropertyChangedFor(nameof(IsFavoritesEmpty))]
     private ObservableCollection<UiLocation> _uiLocations = [];
 
     [ObservableProperty]
@@ -42,6 +46,12 @@ public partial class MainPageViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _isCampusSouthOnly;
+
+    [ObservableProperty]
+    private bool _isHapticFeedbackEnabled;
+
+    [ObservableProperty]
+    private bool _isOfflineBannerVisible;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBeforeMode))]
@@ -82,6 +92,8 @@ public partial class MainPageViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsMainContentVisible))]
     [NotifyPropertyChangedFor(nameof(IsSettingsContentVisible))]
+    [NotifyPropertyChangedFor(nameof(IsHomeEmpty))]
+    [NotifyPropertyChangedFor(nameof(IsFavoritesEmpty))]
     private string _currentTab = string.Empty;
 
     [ObservableProperty]
@@ -103,11 +115,14 @@ public partial class MainPageViewModel : ObservableObject
     private bool _isUpdatingDateTimeSelection;
     private string _lastLoadedBeforeParameter = string.Empty;
     private DateTime _lastLiveSnapshotFetchUtc = DateTime.MinValue;
+    private CancellationTokenSource? _offlineBannerCts;
 
     public bool IsMainContentVisible => CurrentTab != _config.Tabs.Settings;
     public bool IsSettingsContentVisible => CurrentTab == _config.Tabs.Settings;
     public bool IsDataVisible => !IsBusy && UiLocations.Count > 0 && IsMainContentVisible;
     public bool IsListEmpty => UiLocations.Count == 0 && IsMainContentVisible;
+    public bool IsHomeEmpty => UiLocations.Count == 0 && CurrentTab == _config.Tabs.Home;
+    public bool IsFavoritesEmpty => UiLocations.Count == 0 && CurrentTab == _config.Tabs.Favorites;
     public bool IsBeforeMode => !UseNow;
     public bool IsSearchInactive => !IsSearchActive;
     public DateTime MaxSelectableDate => DateTime.Today;
@@ -142,6 +157,7 @@ public partial class MainPageViewModel : ObservableObject
         _currentTab = ResolveInitialTab(Preferences.Default.Get(_config.Preferences.TabModeKey, _config.Tabs.Home));
         _isColorBlindMode = Preferences.Default.Get(_config.Preferences.ColorBlindModeKey, false);
         _isCampusSouthOnly = Preferences.Default.Get(_config.Preferences.CampusSouthOnlyKey, false);
+        _isHapticFeedbackEnabled = Preferences.Default.Get(_config.Preferences.HapticFeedbackKey, true);
 
         if (!SortOptions.Contains(_selectedSortOption))
         {
@@ -267,6 +283,11 @@ public partial class MainPageViewModel : ObservableObject
         ApplyFilter();
     }
 
+    partial void OnIsHapticFeedbackEnabledChanged(bool value)
+    {
+        Preferences.Default.Set(_config.Preferences.HapticFeedbackKey, value);
+    }
+
     [RelayCommand]
     private void SwitchTab(string tabName)
     {
@@ -305,7 +326,13 @@ public partial class MainPageViewModel : ObservableObject
             return;
         }
 
+        var wasFavorite = location.IsFavorite;
         location.IsFavorite = !location.IsFavorite;
+
+        if (!wasFavorite && location.IsFavorite)
+        {
+            PerformFavoriteHaptic();
+        }
 
         var favorites = GetFavoriteNames();
         if (location.IsFavorite && !favorites.Contains(location.Name))
@@ -355,6 +382,12 @@ public partial class MainPageViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ToggleHapticFeedback()
+    {
+        IsHapticFeedbackEnabled = !IsHapticFeedbackEnabled;
+    }
+
+    [RelayCommand]
     private async Task OpenGithubAsync()
     {
         await Browser.Default.OpenAsync(_config.Urls.Github, BrowserLaunchMode.SystemPreferred);
@@ -383,6 +416,14 @@ public partial class MainPageViewModel : ObservableObject
     {
         if (IsBusy)
         {
+            return;
+        }
+
+        if (!HasInternetAccess())
+        {
+            await ShowOfflineBannerAsync();
+            IsRefreshing = false;
+            ApplyFilter();
             return;
         }
 
@@ -1055,6 +1096,8 @@ public partial class MainPageViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(IsDataVisible));
         OnPropertyChanged(nameof(IsListEmpty));
+        OnPropertyChanged(nameof(IsHomeEmpty));
+        OnPropertyChanged(nameof(IsFavoritesEmpty));
     }
 
     private List<UiLocation> MapSpacesToUiLocations(IEnumerable<StudySpace> spaces)
@@ -1321,6 +1364,50 @@ public partial class MainPageViewModel : ObservableObject
         return UseNow
             ? _config.SeatFinder.NowToken
             : GetReferenceDateTime().ToString(_config.Internal.ApiDateTimeFormat, CultureInfo.InvariantCulture);
+    }
+
+    private bool HasInternetAccess()
+    {
+        return Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+    }
+
+    private void PerformFavoriteHaptic()
+    {
+        if (!IsHapticFeedbackEnabled)
+        {
+            return;
+        }
+
+        try
+        {
+            HapticFeedback.Default.Perform(HapticFeedbackType.Click);
+        }
+        catch (Exception)
+        {
+        }
+    }
+
+    private async Task ShowOfflineBannerAsync()
+    {
+        _offlineBannerCts?.Cancel();
+        var cts = new CancellationTokenSource();
+        _offlineBannerCts = cts;
+
+        IsOfflineBannerVisible = true;
+
+        try
+        {
+            await Task.Delay(2500, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (!cts.IsCancellationRequested)
+        {
+            IsOfflineBannerVisible = false;
+        }
     }
 
     [RelayCommand]
