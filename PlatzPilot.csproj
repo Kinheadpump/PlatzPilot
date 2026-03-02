@@ -22,7 +22,7 @@
 		<ApplicationTitle>PlatzPilot</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.platzpilot</ApplicationId>
+		<ApplicationId>de.kinheadpump.platzpilot</ApplicationId>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
