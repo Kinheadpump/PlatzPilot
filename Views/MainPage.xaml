@@ -247,11 +247,18 @@
 
                 <VerticalStackLayout VerticalOptions="Center"
                                      HorizontalOptions="Center"
-                                     Spacing="10"
+                                     Spacing="12"
                                      IsVisible="{Binding IsListEmpty}">
                     <Label Text="{x:Static local:AppText.EmptyListText}"
-                           FontSize="18"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           HorizontalTextAlignment="Center"
                            HorizontalOptions="Center" />
+                    <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                       IsVisible="{Binding IsBusy}"
+                                       Color="{AppThemeBinding Light=#1f6feb, Dark=#9ec1ff}"
+                                       WidthRequest="32"
+                                       HeightRequest="32" />
                 </VerticalStackLayout>
             </Grid>
         </RefreshView>
@@ -266,90 +273,96 @@
                        FontSize="28"
                        Margin="0,10,0,10" />
 
-                <Border Padding="15"
-                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
-                        StrokeShape="RoundRectangle 10"
-                        StrokeThickness="0">
-                    <Grid ColumnDefinitions="*, Auto">
-                        <Label Text="{x:Static local:AppText.SettingsDesignLabel}"
-                               VerticalOptions="Center"
-                               FontAttributes="Bold" />
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{x:Static local:AppText.SettingsDisplayTitle}"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#4a4a4a, Dark=#cfcfcf}" />
 
-                        <ImageButton Grid.Column="1"
-                                     Source="{AppThemeBinding Light={x:Static local:AppAssets.DarkModeIconLight}, Dark={x:Static local:AppAssets.DarkModeIconDark}}"
-                                     Command="{Binding ToggleThemeCommand}"
-                                     BackgroundColor="Transparent"
-                                     HeightRequest="40"
-                                     WidthRequest="40"
-                                     Padding="8" />
-                    </Grid>
-                </Border>
+                    <Border Padding="14"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
+                            Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                            StrokeShape="RoundRectangle 12"
+                            StrokeThickness="1">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Label Text="{x:Static local:AppText.SettingsDesignLabel}"
+                                       VerticalOptions="Center"
+                                       FontAttributes="Bold" />
 
-                <Border Padding="15"
-                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
-                        StrokeShape="RoundRectangle 10"
-                        StrokeThickness="0">
-                    <Grid ColumnDefinitions="*, Auto">
-                        <Label Text="{x:Static local:AppText.ColorBlindModeLabel}"
-                               VerticalOptions="Center"
-                               FontAttributes="Bold" />
+                                <ImageButton Grid.Column="1"
+                                             Source="{AppThemeBinding Light={x:Static local:AppAssets.DarkModeIconLight}, Dark={x:Static local:AppAssets.DarkModeIconDark}}"
+                                             Command="{Binding ToggleThemeCommand}"
+                                             BackgroundColor="Transparent"
+                                             HeightRequest="40"
+                                             WidthRequest="40"
+                                             Padding="8" />
+                            </Grid>
 
-                        <ImageButton Grid.Column="1"
-                                     Command="{Binding ToggleColorBlindModeCommand}"
-                                     BackgroundColor="Transparent"
-                                     HeightRequest="40"
-                                     WidthRequest="40"
-                                     Padding="8">
-                            <ImageButton.Triggers>
-                                <DataTrigger TargetType="ImageButton"
-                                             Binding="{Binding IsColorBlindMode}"
-                                             Value="True">
-                                    <Setter Property="Source"
-                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOnIconLight}, Dark={x:Static local:AppAssets.ColorBlindOnIconDark}}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="ImageButton"
-                                             Binding="{Binding IsColorBlindMode}"
-                                             Value="False">
-                                    <Setter Property="Source"
-                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOffIconLight}, Dark={x:Static local:AppAssets.ColorBlindOffIconDark}}" />
-                                </DataTrigger>
-                            </ImageButton.Triggers>
-                        </ImageButton>
-                    </Grid>
-                </Border>
+                            <BoxView HeightRequest="1"
+                                     Color="{AppThemeBinding Light=#ededed, Dark=#2a2a2a}" />
 
-                <Border Padding="15"
-                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
-                        StrokeShape="RoundRectangle 10"
-                        StrokeThickness="0">
-                    <Grid ColumnDefinitions="*, Auto">
-                        <Label Text="{x:Static local:AppText.CampusSouthOnlyLabel}"
-                               VerticalOptions="Center"
-                               FontAttributes="Bold" />
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Label Text="{x:Static local:AppText.ColorBlindModeLabel}"
+                                       VerticalOptions="Center"
+                                       FontAttributes="Bold" />
 
-                        <ImageButton Grid.Column="1"
-                                     Command="{Binding ToggleCampusSouthOnlyCommand}"
-                                     BackgroundColor="Transparent"
-                                     HeightRequest="40"
-                                     WidthRequest="40"
-                                     Padding="8">
-                            <ImageButton.Triggers>
-                                <DataTrigger TargetType="ImageButton"
-                                             Binding="{Binding IsCampusSouthOnly}"
-                                             Value="True">
-                                    <Setter Property="Source"
-                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="ImageButton"
-                                             Binding="{Binding IsCampusSouthOnly}"
-                                             Value="False">
-                                    <Setter Property="Source"
-                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
-                                </DataTrigger>
-                            </ImageButton.Triggers>
-                        </ImageButton>
-                    </Grid>
-                </Border>
+                                <ImageButton Grid.Column="1"
+                                             Command="{Binding ToggleColorBlindModeCommand}"
+                                             BackgroundColor="Transparent"
+                                             HeightRequest="40"
+                                             WidthRequest="40"
+                                             Padding="8">
+                                    <ImageButton.Triggers>
+                                        <DataTrigger TargetType="ImageButton"
+                                                     Binding="{Binding IsColorBlindMode}"
+                                                     Value="True">
+                                            <Setter Property="Source"
+                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOnIconLight}, Dark={x:Static local:AppAssets.ColorBlindOnIconDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="ImageButton"
+                                                     Binding="{Binding IsColorBlindMode}"
+                                                     Value="False">
+                                            <Setter Property="Source"
+                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOffIconLight}, Dark={x:Static local:AppAssets.ColorBlindOffIconDark}}" />
+                                        </DataTrigger>
+                                    </ImageButton.Triggers>
+                                </ImageButton>
+                            </Grid>
+
+                            <BoxView HeightRequest="1"
+                                     Color="{AppThemeBinding Light=#ededed, Dark=#2a2a2a}" />
+
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Label Text="{x:Static local:AppText.CampusSouthOnlyLabel}"
+                                       VerticalOptions="Center"
+                                       FontAttributes="Bold" />
+
+                                <ImageButton Grid.Column="1"
+                                             Command="{Binding ToggleCampusSouthOnlyCommand}"
+                                             BackgroundColor="Transparent"
+                                             HeightRequest="40"
+                                             WidthRequest="40"
+                                             Padding="8">
+                                    <ImageButton.Triggers>
+                                        <DataTrigger TargetType="ImageButton"
+                                                     Binding="{Binding IsCampusSouthOnly}"
+                                                     Value="True">
+                                            <Setter Property="Source"
+                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="ImageButton"
+                                                     Binding="{Binding IsCampusSouthOnly}"
+                                                     Value="False">
+                                            <Setter Property="Source"
+                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
+                                        </DataTrigger>
+                                    </ImageButton.Triggers>
+                                </ImageButton>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
 
                 <Border Padding="15"
                         Margin="0,50,0,0"

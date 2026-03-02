@@ -90,6 +90,7 @@ public sealed class UiTextConfig
     public string LastUpdatedUnknownText { get; set; } = string.Empty;
     public string SettingsTitle { get; set; } = string.Empty;
     public string SettingsDesignLabel { get; set; } = string.Empty;
+    public string SettingsDisplayTitle { get; set; } = string.Empty;
     public string SettingsVersionFormat { get; set; } = string.Empty;
     public string SettingsDisclaimer { get; set; } = string.Empty;
     public string GithubLabel { get; set; } = string.Empty;
