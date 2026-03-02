@@ -5,8 +5,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:PlatzPilot"
     xmlns:views="clr-namespace:PlatzPilot.Views"
-    Title="PlatzPilot">
+    Title="{x:Static local:AppInfoValues.Name}">
 
-    <ShellContent Title="Home" ContentTemplate="{DataTemplate views:MainPage}" Route="MainPage" />
+    <ShellContent Title="{x:Static local:AppText.HomeTabLabel}"
+                  ContentTemplate="{DataTemplate views:MainPage}"
+                  Route="{x:Static local:AppRoutes.MainPage}" />
 
 </Shell>

@@ -1,14 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using PlatzPilot.Configuration;
 
 namespace PlatzPilot.Models;
 
 // WICHTIG: Erbt jetzt von ObservableObject und ist partial!
 public partial class UiLocation : ObservableObject
 {
-    private static readonly TimeSpan StudentAccessStart = new(7, 0, 0);
-    private static readonly TimeSpan StudentAccessEnd = new(22, 0, 0);
-    private const string StudentAccessLocationId = "LAF";
-    private const string InformatikomBuildingId = "50.19";
 
     public string Name { get; set; } = string.Empty;
     public string Subtitle { get; set; } = string.Empty;
@@ -19,19 +16,22 @@ public partial class UiLocation : ObservableObject
     public List<StudySpace> SubSpaces { get; set; } = new();
     public string? MainUrl => SubSpaces.FirstOrDefault()?.Url;
     public string? BuildingNumber { get; set; }
-    public string BuildingDisplayText => string.IsNullOrWhiteSpace(BuildingNumber) ? "Keine Info" : BuildingNumber;
+    public string BuildingDisplayText => string.IsNullOrWhiteSpace(BuildingNumber)
+        ? AppText.BuildingUnknownText
+        : BuildingNumber;
     public DateTime ReferenceTime { get; set; } = DateTime.Now;
-    public string BestArrivalText { get; set; } = "Empfohlene Ankunft: keine sichere Zeit";
+    public string BestArrivalText { get; set; } = AppText.RecommendationNoneText;
     public bool HasArrivalInsights { get; set; }
-    public string PeakAverageText { get; set; } = "Peak ⌀: keine Daten";
-    public string SafetyLevelText { get; set; } = "Empfehlungsqualität: Niedrig";
-    public string PeakTrendText { get; set; } = "Peak-Trend: bleibt gleich";
+    public string PeakAverageText { get; set; } = AppText.PeakNoneText;
+    public string SafetyLevelText { get; set; } = string.Format(AppText.QualityFormat, AppText.QualityLow);
+    public string PeakTrendText { get; set; } = string.Format(AppText.PeakTrendFormat, AppText.PeakTrendFlat);
 
     public DateTime? LastUpdated => SubSpaces.Max(s => s.LastUpdated);
     
-    public string LastUpdatedText => LastUpdated.HasValue && LastUpdated.Value.Year > 2000
-        ? $"{LastUpdated.Value:dd.MM.yy HH:mm} Uhr"
-        : "Unbekannt";
+    public string LastUpdatedText => LastUpdated.HasValue &&
+                                     LastUpdated.Value.Year > AppConfigProvider.Current.UiNumbers.UnknownYearThreshold
+        ? string.Format(AppText.LastUpdatedFormat, LastUpdated.Value)
+        : AppText.LastUpdatedUnknownText;
 
     public double Latitude => SubSpaces.FirstOrDefault()?.Latitude ?? 0;
     public double Longitude => SubSpaces.FirstOrDefault()?.Longitude ?? 0;
@@ -43,10 +43,10 @@ public partial class UiLocation : ObservableObject
     public bool IsOpen => SubSpaces.FirstOrDefault()?.OpeningHours?.IsCurrentlyOpen(ReferenceTime) ?? true;
 
     public bool IsStudentOnlyClosed => !IsOpen && IsStudentAccessLocation && IsWithinStudentAccessHours;
-    public string ClosedStatusText => IsStudentOnlyClosed ? "Geschlossen (Außer für Studierende)" : "Geschlossen";
+    public string ClosedStatusText => IsStudentOnlyClosed ? AppText.ClosedStudentsLabel : AppText.ClosedLabel;
     public bool ShowBestArrivalInTile => IsOpen || IsStudentOnlyClosed;
     public Microsoft.Maui.Thickness ClosedLabelMargin => IsStudentOnlyClosed
-        ? new Microsoft.Maui.Thickness(0, 4, 0, 0)
+        ? new Microsoft.Maui.Thickness(0, AppConfigProvider.Current.UiNumbers.StudentClosedLabelTopMargin, 0, 0)
         : new Microsoft.Maui.Thickness(0);
 
     // Holt den Text für die Detailseite
@@ -55,52 +55,54 @@ public partial class UiLocation : ObservableObject
         get
         {
             var firstSpace = SubSpaces.FirstOrDefault();
+            var openingText = AppConfigProvider.Current.OpeningHoursText;
             
             if (firstSpace == null)
             {
-                return "Keine Räume";
+                return openingText.NoRoomsText;
             }
 
             if (firstSpace.OpeningHours == null)
             {
-                return "Unbekannt (Objekt Null)";
+                return openingText.UnknownObjectText;
             }
 
             var text = firstSpace.OpeningHours.GetTodayOpeningHoursText(ReferenceTime);
-            if (text.StartsWith("Geschlossen", StringComparison.OrdinalIgnoreCase) &&
+            if (text.StartsWith(openingText.ClosedText, StringComparison.OrdinalIgnoreCase) &&
                 firstSpace.OpeningHours.TryGetNextOpeningTime(ReferenceTime, out var nextOpening))
             {
                 if (nextOpening.Date == ReferenceTime.Date)
                 {
-                    return $"Geschlossen - öffnet heute um {nextOpening:HH:mm} Uhr";
+                    return string.Format(openingText.ClosedOpensTodayFormat, nextOpening);
                 }
 
                 if (nextOpening.Date == ReferenceTime.Date.AddDays(1))
                 {
-                    return $"Geschlossen - öffnet morgen um {nextOpening:HH:mm} Uhr";
+                    return string.Format(openingText.ClosedOpensTomorrowFormat, nextOpening);
                 }
 
-                return $"Geschlossen - öffnet am {nextOpening:dd.MM.} um {nextOpening:HH:mm} Uhr";
+                return string.Format(openingText.ClosedOpensOnDateFormat, nextOpening);
             }
 
             return text;
         }
     }
     public double OccupancyRate => TotalSeats > 0 ? (double)OccupiedSeats / TotalSeats : 0;
-    public string AvailabilityText => $"{FreeSeats} von {TotalSeats}";
+    public string AvailabilityText => string.Format(AppText.AvailabilityFormat, FreeSeats, TotalSeats);
 
-    public string HomeAvailabilityText => IsOpen ? FreeSeats.ToString() : "Keine aktuellen Infos";
-    public string HomeAvailabilitySubText => $"von {TotalSeats} frei";
+    public string HomeAvailabilityText => IsOpen ? FreeSeats.ToString() : AppText.NoCurrentInfoText;
+    public string HomeAvailabilitySubText => string.Format(AppText.HomeAvailabilitySubFormat, TotalSeats);
     public bool IsHomeAvailabilitySubVisible => IsOpen;
     public double HomeOccupancyRate => IsOpen ? OccupancyRate : 0;
-    public Color HomeOccupancyColor => IsOpen ? OccupancyColor : Color.FromArgb("#b0b0b0");
+    public Color HomeOccupancyColor => IsOpen ? OccupancyColor : Color.FromArgb(AppConfigProvider.Current.Occupancy.ClosedColor);
 
     private bool IsWithinStudentAccessHours
     {
         get
         {
             var time = ReferenceTime.TimeOfDay;
-            return time >= StudentAccessStart && time <= StudentAccessEnd;
+            return time >= AppConfigProvider.Current.StudentAccess.Start &&
+                   time <= AppConfigProvider.Current.StudentAccess.End;
         }
     }
 
@@ -108,18 +110,21 @@ public partial class UiLocation : ObservableObject
     {
         get
         {
-            if (SubSpaces.Any(space => string.Equals(space.Id, StudentAccessLocationId, StringComparison.OrdinalIgnoreCase)))
+            if (SubSpaces.Any(space => AppConfigProvider.Current.StudentAccess.LocationIds
+                    .Any(id => string.Equals(space.Id, id, StringComparison.OrdinalIgnoreCase))))
             {
                 return true;
             }
 
             if (!string.IsNullOrWhiteSpace(BuildingNumber) &&
-                string.Equals(BuildingNumber.Trim(), InformatikomBuildingId, StringComparison.OrdinalIgnoreCase))
+                AppConfigProvider.Current.StudentAccess.BuildingIds
+                    .Any(id => string.Equals(BuildingNumber.Trim(), id, StringComparison.OrdinalIgnoreCase)))
             {
                 return true;
             }
 
-            return Name.Contains("Informatikom", StringComparison.OrdinalIgnoreCase);
+            return AppConfigProvider.Current.StudentAccess.NameContains
+                .Any(token => Name.Contains(token, StringComparison.OrdinalIgnoreCase));
         }
     }
 
@@ -127,10 +132,11 @@ public partial class UiLocation : ObservableObject
     {
         get
         {
-            if (OccupancyRate < 0.4) return Color.FromArgb("#2ecc71");
-            if (OccupancyRate < 0.7) return Color.FromArgb("#f1c40f");
-            if (OccupancyRate < 0.9) return Color.FromArgb("#e67e22");
-            return Color.FromArgb("#e74c3c");
+            var config = AppConfigProvider.Current.Occupancy;
+            if (OccupancyRate < config.LowThreshold) return Color.FromArgb(config.LowColor);
+            if (OccupancyRate < config.MediumThreshold) return Color.FromArgb(config.MediumColor);
+            if (OccupancyRate < config.HighThreshold) return Color.FromArgb(config.HighColor);
+            return Color.FromArgb(config.FullColor);
         }
     }
 
@@ -141,6 +147,8 @@ public partial class UiLocation : ObservableObject
     private bool _isFavorite;
 
     // Diese Properties steuern das Aussehen des Sterns in der UI automatisch!
-    public string FavoriteIcon => IsFavorite ? "★" : "☆";
-    public Color FavoriteColor => IsFavorite ? Color.FromArgb("#f1c40f") : Colors.Gray;
+    public string FavoriteIcon => IsFavorite ? AppText.FavoriteIconFilled : AppText.FavoriteIconOutline;
+    public Color FavoriteColor => IsFavorite
+        ? Color.FromArgb(AppConfigProvider.Current.UiColors.FavoriteOnColor)
+        : Color.FromArgb(AppConfigProvider.Current.UiColors.FavoriteOffColor);
 }

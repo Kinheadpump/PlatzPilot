@@ -1,16 +1,18 @@
+using System.Collections.Generic;
 using System.Windows.Input;
 using System.Globalization; // WICHTIG für die Formatierung der Koordinaten!
 using System.Text.RegularExpressions;
 using Microsoft.Maui.ApplicationModel;
+using PlatzPilot.Configuration;
 using PlatzPilot.Models;
 
 namespace PlatzPilot.Views;
 
-[QueryProperty(nameof(LocationData), "LocationData")]
-public partial class DetailPage : ContentPage
+public partial class DetailPage : ContentPage, IQueryAttributable
 {
     private UiLocation? _locationData;
-    private static readonly Regex FirstIntegerRegex = new(@"-?\d+", RegexOptions.Compiled);
+    private static readonly Lazy<Regex> LevelNumberRegex = new(() =>
+        new Regex(AppConfigProvider.Current.Internal.LevelNumberRegex, RegexOptions.Compiled));
 
     public UiLocation? LocationData
     {
@@ -36,9 +38,18 @@ public partial class DetailPage : ContentPage
 
         OpenUrlCommand = new Command<string>(async url => await OpenUrlAsync(url));
         OpenMapCommand = new Command(async () => await OpenMapAsync());
-        GoBackCommand = new Command(async () => await Shell.Current.GoToAsync(".."));
+        GoBackCommand = new Command(async () => await Shell.Current.GoToAsync(AppConfigProvider.Current.Internal.BackNavigationRoute));
 
         BindingContext = this;
+    }
+
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        var key = AppConfigProvider.Current.Internal.LocationDataKey;
+        if (query.TryGetValue(key, out var value) && value is UiLocation location)
+        {
+            LocationData = location;
+        }
     }
 
     private async Task OpenUrlAsync(string? url)
@@ -60,19 +71,23 @@ public partial class DetailPage : ContentPage
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"URL Fehler: {ex.Message}");
+            Console.WriteLine(string.Format(
+                CultureInfo.CurrentCulture,
+                AppConfigProvider.Current.Internal.UrlOpenFailedFormat,
+                ex.Message));
         }
     }
 
     private static string NormalizeUrl(string url)
     {
-        if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-            url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        var config = AppConfigProvider.Current.Internal;
+        if (url.StartsWith(config.UrlSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith(config.UrlSchemeHttps, StringComparison.OrdinalIgnoreCase))
         {
             return url;
         }
 
-        return $"https://{url}";
+        return $"{config.UrlSchemeDefaultPrefix}{url}";
     }
 
     private async Task OpenMapAsync()
@@ -100,7 +115,11 @@ public partial class DetailPage : ContentPage
         {
             var lat = locationData.Latitude.ToString(CultureInfo.InvariantCulture);
             var lon = locationData.Longitude.ToString(CultureInfo.InvariantCulture);
-            var mapUrl = $"https://www.google.com/maps/search/?api=1&query={lat},{lon}";
+            var mapUrl = string.Format(
+                CultureInfo.InvariantCulture,
+                AppConfigProvider.Current.Internal.MapSearchUrlFormat,
+                lat,
+                lon);
             await Launcher.Default.OpenAsync(new Uri(mapUrl));
         }
         catch
@@ -129,7 +148,7 @@ public partial class DetailPage : ContentPage
             return int.MaxValue;
         }
 
-        var match = FirstIntegerRegex.Match(level);
+        var match = LevelNumberRegex.Value.Match(level);
         if (!match.Success || !int.TryParse(match.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedLevel))
         {
             return int.MaxValue - 1;

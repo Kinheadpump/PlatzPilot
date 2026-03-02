@@ -1,34 +1,26 @@
+using PlatzPilot.Configuration;
 using PlatzPilot.Models;
 
 namespace PlatzPilot.Services;
 
 public sealed class SafeArrivalForecastService
 {
-    private const int BinMinutes = 5;
-    private const int BinsPerDay = (24 * 60) / BinMinutes;
-    private const int SmoothingWindow = 5;
-    private const int SmoothingRadius = SmoothingWindow / 2;
-    private static readonly TimeSpan StudentAccessStart = new(7, 0, 0);
-    private static readonly TimeSpan StudentAccessEnd = new(22, 0, 0);
-    private const string StudentAccessLocationId = "LAF";
-    private const string StudentAccessBuildingId = "50.19";
+    private readonly SafeArrivalConfig _settings;
+    private readonly StudentAccessConfig _studentAccess;
+    private readonly int _binMinutes;
+    private readonly int _binsPerDay;
+    private readonly int _smoothingRadius;
 
-    private const double AlphaPrior = 1.0;
-    private const double BetaPrior = 1.0;
+    public SafeArrivalForecastService(AppConfig config)
+    {
+        _settings = config.SafeArrival;
+        _studentAccess = config.StudentAccess;
+        _binMinutes = Math.Max(1, _settings.BinMinutes);
+        _binsPerDay = (24 * 60) / _binMinutes;
 
-    public int RequiredFreeSeats { get; set; } = 1;
-    public double GoalProbability { get; set; } = 0.85;
-    public double TauDays { get; set; } = 2.5;
-    public double BufferRatio { get; set; } = 0.08;
-    public double MinWeightedSamplesForCandidate { get; set; } = 0.2;
-    public double EarlyPeakQuantile { get; set; } = 0.45;
-    public double EarlyPeakBias { get; set; } = 0.7;
-    public double DailyPeakThresholdRatio { get; set; } = 0.85;
-    public int LeadTimeBeforePeakMinutes { get; set; } = 15;
-    public int MinCoveredDaysForConfidence { get; set; } = 2;
-    public double MinWeightedSamplesForConfidence { get; set; } = 1.0;
-    public double FallbackProbabilityMargin { get; set; } = 0.18;
-    public double MinFallbackProbability { get; set; } = 0.65;
+        var window = Math.Max(1, _settings.SmoothingWindow);
+        _smoothingRadius = Math.Max(0, window / 2);
+    }
 
     public SafeArrivalRecommendation Calculate(StudySpace space, IReadOnlyList<SeatHistoryPoint>? history, DateTime referenceTime)
     {
@@ -48,21 +40,21 @@ public sealed class SafeArrivalForecastService
 
         var modelReferenceDate = filteredHistory.Max(point => point.Timestamp.Date);
         var capacity = space.TotalSeats;
-        var alphaRaw = Enumerable.Repeat(AlphaPrior, BinsPerDay).ToArray();
-        var betaRaw = Enumerable.Repeat(BetaPrior, BinsPerDay).ToArray();
-        var supportRaw = new double[BinsPerDay];
-        var dayCoverageMask = new int[BinsPerDay];
+        var alphaRaw = Enumerable.Repeat(_settings.AlphaPrior, _binsPerDay).ToArray();
+        var betaRaw = Enumerable.Repeat(_settings.BetaPrior, _binsPerDay).ToArray();
+        var supportRaw = new double[_binsPerDay];
+        var dayCoverageMask = new int[_binsPerDay];
 
         foreach (var point in filteredHistory)
         {
             // Use newest history day as reference so "before" filters do not discard most of the week.
             var daysAgo = (modelReferenceDate - point.Timestamp.Date).TotalDays;
-            if (daysAgo < 0 || daysAgo > 7)
+            if (daysAgo < 0 || daysAgo > _settings.HistoryWindowDays)
             {
                 continue;
             }
 
-            var weight = Math.Exp(-daysAgo / TauDays);
+            var weight = Math.Exp(-daysAgo / _settings.TauDays);
             var clampedFreeSeats = Math.Clamp(point.FreeSeats, 0, capacity);
             var occupiedSeats = Math.Max(0, capacity - clampedFreeSeats);
             var binIndex = GetBinIndex(point.Timestamp);
@@ -71,7 +63,7 @@ public sealed class SafeArrivalForecastService
             betaRaw[binIndex] += weight * occupiedSeats;
             supportRaw[binIndex] += weight;
 
-            var dayOffset = Math.Clamp((int)daysAgo, 0, 30);
+            var dayOffset = Math.Clamp((int)daysAgo, 0, _settings.DayCoverageMaxOffsetDays);
             dayCoverageMask[binIndex] |= (1 << dayOffset);
         }
 
@@ -104,9 +96,9 @@ public sealed class SafeArrivalForecastService
             ? Math.Clamp((capacity - peakExpectedFreeSeats) / capacity, 0, 1)
             : 0;
 
-        var bufferSeats = Math.Max((int)Math.Ceiling(BufferRatio * capacity), 1);
-        var kEff = Math.Min(capacity, RequiredFreeSeats + bufferSeats);
-        var leadBins = Math.Max(1, LeadTimeBeforePeakMinutes / BinMinutes);
+        var bufferSeats = Math.Max((int)Math.Ceiling(_settings.BufferRatio * capacity), 1);
+        var kEff = Math.Min(capacity, _settings.RequiredFreeSeats + bufferSeats);
+        var leadBins = Math.Max(1, _settings.LeadTimeBeforePeakMinutes / _binMinutes);
         var searchUpperBoundBin = Math.Max(0, peakBin - leadBins);
         var firstOpenBin = Array.FindIndex(openBins, isOpen => isOpen);
         if (firstOpenBin < 0)
@@ -116,7 +108,7 @@ public sealed class SafeArrivalForecastService
 
         searchUpperBoundBin = Math.Max(searchUpperBoundBin, firstOpenBin);
 
-        var relaxedGoal = Math.Max(MinFallbackProbability, GoalProbability - FallbackProbabilityMargin);
+        var relaxedGoal = Math.Max(_settings.MinFallbackProbability, _settings.GoalProbability - _settings.FallbackProbabilityMargin);
 
         var latestStrictBin = -1;
         var latestStrictProbability = 0.0;
@@ -130,7 +122,7 @@ public sealed class SafeArrivalForecastService
         // This avoids suggesting very late times (e.g. 23:00) when places become freer again.
         for (var bin = 0; bin <= searchUpperBoundBin; bin++)
         {
-            if (!openBins[bin] || support[bin] < MinWeightedSamplesForCandidate)
+            if (!openBins[bin] || support[bin] < _settings.MinWeightedSamplesForCandidate)
             {
                 continue;
             }
@@ -145,7 +137,7 @@ public sealed class SafeArrivalForecastService
                 latestFallbackExpectedFreeSeats = expectedFreeSeats;
             }
 
-            if (probability < GoalProbability)
+            if (probability < _settings.GoalProbability)
             {
                 continue;
             }
@@ -165,7 +157,7 @@ public sealed class SafeArrivalForecastService
                 ExpectedFreeSeats = 0,
                 ConfidenceFlag = false,
                 HasPeakData = true,
-                PeakTime = TimeSpan.FromMinutes(peakBin * BinMinutes),
+                PeakTime = TimeSpan.FromMinutes(peakBin * _binMinutes),
                 PeakExpectedFreeSeats = peakExpectedFreeSeats,
                 PeakOccupancyRate = peakOccupancyRate,
                 PeakTrendMinutesPerDay = peakTrendMinutesPerDay
@@ -179,18 +171,18 @@ public sealed class SafeArrivalForecastService
 
         var coveredDays = CountBits(dayCoverageMask[chosenBin]);
         var confidenceFlag = !usesFallbackRecommendation &&
-                             coveredDays >= MinCoveredDaysForConfidence &&
-                             support[chosenBin] >= MinWeightedSamplesForConfidence;
+                             coveredDays >= _settings.MinCoveredDaysForConfidence &&
+                             support[chosenBin] >= _settings.MinWeightedSamplesForConfidence;
 
         return new SafeArrivalRecommendation
         {
             HasRecommendation = true,
-            LatestSafeTime = TimeSpan.FromMinutes(chosenBin * BinMinutes),
+            LatestSafeTime = TimeSpan.FromMinutes(chosenBin * _binMinutes),
             Probability = chosenProbability,
             ExpectedFreeSeats = chosenExpectedFreeSeats,
             ConfidenceFlag = confidenceFlag,
             HasPeakData = true,
-            PeakTime = TimeSpan.FromMinutes(peakBin * BinMinutes),
+            PeakTime = TimeSpan.FromMinutes(peakBin * _binMinutes),
             PeakExpectedFreeSeats = peakExpectedFreeSeats,
             PeakOccupancyRate = peakOccupancyRate,
             PeakTrendMinutesPerDay = peakTrendMinutesPerDay
@@ -214,23 +206,26 @@ public sealed class SafeArrivalForecastService
         };
     }
 
-    private static int GetBinIndex(DateTime timestamp)
+    private int GetBinIndex(DateTime timestamp)
     {
         var totalMinutes = timestamp.TimeOfDay.TotalMinutes;
-        var bin = (int)(totalMinutes / BinMinutes);
-        return Math.Clamp(bin, 0, BinsPerDay - 1);
+        var bin = (int)(totalMinutes / _binMinutes);
+        return Math.Clamp(bin, 0, _binsPerDay - 1);
     }
 
     private (int PeakBin, double PeakTrendMinutesPerDay) AnalyzeDailyPeaks(IReadOnlyList<SeatHistoryPoint> history, bool[] openBins, DateTime referenceDate, int capacity)
     {
         var dailyPeaksForQuantile = new List<(int Bin, double Weight)>();
         var dailyPeaksForTrend = new List<(double DayPosition, int Bin, double Weight)>();
-        var thresholdRatio = Math.Clamp(DailyPeakThresholdRatio, 0.6, 0.98);
+        var thresholdRatio = Math.Clamp(
+            _settings.DailyPeakThresholdRatio,
+            _settings.DailyPeakThresholdMin,
+            _settings.DailyPeakThresholdMax);
 
         foreach (var dayGroup in history.GroupBy(point => point.Timestamp.Date))
         {
             var daysAgo = (referenceDate - dayGroup.Key).TotalDays;
-            if (daysAgo < 0 || daysAgo > 7)
+            if (daysAgo < 0 || daysAgo > _settings.HistoryWindowDays)
             {
                 continue;
             }
@@ -269,8 +264,8 @@ public sealed class SafeArrivalForecastService
                     .ThenBy(point => point.Bin)
                     .First();
 
-            var recencyWeight = Math.Exp(-daysAgo / TauDays);
-            var earlyWeight = 1.0 + EarlyPeakBias * (1.0 - (double)dayPeak.Bin / (BinsPerDay - 1));
+            var recencyWeight = Math.Exp(-daysAgo / _settings.TauDays);
+            var earlyWeight = 1.0 + _settings.EarlyPeakBias * (1.0 - (double)dayPeak.Bin / (_binsPerDay - 1));
             var totalWeight = recencyWeight * earlyWeight;
             if (totalWeight <= 0)
             {
@@ -286,7 +281,9 @@ public sealed class SafeArrivalForecastService
             return (-1, 0);
         }
 
-        var peakBin = WeightedQuantileBin(dailyPeaksForQuantile, Math.Clamp(EarlyPeakQuantile, 0.05, 0.95));
+        var peakBin = WeightedQuantileBin(
+            dailyPeaksForQuantile,
+            Math.Clamp(_settings.EarlyPeakQuantile, _settings.EarlyPeakQuantileMin, _settings.EarlyPeakQuantileMax));
         var trendMinutesPerDay = CalculateTrendMinutesPerDay(dailyPeaksForTrend);
         return (peakBin, trendMinutesPerDay);
     }
@@ -296,9 +293,9 @@ public sealed class SafeArrivalForecastService
         var peakBin = -1;
         var peakOccupancyRate = double.NegativeInfinity;
 
-        for (var bin = 0; bin < BinsPerDay; bin++)
+        for (var bin = 0; bin < _binsPerDay; bin++)
         {
-            if (!openBins[bin] || support[bin] < MinWeightedSamplesForCandidate)
+            if (!openBins[bin] || support[bin] < _settings.MinWeightedSamplesForCandidate)
             {
                 continue;
             }
@@ -344,7 +341,7 @@ public sealed class SafeArrivalForecastService
         return sorted[^1].Bin;
     }
 
-    private static double CalculateTrendMinutesPerDay(List<(double DayPosition, int Bin, double Weight)> points)
+    private double CalculateTrendMinutesPerDay(List<(double DayPosition, int Bin, double Weight)> points)
     {
         if (points.Count < 3)
         {
@@ -368,12 +365,12 @@ public sealed class SafeArrivalForecastService
         }
 
         var slopeBinsPerDay = covariance / variance;
-        return slopeBinsPerDay * BinMinutes;
+        return slopeBinsPerDay * _binMinutes;
     }
 
-    private static bool[] BuildOpenBinMask(OpeningHoursDto? openingHours, DateTime dayStart)
+    private bool[] BuildOpenBinMask(OpeningHoursDto? openingHours, DateTime dayStart)
     {
-        var openBins = new bool[BinsPerDay];
+        var openBins = new bool[_binsPerDay];
 
         // If opening hours are unknown, do not block the recommendation by schedule.
         if (openingHours == null)
@@ -382,16 +379,16 @@ public sealed class SafeArrivalForecastService
             return openBins;
         }
 
-        for (var bin = 0; bin < BinsPerDay; bin++)
+        for (var bin = 0; bin < _binsPerDay; bin++)
         {
-            var binTime = dayStart.AddMinutes(bin * BinMinutes);
+            var binTime = dayStart.AddMinutes(bin * _binMinutes);
             openBins[bin] = openingHours.IsCurrentlyOpen(binTime);
         }
 
         return openBins;
     }
 
-    private static bool[] BuildOpenBinMaskForSpace(StudySpace space, DateTime dayStart)
+    private bool[] BuildOpenBinMaskForSpace(StudySpace space, DateTime dayStart)
     {
         if (IsStudentAccessLocation(space))
         {
@@ -401,43 +398,44 @@ public sealed class SafeArrivalForecastService
         return BuildOpenBinMask(space.OpeningHours, dayStart);
     }
 
-    private static bool[] BuildStudentAccessBinMask(DateTime dayStart)
+    private bool[] BuildStudentAccessBinMask(DateTime dayStart)
     {
-        var openBins = new bool[BinsPerDay];
-        for (var bin = 0; bin < BinsPerDay; bin++)
+        var openBins = new bool[_binsPerDay];
+        for (var bin = 0; bin < _binsPerDay; bin++)
         {
-            var binTime = dayStart.AddMinutes(bin * BinMinutes).TimeOfDay;
-            openBins[bin] = binTime >= StudentAccessStart && binTime < StudentAccessEnd;
+            var binTime = dayStart.AddMinutes(bin * _binMinutes).TimeOfDay;
+            openBins[bin] = binTime >= _studentAccess.Start && binTime < _studentAccess.End;
         }
 
         return openBins;
     }
 
-    private static bool IsOpenAtTime(StudySpace space, DateTime timestamp)
+    private bool IsOpenAtTime(StudySpace space, DateTime timestamp)
     {
         if (IsStudentAccessLocation(space))
         {
             var time = timestamp.TimeOfDay;
-            return time >= StudentAccessStart && time < StudentAccessEnd;
+            return time >= _studentAccess.Start && time < _studentAccess.End;
         }
 
         return space.OpeningHours?.IsCurrentlyOpen(timestamp) ?? true;
     }
 
-    private static bool IsStudentAccessLocation(StudySpace space)
+    private bool IsStudentAccessLocation(StudySpace space)
     {
-        if (string.Equals(space.Id, StudentAccessLocationId, StringComparison.OrdinalIgnoreCase))
+        if (_studentAccess.LocationIds.Any(id => string.Equals(space.Id, id, StringComparison.OrdinalIgnoreCase)))
         {
             return true;
         }
 
         if (!string.IsNullOrWhiteSpace(space.Building) &&
-            string.Equals(space.Building.Trim(), StudentAccessBuildingId, StringComparison.OrdinalIgnoreCase))
+            _studentAccess.BuildingIds.Any(id => string.Equals(space.Building.Trim(), id, StringComparison.OrdinalIgnoreCase)))
         {
             return true;
         }
 
-        return space.Name.Contains("Informatikom", StringComparison.OrdinalIgnoreCase);
+        return _studentAccess.NameContains.Any(token =>
+            space.Name.Contains(token, StringComparison.OrdinalIgnoreCase));
     }
 
     private static bool HasAnyOpenBin(bool[] openBins)
@@ -464,14 +462,14 @@ public sealed class SafeArrivalForecastService
         return capacity * alpha / denominator;
     }
 
-    private static double[] MovingAverage(double[] values)
+    private double[] MovingAverage(double[] values)
     {
         var result = new double[values.Length];
 
         for (var i = 0; i < values.Length; i++)
         {
-            var start = Math.Max(0, i - SmoothingRadius);
-            var end = Math.Min(values.Length - 1, i + SmoothingRadius);
+            var start = Math.Max(0, i - _smoothingRadius);
+            var end = Math.Min(values.Length - 1, i + _smoothingRadius);
 
             var sum = 0.0;
             for (var j = start; j <= end; j++)

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Globalization;
+using PlatzPilot.Configuration;
 using PlatzPilot.Models;
 
 namespace PlatzPilot.Services;
@@ -7,46 +8,46 @@ namespace PlatzPilot.Services;
 public class SeatFinderService
 {
     private readonly HttpClient _httpClient;
-    
-    private const string BaseUrl = "https://seatfinder.bibliothek.kit.edu/karlsruhe/getdata.php";
-    
-    private readonly string[] _locations = 
-    {
-        "LSG", "LSM", "LST", "LSN", "LSW", "LBS", "BIB-N", "L3", "L2", "SAR", 
-        "L1", "LEG", "FBC", "FBP", "LAF", "FBA", "FBI", "FBM", "FBH", "FBD", "BLB", "WIS"
-    };
+    private readonly SeatFinderConfig _settings;
+    private readonly InternalConfig _internal;
 
-    public SeatFinderService()
+    public SeatFinderService(AppConfig config)
     {
         _httpClient = new HttpClient();
+        _settings = config.SeatFinder;
+        _internal = config.Internal;
     }
 
-    public async Task<List<StudySpace>> FetchSeatDataAsync(int limit = 1, string after = "", string before = "now")
+    public async Task<List<StudySpace>> FetchSeatDataAsync(int limit, string? after = null, string? before = null)
     {
         var resultList = new List<StudySpace>();
-        string locationString = string.Join(",", _locations);
+        string locationString = string.Join(_settings.LocationSeparator, _settings.Locations);
+
+        var query = _settings.Query;
+        var resolvedAfter = after ?? string.Empty;
+        var resolvedBefore = string.IsNullOrWhiteSpace(before) ? _settings.NowToken : before;
         
         var queryParams = new Dictionary<string, string>
         {
-            { "callback", $"PlatzPilot_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}" },
-            { "_", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString() },
+            { query.CallbackParam, $"{_settings.CallbackPrefix}{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}" },
+            { query.TimestampParam, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString() },
             
             // Block 0: Zeitverlauf der Auslastung
-            { "location[0]", locationString },
-            { "values[0]", "seatestimate,manualcount" },
-            { "after[0]", after },
-            { "before[0]", before },
-            { "limit[0]", limit.ToString() },
+            { query.Location0Param, locationString },
+            { query.Values0Param, query.Values0Value },
+            { query.After0Param, resolvedAfter },
+            { query.Before0Param, resolvedBefore },
+            { query.Limit0Param, limit.ToString() },
             
             // Block 1: Stammdaten (Limit immer 1, da Stammdaten sich nicht ändern)
-            { "location[1]", locationString },
-            { "values[1]", "location" },
-            { "after[1]", "" },
-            { "before[1]", "now" },
-            { "limit[1]", "1" }
+            { query.Location1Param, locationString },
+            { query.Values1Param, query.Values1Value },
+            { query.After1Param, string.Empty },
+            { query.Before1Param, _settings.NowToken },
+            { query.Limit1Param, _settings.MetadataLimit.ToString(CultureInfo.InvariantCulture) }
         };
 
-        string requestUrl = $"{BaseUrl}?{BuildQueryString(queryParams)}";
+        string requestUrl = $"{_settings.BaseUrl}{_settings.QueryStartSeparator}{BuildQueryString(queryParams)}";
 
         try
         {
@@ -57,7 +58,7 @@ public class SeatFinderService
 
             if (startIdx == -1 || endIdx == -1) 
             {
-                System.Diagnostics.Debug.WriteLine("Fehler: Konnte JSONP-Format nicht parsen.");
+                System.Diagnostics.Debug.WriteLine(_internal.JsonpParseErrorText);
                 return resultList;
             }
 
@@ -101,17 +102,22 @@ public class SeatFinderService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Fehler beim HTTP-Request: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine(string.Format(
+                CultureInfo.CurrentCulture,
+                _internal.HttpRequestErrorFormat,
+                ex.Message));
         }
 
         return resultList;
     }
 
-    static private string BuildQueryString(Dictionary<string, string> parameters)
+    private string BuildQueryString(Dictionary<string, string> parameters)
     {
-        var encodedParams = parameters.Select(kvp => 
-            $"{Uri.EscapeDataString(kvp.Key)}={Uri.EscapeDataString(kvp.Value)}");
-        return string.Join("&", encodedParams);
+        var pairSeparator = _settings.QueryPairSeparator;
+        var parameterSeparator = _settings.QueryParameterSeparator;
+        var encodedParams = parameters.Select(kvp =>
+            $"{Uri.EscapeDataString(kvp.Key)}{pairSeparator}{Uri.EscapeDataString(kvp.Value)}");
+        return string.Join(parameterSeparator, encodedParams);
     }
 
     static private List<SeatHistoryPoint> BuildHistoricalEstimateHistory(string locationId, SeatFinderResponseDto liveData)
@@ -187,8 +193,14 @@ public class SeatFinderService
     static private void ParseCoordinates(string? geoString, StudySpace space)
     {
         if (string.IsNullOrWhiteSpace(geoString)) return;
-        
-        var coords = geoString.Split(';');
+
+        var separator = AppConfigProvider.Current.SeatFinder.CoordinateSeparator;
+        if (string.IsNullOrWhiteSpace(separator))
+        {
+            return;
+        }
+
+        var coords = geoString.Split(new[] { separator }, StringSplitOptions.RemoveEmptyEntries);
         if (coords.Length == 2 && 
             double.TryParse(coords[0], NumberStyles.Any, CultureInfo.InvariantCulture, out double lat) &&
             double.TryParse(coords[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double lon))

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PlatzPilot.Configuration;
 using PlatzPilot.Models;
 using PlatzPilot.Services;
 
@@ -11,46 +12,9 @@ namespace PlatzPilot.ViewModels;
 
 public partial class MainPageViewModel : ObservableObject
 {
+    private readonly AppConfig _config;
     private readonly SeatFinderService _seatFinderService;
     private readonly SafeArrivalForecastService _safeArrivalForecastService;
-
-    private const string FavoritesKey = "PlatzPilot_Favorites";
-    private const string SortModeKey = "PlatzPilot_SortMode";
-    private const string TabModeKey = "PlatzPilot_CurrentTab";
-    private const string ThemeKey = "PlatzPilot_Theme";
-    private const string SpaceFeaturesFileName = "study_space_features.json";
-    private const string PrivacyPageUrl = "https://kinheadpump.github.io/PlatzPilot/privacy.html";
-    private const string ImpressumPageUrl = "https://kinheadpump.github.io/PlatzPilot/impressum.html";
-
-    private const string ThemeLight = "Light";
-    private const string ThemeDark = "Dark";
-
-    private const string TabHome = "Home";
-    private const string TabFavorites = "Favorites";
-    private const string TabSettings = "Settings";
-
-    private const string SortByRelevance = "Relevanz";
-    private const string SortByMostFree = "Meiste freie Pl√§tze";
-    private const string SortByMostTotal = "Meiste Pl√§tze insgesamt";
-    private const string SortByAlphabetical = "Alphabetisch (A-Z)";
-
-    private const string RoomTypeGroup = "gruppenraum";
-    private const string RoomTypeSilentStudy = "stillarbeitsraum";
-    private const string RoomTypeSilentStudyLegacy = "silent study";
-    private const string RoomTypeNoReservation = "ohne reservierung";
-    private const string RoomTypeNoReservationLegacy = "pc-pool";
-
-    private const int MinOpeningHoursSliderValue = 0;
-    private const int MaxOpeningHoursSliderValue = 12;
-    private const int WeeklyHistoryPoints = 2016;
-    private const int LiveRefreshIntervalMinutes = 5;
-
-    private static readonly Dictionary<string, string> BuildingNames = new()
-    {
-        { "30.50", "KIT-Bibliothek S√ºd Altbau" },
-        { "30.51", "KIT-Bibliothek S√ºd Neubau" },
-        { "50.19", "Informatikom" }
-    };
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDataVisible))]
@@ -103,7 +67,7 @@ public partial class MainPageViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(MinimumOpenHoursText))]
-    private double _minimumOpenHours = MinOpeningHoursSliderValue;
+    private double _minimumOpenHours;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowResultsButtonText))]
@@ -112,7 +76,7 @@ public partial class MainPageViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsMainContentVisible))]
     [NotifyPropertyChangedFor(nameof(IsSettingsContentVisible))]
-    private string _currentTab = TabHome;
+    private string _currentTab = string.Empty;
 
     [ObservableProperty]
     private string _selectedSortOption;
@@ -130,34 +94,46 @@ public partial class MainPageViewModel : ObservableObject
     private string _lastLoadedBeforeParameter = string.Empty;
     private DateTime _lastLiveSnapshotFetchUtc = DateTime.MinValue;
 
-    public bool IsMainContentVisible => CurrentTab != TabSettings;
-    public bool IsSettingsContentVisible => CurrentTab == TabSettings;
+    public bool IsMainContentVisible => CurrentTab != _config.Tabs.Settings;
+    public bool IsSettingsContentVisible => CurrentTab == _config.Tabs.Settings;
     public bool IsDataVisible => !IsBusy && UiLocations.Count > 0 && IsMainContentVisible;
     public bool IsListEmpty => !IsBusy && UiLocations.Count == 0 && IsMainContentVisible;
     public bool IsBeforeMode => !UseNow;
     public bool IsSearchInactive => !IsSearchActive;
     public DateTime MaxSelectableDate => DateTime.Today;
-    public string MinimumOpenHoursText => $"Noch ge√∂ffnet f√ºr: mind. {MinimumOpenHours:0} Stunden";
-    public string ShowResultsButtonText => $"{FilteredLocationCount} Geb√§ude anzeigen";
+    public double MinimumOpenHoursMin => _config.UiNumbers.MinOpeningHours;
+    public double MinimumOpenHoursMax => _config.UiNumbers.MaxOpeningHours;
+    public string MinimumOpenHoursText =>
+        string.Format(CultureInfo.CurrentCulture, _config.UiText.MinimumOpenHoursFormat, MinimumOpenHours);
+    public string ShowResultsButtonText =>
+        string.Format(CultureInfo.CurrentCulture, _config.UiText.ShowResultsFormat, FilteredLocationCount);
+    public string SettingsVersionText =>
+        string.Format(CultureInfo.CurrentCulture, _config.UiText.SettingsVersionFormat, _config.AppInfo.Version);
 
-    public List<string> SortOptions { get; } =
-    [
-        SortByRelevance,
-        SortByMostFree,
-        SortByMostTotal,
-        SortByAlphabetical
-    ];
+    public List<string> SortOptions { get; }
 
-    public MainPageViewModel(SeatFinderService seatFinderService, SafeArrivalForecastService safeArrivalForecastService)
+    public MainPageViewModel(
+        SeatFinderService seatFinderService,
+        SafeArrivalForecastService safeArrivalForecastService,
+        AppConfig config)
     {
+        _config = config;
         _seatFinderService = seatFinderService;
         _safeArrivalForecastService = safeArrivalForecastService;
-        _selectedSortOption = Preferences.Default.Get(SortModeKey, SortByRelevance);
-        _currentTab = ResolveInitialTab(Preferences.Default.Get(TabModeKey, TabHome));
+        SortOptions = new List<string>
+        {
+            _config.Sort.Relevance,
+            _config.Sort.MostFree,
+            _config.Sort.MostTotal,
+            _config.Sort.Alphabetical
+        };
+        _minimumOpenHours = _config.UiNumbers.MinOpeningHours;
+        _selectedSortOption = Preferences.Default.Get(_config.Preferences.SortModeKey, _config.Sort.Relevance);
+        _currentTab = ResolveInitialTab(Preferences.Default.Get(_config.Preferences.TabModeKey, _config.Tabs.Home));
 
         if (!SortOptions.Contains(_selectedSortOption))
         {
-            _selectedSortOption = SortByRelevance;
+            _selectedSortOption = _config.Sort.Relevance;
         }
 
         ApplySavedTheme();
@@ -204,7 +180,7 @@ public partial class MainPageViewModel : ObservableObject
         RequireFreeWifi = false;
         RequirePowerOutlets = false;
         RequireWhiteboard = false;
-        MinimumOpenHours = MinOpeningHoursSliderValue;
+        MinimumOpenHours = _config.UiNumbers.MinOpeningHours;
 
         UpdateFilteredLocationPreviewCount();
     }
@@ -247,7 +223,7 @@ public partial class MainPageViewModel : ObservableObject
 
         if (SelectedTime == TimeSpan.Zero)
         {
-            SelectedTime = TimeSpan.FromHours(12);
+            SelectedTime = _config.UiNumbers.DefaultBeforeTime;
         }
 
         _isUpdatingDateTimeSelection = false;
@@ -263,7 +239,7 @@ public partial class MainPageViewModel : ObservableObject
             return;
         }
 
-        Preferences.Default.Set(SortModeKey, value);
+        Preferences.Default.Set(_config.Preferences.SortModeKey, value);
         UpdateFilteredLocationPreviewCount();
     }
 
@@ -272,9 +248,9 @@ public partial class MainPageViewModel : ObservableObject
     {
         tabName = NormalizeTab(tabName);
         CurrentTab = tabName;
-        Preferences.Default.Set(TabModeKey, tabName);
+        Preferences.Default.Set(_config.Preferences.TabModeKey, tabName);
 
-        if (CurrentTab != TabHome)
+        if (CurrentTab != _config.Tabs.Home)
         {
             IsSearchActive = false;
             IsFilterExpanded = false;
@@ -288,13 +264,13 @@ public partial class MainPageViewModel : ObservableObject
 
     private List<string> GetFavoriteNames()
     {
-        var json = Preferences.Default.Get(FavoritesKey, "[]");
+        var json = Preferences.Default.Get(_config.Preferences.FavoritesKey, _config.Preferences.EmptyListJson);
         return JsonSerializer.Deserialize<List<string>>(json) ?? [];
     }
 
     private void SaveFavoriteNames(List<string> favorites)
     {
-        Preferences.Default.Set(FavoritesKey, JsonSerializer.Serialize(favorites));
+        Preferences.Default.Set(_config.Preferences.FavoritesKey, JsonSerializer.Serialize(favorites));
     }
 
     [RelayCommand]
@@ -319,7 +295,7 @@ public partial class MainPageViewModel : ObservableObject
 
         SaveFavoriteNames(favorites);
 
-        if (CurrentTab == TabFavorites && !location.IsFavorite)
+        if (CurrentTab == _config.Tabs.Favorites && !location.IsFavorite)
         {
             UiLocations.Remove(location);
             NotifyCollectionVisibilityChanged();
@@ -339,45 +315,31 @@ public partial class MainPageViewModel : ObservableObject
         var nextTheme = currentTheme == AppTheme.Dark ? AppTheme.Light : AppTheme.Dark;
 
         Application.Current.UserAppTheme = nextTheme;
-        Preferences.Default.Set(ThemeKey, nextTheme == AppTheme.Light ? ThemeLight : ThemeDark);
+        Preferences.Default.Set(_config.Preferences.ThemeKey, nextTheme == AppTheme.Light ? _config.Theme.Light : _config.Theme.Dark);
     }
 
     [RelayCommand]
     private async Task OpenGithubAsync()
     {
-        const string repositoryUrl = "https://github.com/Kinheadpump/PlatzPilot";
-        await Browser.Default.OpenAsync(repositoryUrl, BrowserLaunchMode.SystemPreferred);
+        await Browser.Default.OpenAsync(_config.Urls.Github, BrowserLaunchMode.SystemPreferred);
     }
 
     [RelayCommand]
     private async Task ShowImpressumAsync()
     {
-        await Browser.Default.OpenAsync(ImpressumPageUrl, BrowserLaunchMode.SystemPreferred);
+        await Browser.Default.OpenAsync(_config.Urls.Impressum, BrowserLaunchMode.SystemPreferred);
     }
 
     [RelayCommand]
     private async Task ShowPrivacyAsync()
     {
-        await Browser.Default.OpenAsync(PrivacyPageUrl, BrowserLaunchMode.SystemPreferred);
+        await Browser.Default.OpenAsync(_config.Urls.Privacy, BrowserLaunchMode.SystemPreferred);
     }
 
     [RelayCommand]
     private async Task ShowLicensesAsync()
     {
-        const string licenseText = """
-Diese App verwendet folgende Open-Source-Bibliotheken unter der MIT-Lizenz:
-
-1. .NET MAUI Community Toolkit
-Copyright (c) .NET Foundation and Contributors
-
-2. Microcharts
-Copyright (c) 2017 Alo√Øs Deniel
-
-Die vollst√§ndige MIT-Lizenz lautet:
-Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√∂rigen Dokumentation zu nutzen, zu kopieren, zu √§ndern und zu vertreiben, wird unter der Bedingung erteilt, dass der obige Urheberrechtshinweis in allen Kopien enthalten ist. DIE SOFTWARE WIRD OHNE JEDE AUSDR√úCKLICHE ODER IMPLIZIERTE GARANTIE BEREITGESTELLT.
-""";
-
-        await ShowDialogAsync("Open-Source-Lizenzen", licenseText);
+        await ShowDialogAsync(_config.UiText.LicensesTitle, _config.UiText.LicensesText);
     }
 
     [RelayCommand]
@@ -397,13 +359,17 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
             var shouldReloadWeeklyHistory = !_hasLoadedWeeklyHistory || forceWeeklyReload;
             if (shouldReloadWeeklyHistory)
             {
-                _allSpaces = await _seatFinderService.FetchSeatDataAsync(limit: WeeklyHistoryPoints, before: "now");
+                _allSpaces = await _seatFinderService.FetchSeatDataAsync(
+                    limit: _config.SeatFinder.WeeklyHistoryPoints,
+                    before: _config.SeatFinder.NowToken);
                 ReplaceHistoricalSeatData(_allSpaces);
                 _hasLoadedWeeklyHistory = true;
             }
             else
             {
-                _allSpaces = await _seatFinderService.FetchSeatDataAsync(limit: 1, before: GetApiBeforeParameter());
+                _allSpaces = await _seatFinderService.FetchSeatDataAsync(
+                    limit: _config.SeatFinder.LiveSnapshotPoints,
+                    before: GetApiBeforeParameter());
                 AppendLatestSeatDataToHistory(_allSpaces);
             }
 
@@ -433,7 +399,7 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
             return true;
         }
 
-        if (!string.Equals(requestedBeforeParameter, "now", StringComparison.Ordinal))
+        if (!string.Equals(requestedBeforeParameter, _config.SeatFinder.NowToken, StringComparison.Ordinal))
         {
             return !string.Equals(requestedBeforeParameter, _lastLoadedBeforeParameter, StringComparison.Ordinal);
         }
@@ -443,7 +409,8 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
             return true;
         }
 
-        return DateTime.UtcNow - _lastLiveSnapshotFetchUtc >= TimeSpan.FromMinutes(LiveRefreshIntervalMinutes);
+        return DateTime.UtcNow - _lastLiveSnapshotFetchUtc >=
+               TimeSpan.FromMinutes(_config.SeatFinder.LiveRefreshIntervalMinutes);
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
@@ -502,8 +469,12 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
 
     partial void OnMinimumOpenHoursChanged(double value)
     {
-        var rounded = Math.Clamp(Math.Round(value), MinOpeningHoursSliderValue, MaxOpeningHoursSliderValue);
-        if (Math.Abs(rounded - value) > 0.001)
+        var epsilon = _config.UiNumbers.OpeningHoursSliderSnapEpsilon;
+        var rounded = Math.Clamp(
+            Math.Round(value),
+            _config.UiNumbers.MinOpeningHours,
+            _config.UiNumbers.MaxOpeningHours);
+        if (Math.Abs(rounded - value) > epsilon)
         {
             MinimumOpenHours = rounded;
             return;
@@ -523,7 +494,7 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
 
         try
         {
-            await using var stream = await FileSystem.OpenAppPackageFileAsync(SpaceFeaturesFileName);
+            await using var stream = await FileSystem.OpenAppPackageFileAsync(_config.SeatFinder.SpaceFeaturesFileName);
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -547,7 +518,11 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Konnte {SpaceFeaturesFileName} nicht laden: {ex.Message}");
+            Debug.WriteLine(string.Format(
+                CultureInfo.CurrentCulture,
+                _config.Internal.SpaceFeaturesLoadFailedFormat,
+                _config.SeatFinder.SpaceFeaturesFileName,
+                ex.Message));
         }
     }
 
@@ -595,9 +570,9 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
             }
 
             history.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
-            if (history.Count > WeeklyHistoryPoints)
+            if (history.Count > _config.SeatFinder.WeeklyHistoryPoints)
             {
-                history.RemoveRange(WeeklyHistoryPoints, history.Count - WeeklyHistoryPoints);
+                history.RemoveRange(_config.SeatFinder.WeeklyHistoryPoints, history.Count - _config.SeatFinder.WeeklyHistoryPoints);
             }
         }
     }
@@ -663,7 +638,7 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
         var filteredSpaces = ApplySpaceFilters(_allSpaces);
         var results = MapSpacesToUiLocations(filteredSpaces);
 
-        if (CurrentTab == TabFavorites)
+        if (CurrentTab == _config.Tabs.Favorites)
         {
             results = results.Where(location => location.IsFavorite).ToList();
         }
@@ -683,7 +658,7 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
         var filteredSpaces = ApplySpaceFilters(_allSpaces);
         var results = MapSpacesToUiLocations(filteredSpaces);
 
-        if (CurrentTab == TabFavorites)
+        if (CurrentTab == _config.Tabs.Favorites)
         {
             results = results.Where(location => location.IsFavorite).ToList();
         }
@@ -752,19 +727,19 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
 
         if (IsGroupRoomSelected)
         {
-            selectedRoomTypes.Add(RoomTypeGroup);
+            selectedRoomTypes.Add(_config.RoomTypes.Group);
         }
 
         if (IsSilentStudySelected)
         {
-            selectedRoomTypes.Add(RoomTypeSilentStudy);
-            selectedRoomTypes.Add(RoomTypeSilentStudyLegacy);
+            selectedRoomTypes.Add(_config.RoomTypes.SilentStudy);
+            selectedRoomTypes.Add(_config.RoomTypes.SilentStudyLegacy);
         }
 
         if (IsNoReservationSelected)
         {
-            selectedRoomTypes.Add(RoomTypeNoReservation);
-            selectedRoomTypes.Add(RoomTypeNoReservationLegacy);
+            selectedRoomTypes.Add(_config.RoomTypes.NoReservation);
+            selectedRoomTypes.Add(_config.RoomTypes.NoReservationLegacy);
         }
 
         return selectedRoomTypes;
@@ -810,7 +785,7 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
 
     private IEnumerable<StudySpace> FilterSpacesByOpeningHours(IEnumerable<StudySpace> spaces)
     {
-        if (MinimumOpenHours <= 0)
+        if (MinimumOpenHours <= _config.UiNumbers.MinOpeningHours)
         {
             return spaces;
         }
@@ -828,9 +803,12 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
     {
         return SelectedSortOption switch
         {
-            SortByMostFree => locations.OrderByDescending(location => location.FreeSeats).ToList(),
-            SortByMostTotal => locations.OrderByDescending(location => location.TotalSeats).ToList(),
-            SortByAlphabetical => locations.OrderBy(location => location.Name).ToList(),
+            var value when string.Equals(value, _config.Sort.MostFree, StringComparison.Ordinal) =>
+                locations.OrderByDescending(location => location.FreeSeats).ToList(),
+            var value when string.Equals(value, _config.Sort.MostTotal, StringComparison.Ordinal) =>
+                locations.OrderByDescending(location => location.TotalSeats).ToList(),
+            var value when string.Equals(value, _config.Sort.Alphabetical, StringComparison.Ordinal) =>
+                locations.OrderBy(location => location.Name).ToList(),
             _ => locations
                 .Select((location, index) => new { location, index })
                 .OrderBy(item => GetRelevanceRank(item.location))
@@ -840,19 +818,23 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
         };
     }
 
+    private const int RelevanceRankOpen = 0;
+    private const int RelevanceRankStudentOnlyClosed = 1;
+    private const int RelevanceRankClosed = 2;
+
     private static int GetRelevanceRank(UiLocation location)
     {
         if (location.IsOpen)
         {
-            return 0;
+            return RelevanceRankOpen;
         }
 
         if (location.IsStudentOnlyClosed)
         {
-            return 1;
+            return RelevanceRankStudentOnlyClosed;
         }
 
-        return 2;
+        return RelevanceRankClosed;
     }
 
     private void ReplaceUiLocations(IEnumerable<UiLocation> locations)
@@ -907,7 +889,7 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
         return new UiLocation
         {
             Name = space.Name,
-            Subtitle = "1 Lernort",
+            Subtitle = AppText.SingleLocationSubtitle,
             BuildingNumber = space.Building,
             TotalSeats = space.TotalSeats,
             FreeSeats = space.FreeSeats,
@@ -927,9 +909,9 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
     private UiLocation CreateGroupedLocation(string buildingKey, List<StudySpace> spaces, List<string> favoriteNames, DateTime referenceTime)
     {
         var normalizedBuildingKey = buildingKey.Trim();
-        var displayName = BuildingNames.TryGetValue(normalizedBuildingKey, out var mappedName)
+        var displayName = _config.BuildingNames.TryGetValue(normalizedBuildingKey, out var mappedName)
             ? mappedName
-            : $"Geb√§ude {normalizedBuildingKey}";
+            : string.Format(CultureInfo.CurrentCulture, _config.UiText.BuildingFormat, normalizedBuildingKey);
 
         var buildingRecommendation = GetCachedBuildingRecommendation(normalizedBuildingKey);
 
@@ -938,7 +920,7 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
         return new UiLocation
         {
             Name = displayName,
-            Subtitle = $"{spaces.Count} Lernorte",
+            Subtitle = string.Format(CultureInfo.CurrentCulture, _config.UiText.GroupedLocationSubtitleFormat, spaces.Count),
             BuildingNumber = normalizedBuildingKey,
             TotalSeats = spaces.Sum(space => space.TotalSeats),
             FreeSeats = spaces.Sum(space => space.FreeSeats),
@@ -987,7 +969,7 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
                     ? history
                     : [];
             })
-            .GroupBy(point => NormalizeToFiveMinuteBin(point.Timestamp))
+            .GroupBy(point => NormalizeToBin(point.Timestamp))
             .Select(group =>
             {
                 var sumFreeSeats = group.Sum(point => point.FreeSeats);
@@ -1014,8 +996,8 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
 
         var buildingSpace = new StudySpace
         {
-            Id = $"building:{string.Join("|", spaces.Select(space => space.Id).OrderBy(id => id))}",
-            Name = "Geb√§ude aggregiert",
+            Id = $"{_config.Internal.BuildingAggregateIdPrefix}{string.Join(_config.Internal.BuildingAggregateIdSeparator, spaces.Select(space => space.Id).OrderBy(id => id))}",
+            Name = _config.Internal.BuildingAggregateName,
             TotalSeats = totalCapacity,
             Building = spaces.FirstOrDefault()?.Building,
             OpeningHours = representativeOpeningHours,
@@ -1025,10 +1007,11 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
         return _safeArrivalForecastService.Calculate(buildingSpace, aggregatedHistory, _safeArrivalReferenceDate);
     }
 
-    private static DateTime NormalizeToFiveMinuteBin(DateTime timestamp)
+    private DateTime NormalizeToBin(DateTime timestamp)
     {
+        var binMinutes = Math.Max(1, _config.SafeArrival.BinMinutes);
         var minutes = (timestamp.Hour * 60) + timestamp.Minute;
-        var normalizedMinutes = (minutes / 5) * 5;
+        var normalizedMinutes = (minutes / binMinutes) * binMinutes;
         return timestamp.Date.AddMinutes(normalizedMinutes);
     }
 
@@ -1037,23 +1020,23 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
         if (recommendation == null)
         {
             return new ArrivalInsight(
-                RecommendedArrivalText: "Empfohlene Ankunft: keine sichere Zeit",
+                RecommendedArrivalText: AppText.RecommendationNoneText,
                 HasInsights: false,
-                PeakAverageText: "Auslastungs Peak ‚åÄ: keine Daten",
-                SafetyLevelText: "Empfehlungsqualit√§t: Niedrig",
-                PeakTrendText: "Peak-Trend: bleibt gleich");
+                PeakAverageText: AppText.PeakNoneText,
+                SafetyLevelText: string.Format(CultureInfo.CurrentCulture, AppText.QualityFormat, AppText.QualityLow),
+                PeakTrendText: string.Format(CultureInfo.CurrentCulture, AppText.PeakTrendFormat, AppText.PeakTrendFlat));
         }
 
         var recommendedArrivalText = recommendation.HasRecommendation
-            ? $"Empfohlene Ankunft bis {recommendation.LatestSafeTime:hh\\:mm}"
-            : "Empfohlene Ankunft: keine sichere Zeit";
+            ? string.Format(CultureInfo.CurrentCulture, AppText.RecommendationFormat, recommendation.LatestSafeTime)
+            : AppText.RecommendationNoneText;
 
         var hasInsights = recommendation.HasPeakData;
         var peakAverageText = recommendation.HasPeakData
-            ? $"Auslastungs Peak ‚åÄ: {recommendation.PeakTime:hh\\:mm} Uhr"
-            : "Auslastungs Peak ‚åÄ: keine Daten";
-        var safetyLevelText = $"Empfehlungsqualit√§t: {GetSafetyLevel(recommendation)}";
-        var peakTrendText = $"Peak-Trend: {GetPeakTrendLabel(recommendation.PeakTrendMinutesPerDay)}";
+            ? string.Format(CultureInfo.CurrentCulture, AppText.PeakFormat, recommendation.PeakTime)
+            : AppText.PeakNoneText;
+        var safetyLevelText = string.Format(CultureInfo.CurrentCulture, AppText.QualityFormat, GetSafetyLevel(recommendation));
+        var peakTrendText = string.Format(CultureInfo.CurrentCulture, AppText.PeakTrendFormat, GetPeakTrendLabel(recommendation.PeakTrendMinutesPerDay));
 
         return new ArrivalInsight(
             RecommendedArrivalText: recommendedArrivalText,
@@ -1067,36 +1050,37 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
     {
         if (!recommendation.HasRecommendation)
         {
-            return "Niedrig";
+            return AppText.QualityLow;
         }
 
-        if (recommendation.ConfidenceFlag && recommendation.Probability >= 0.90)
+        if (recommendation.ConfidenceFlag &&
+            recommendation.Probability >= AppConfigProvider.Current.SafeArrival.HighProbabilityThreshold)
         {
-            return "Hoch";
+            return AppText.QualityHigh;
         }
 
-        if (recommendation.Probability >= 0.80)
+        if (recommendation.Probability >= AppConfigProvider.Current.SafeArrival.MediumProbabilityThreshold)
         {
-            return "Mittel";
+            return AppText.QualityMedium;
         }
 
-        return "Niedrig";
+        return AppText.QualityLow;
     }
 
     private static string GetPeakTrendLabel(double trendMinutesPerDay)
     {
-        const double FlatThreshold = 2.0;
-        if (trendMinutesPerDay > FlatThreshold)
+        var flatThreshold = AppConfigProvider.Current.SafeArrival.TrendFlatThresholdMinutes;
+        if (trendMinutesPerDay > flatThreshold)
         {
-            return "wird sp√§ter";
+            return AppText.PeakTrendLater;
         }
 
-        if (trendMinutesPerDay < -FlatThreshold)
+        if (trendMinutesPerDay < -flatThreshold)
         {
-            return "wird fr√ºher";
+            return AppText.PeakTrendEarlier;
         }
 
-        return "bleibt gleich";
+        return AppText.PeakTrendFlat;
     }
 
     private readonly record struct ArrivalInsight(
@@ -1115,8 +1099,8 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
     private string GetApiBeforeParameter()
     {
         return UseNow
-            ? "now"
-            : GetReferenceDateTime().ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+            ? _config.SeatFinder.NowToken
+            : GetReferenceDateTime().ToString(_config.Internal.ApiDateTimeFormat, CultureInfo.InvariantCulture);
     }
 
     [RelayCommand]
@@ -1127,43 +1111,56 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
             return;
         }
 
-        await Shell.Current.GoToAsync("DetailPage", new Dictionary<string, object> { { "LocationData", selectedLocation } });
+        await Shell.Current.GoToAsync(
+            _config.Internal.DetailPageRoute,
+            new Dictionary<string, object> { { _config.Internal.LocationDataKey, selectedLocation } });
     }
 
-    private static string NormalizeTab(string tabName)
+    private string NormalizeTab(string tabName)
     {
-        return tabName switch
+        if (string.Equals(tabName, _config.Tabs.Home, StringComparison.Ordinal))
         {
-            TabHome => TabHome,
-            TabFavorites => TabFavorites,
-            TabSettings => TabSettings,
-            _ => TabHome
-        };
+            return _config.Tabs.Home;
+        }
+
+        if (string.Equals(tabName, _config.Tabs.Favorites, StringComparison.Ordinal))
+        {
+            return _config.Tabs.Favorites;
+        }
+
+        if (string.Equals(tabName, _config.Tabs.Settings, StringComparison.Ordinal))
+        {
+            return _config.Tabs.Settings;
+        }
+
+        return _config.Tabs.Home;
     }
 
-    private static string ResolveInitialTab(string tabName)
+    private string ResolveInitialTab(string tabName)
     {
         var normalizedTab = NormalizeTab(tabName);
-        return normalizedTab == TabSettings ? TabHome : normalizedTab;
+        return string.Equals(normalizedTab, _config.Tabs.Settings, StringComparison.Ordinal)
+            ? _config.Tabs.Home
+            : normalizedTab;
     }
 
-    private static void ApplySavedTheme()
+    private void ApplySavedTheme()
     {
         if (Application.Current == null)
         {
             return;
         }
 
-        var savedTheme = Preferences.Default.Get(ThemeKey, "System");
+        var savedTheme = Preferences.Default.Get(_config.Preferences.ThemeKey, _config.Theme.System);
         Application.Current.UserAppTheme = savedTheme switch
         {
-            ThemeLight => AppTheme.Light,
-            ThemeDark => AppTheme.Dark,
+            var value when string.Equals(value, _config.Theme.Light, StringComparison.Ordinal) => AppTheme.Light,
+            var value when string.Equals(value, _config.Theme.Dark, StringComparison.Ordinal) => AppTheme.Dark,
             _ => AppTheme.Unspecified
         };
     }
 
-    private static async Task ShowDialogAsync(string title, string message)
+    private async Task ShowDialogAsync(string title, string message)
     {
         var page = Application.Current?.Windows.FirstOrDefault()?.Page;
         if (page == null)
@@ -1173,7 +1170,7 @@ Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugeh√
 
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            await page.DisplayAlertAsync(title, message, "OK");
+            await page.DisplayAlertAsync(title, message, _config.UiText.OkButtonLabel);
         });
     }
 }

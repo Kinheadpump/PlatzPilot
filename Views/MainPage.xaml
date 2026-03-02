@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:PlatzPilot.ViewModels"
              xmlns:models="clr-namespace:PlatzPilot.Models"
+             xmlns:local="clr-namespace:PlatzPilot"
              x:Class="PlatzPilot.Views.MainPage"
              x:DataType="viewmodels:MainPageViewModel"
              Shell.NavBarIsVisible="False"
@@ -21,14 +22,14 @@
                   ColumnSpacing="8"
                   VerticalOptions="Center">
                 <Label Grid.Column="0"
-                       Text="Lernorte"
+                       Text="{x:Static local:AppText.HomeTitle}"
                        FontSize="22"
                        FontAttributes="Bold"
                        VerticalOptions="Center"
                        IsVisible="{Binding IsSearchInactive}" />
 
                 <SearchBar Grid.Column="0"
-                           Placeholder="Nach Bib oder Kürzel suchen..."
+                           Placeholder="{x:Static local:AppText.SearchPlaceholder}"
                            Text="{Binding SearchText}"
                            IsVisible="{Binding IsSearchActive}"
                            BackgroundColor="Transparent" />
@@ -42,7 +43,7 @@
                         Padding="0"
                         VerticalOptions="Center">
                     <ImageButton Command="{Binding ToggleSearchCommand}"
-                                 Source="{AppThemeBinding Light=icon_search.png, Dark=icon_search_white.png}"
+                                 Source="{AppThemeBinding Light={x:Static local:AppAssets.SearchIconLight}, Dark={x:Static local:AppAssets.SearchIconDark}}"
                                  WidthRequest="44"
                                  HeightRequest="44"
                                  MinimumWidthRequest="44"
@@ -63,7 +64,7 @@
                         Padding="0"
                         VerticalOptions="Center">
                     <ImageButton Command="{Binding ToggleFilterCommand}"
-                                 Source="{AppThemeBinding Light=icon_filter.png, Dark=icon_filter_white.png}"
+                                 Source="{AppThemeBinding Light={x:Static local:AppAssets.FilterIconLight}, Dark={x:Static local:AppAssets.FilterIconDark}}"
                                  WidthRequest="44"
                                  HeightRequest="44"
                                  MinimumWidthRequest="44"
@@ -149,7 +150,7 @@
                                           VerticalOptions="Start"
                                           MinimumWidthRequest="72">
                                         <ImageButton Grid.Row="0"
-                                                     Source="icon_favorite_yellow_outline.png"
+                                                     Source="{x:Static local:AppAssets.FavoriteIconOutline}"
                                                      WidthRequest="20"
                                                      HeightRequest="20"
                                                      MinimumWidthRequest="24"
@@ -166,7 +167,7 @@
                                                              Binding="{Binding IsFavorite}"
                                                              Value="True">
                                                     <Setter Property="Source"
-                                                            Value="icon_favorite_yellow_filled.png" />
+                                                            Value="{x:Static local:AppAssets.FavoriteIconFilled}" />
                                                     <Setter Property="Opacity"
                                                             Value="1" />
                                                 </DataTrigger>
@@ -174,7 +175,7 @@
                                                              Binding="{Binding IsFavorite}"
                                                              Value="False">
                                                     <Setter Property="Source"
-                                                            Value="icon_favorite_yellow_outline.png" />
+                                                            Value="{x:Static local:AppAssets.FavoriteIconOutline}" />
                                                     <Setter Property="Opacity"
                                                             Value="1" />
                                                 </DataTrigger>
@@ -222,12 +223,12 @@
                                     <VerticalStackLayout Grid.Row="1"
                                                          Grid.ColumnSpan="2">
                                         <Grid ColumnDefinitions="*, Auto">
-                                            <Label Text="Auslastung"
+                                            <Label Text="{x:Static local:AppText.OccupancyLabel}"
                                                    FontSize="12"
                                                    TextColor="Gray"
                                                    VerticalOptions="Center" />
                                             <Label Grid.Column="1"
-                                                   Text="Manuell gezählt"
+                                                   Text="{x:Static local:AppText.ManualCountLabel}"
                                                    FontSize="10"
                                                    TextColor="DarkOrange"
                                                    IsVisible="{Binding IsManualCount}"
@@ -248,7 +249,7 @@
                                      HorizontalOptions="Center"
                                      Spacing="10"
                                      IsVisible="{Binding IsListEmpty}">
-                    <Label Text="Noch keine Daten gefunden 🕵️"
+                    <Label Text="{x:Static local:AppText.EmptyListText}"
                            FontSize="18"
                            HorizontalOptions="Center" />
                 </VerticalStackLayout>
@@ -260,7 +261,7 @@
                     IsVisible="{Binding IsSettingsContentVisible}"
                     Margin="15,30,15,15">
             <VerticalStackLayout Spacing="25">
-                <Label Text="Einstellungen"
+                <Label Text="{x:Static local:AppText.SettingsTitle}"
                        FontAttributes="Bold"
                        FontSize="28"
                        Margin="0,10,0,10" />
@@ -270,12 +271,12 @@
                         StrokeShape="RoundRectangle 10"
                         StrokeThickness="0">
                     <Grid ColumnDefinitions="*, Auto">
-                        <Label Text="Design (Hell / Dunkel)"
+                        <Label Text="{x:Static local:AppText.SettingsDesignLabel}"
                                VerticalOptions="Center"
                                FontAttributes="Bold" />
 
                         <ImageButton Grid.Column="1"
-                                     Source="{AppThemeBinding Light=icon_dark_mode.png, Dark=icon_dark_mode_white.png}"
+                                     Source="{AppThemeBinding Light={x:Static local:AppAssets.DarkModeIconLight}, Dark={x:Static local:AppAssets.DarkModeIconDark}}"
                                      Command="{Binding ToggleThemeCommand}"
                                      BackgroundColor="Transparent"
                                      HeightRequest="40"
@@ -291,16 +292,16 @@
                         StrokeThickness="0">
                     <VerticalStackLayout Spacing="8"
                                          HorizontalOptions="Center">
-                        <Image Source="app_logo_settings.png"
+                        <Image Source="{x:Static local:AppAssets.SettingsLogo}"
                                HeightRequest="60"
                                WidthRequest="60"
                                Margin="0,0,0,10"
                                HorizontalOptions="Center" />
-                        <Label Text="Version 1.0.0"
+                        <Label Text="{Binding SettingsVersionText}"
                                FontSize="12"
                                TextColor="Gray"
                                HorizontalOptions="Center" />
-                        <Label Text="Diese App ist ein studentisches Projekt und steht in keiner offiziellen Verbindung zum Karlsruher Institut für Technologie (KIT) oder der KIT-Bibliothek."
+                        <Label Text="{x:Static local:AppText.SettingsDisclaimer}"
                                Margin="0,8,0,0"
                                FontSize="11"
                                TextColor="Gray"
@@ -310,7 +311,7 @@
                               ColumnSpacing="6"
                               HorizontalOptions="Fill">
                             <Button Grid.Column="0"
-                                    Text="Github"
+                                    Text="{x:Static local:AppText.GithubLabel}"
                                     Command="{Binding OpenGithubCommand}"
                                     BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
                                     TextColor="{AppThemeBinding Light=Black, Dark=White}"
@@ -320,7 +321,7 @@
                                     HeightRequest="40"
                                     Padding="6,8" />
                             <Button Grid.Column="1"
-                                    Text="Impressum"
+                                    Text="{x:Static local:AppText.ImpressumLabel}"
                                     Command="{Binding ShowImpressumCommand}"
                                     BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
                                     TextColor="{AppThemeBinding Light=Black, Dark=White}"
@@ -330,7 +331,7 @@
                                     HeightRequest="40"
                                     Padding="6,8" />
                             <Button Grid.Column="2"
-                                    Text="Datenschutz"
+                                    Text="{x:Static local:AppText.PrivacyLabel}"
                                     Command="{Binding ShowPrivacyCommand}"
                                     BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
                                     TextColor="{AppThemeBinding Light=Black, Dark=White}"
@@ -340,7 +341,7 @@
                                     HeightRequest="40"
                                     Padding="6,8" />
                             <Button Grid.Column="3"
-                                    Text="Lizenzen"
+                                    Text="{x:Static local:AppText.LicensesLabel}"
                                     Command="{Binding ShowLicensesCommand}"
                                     BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
                                     TextColor="{AppThemeBinding Light=Black, Dark=White}"
@@ -374,32 +375,32 @@
                                      Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding SwitchTabCommand}"
-                                              CommandParameter="Home" />
+                                              CommandParameter="{x:Static local:AppTabs.Home}" />
                     </VerticalStackLayout.GestureRecognizers>
-                    <Image Source="{AppThemeBinding Light=icon_home.png, Dark=icon_home_white.png}"
+                    <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.HomeIconLight}, Dark={x:Static local:AppAssets.HomeIconDark}}"
                            HeightRequest="24"
                            WidthRequest="24"
                            HorizontalOptions="Center" />
-                    <Label Text="Home"
+                    <Label Text="{x:Static local:AppText.HomeTabLabel}"
                            FontSize="10"
                            HorizontalOptions="Center"
                            FontAttributes="Bold" />
                     <VerticalStackLayout.Triggers>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding CurrentTab}"
-                                     Value="Home">
+                                     Value="{x:Static local:AppTabs.Home}">
                             <Setter Property="Opacity"
                                     Value="1.0" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding CurrentTab}"
-                                     Value="Favorites">
+                                     Value="{x:Static local:AppTabs.Favorites}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding CurrentTab}"
-                                     Value="Settings">
+                                     Value="{x:Static local:AppTabs.Settings}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
@@ -413,32 +414,32 @@
                                      Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding SwitchTabCommand}"
-                                              CommandParameter="Favorites" />
+                                              CommandParameter="{x:Static local:AppTabs.Favorites}" />
                     </VerticalStackLayout.GestureRecognizers>
-                    <Image Source="{AppThemeBinding Light=icon_favorite.png, Dark=icon_favorite_white.png}"
+                    <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.FavoritesIconLight}, Dark={x:Static local:AppAssets.FavoritesIconDark}}"
                            HeightRequest="24"
                            WidthRequest="24"
                            HorizontalOptions="Center" />
-                    <Label Text="Favoriten"
+                    <Label Text="{x:Static local:AppText.FavoritesLabel}"
                            FontSize="10"
                            HorizontalOptions="Center"
                            FontAttributes="Bold" />
                     <VerticalStackLayout.Triggers>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding CurrentTab}"
-                                     Value="Favorites">
+                                     Value="{x:Static local:AppTabs.Favorites}">
                             <Setter Property="Opacity"
                                     Value="1.0" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding CurrentTab}"
-                                     Value="Home">
+                                     Value="{x:Static local:AppTabs.Home}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding CurrentTab}"
-                                     Value="Settings">
+                                     Value="{x:Static local:AppTabs.Settings}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
@@ -452,32 +453,32 @@
                                      Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding SwitchTabCommand}"
-                                              CommandParameter="Settings" />
+                                              CommandParameter="{x:Static local:AppTabs.Settings}" />
                     </VerticalStackLayout.GestureRecognizers>
-                    <Image Source="{AppThemeBinding Light=icon_settings.png, Dark=icon_settings_white.png}"
+                    <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.SettingsIconLight}, Dark={x:Static local:AppAssets.SettingsIconDark}}"
                            HeightRequest="24"
                            WidthRequest="24"
                            HorizontalOptions="Center" />
-                    <Label Text="Einstellungen"
+                    <Label Text="{x:Static local:AppText.SettingsLabel}"
                            FontSize="10"
                            HorizontalOptions="Center"
                            FontAttributes="Bold" />
                     <VerticalStackLayout.Triggers>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding CurrentTab}"
-                                     Value="Settings">
+                                     Value="{x:Static local:AppTabs.Settings}">
                             <Setter Property="Opacity"
                                     Value="1.0" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding CurrentTab}"
-                                     Value="Home">
+                                     Value="{x:Static local:AppTabs.Home}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding CurrentTab}"
-                                     Value="Favorites">
+                                     Value="{x:Static local:AppTabs.Favorites}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
@@ -512,11 +513,11 @@
                                      HorizontalOptions="Center"
                                      Color="{AppThemeBinding Light=#d7d7d7, Dark=#3b3b3b}"
                                      CornerRadius="4" />
-                            <Label Text="Filter"
+                            <Label Text="{x:Static local:AppText.FilterTitle}"
                                    FontSize="22"
                                    FontAttributes="Bold" />
                         </VerticalStackLayout>
-                        <Button Text="Reset"
+                        <Button Text="{x:Static local:AppText.FilterReset}"
                                 Command="{Binding ResetFiltersCommand}"
                                 BackgroundColor="{AppThemeBinding Light=#e9f0ff, Dark=#24324d}"
                                 TextColor="{AppThemeBinding Light=#1f4db8, Dark=#9ec1ff}"
@@ -537,12 +538,12 @@
                                     Padding="14"
                                     StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="10">
-                                    <Label Text="Sortierung"
+                                    <Label Text="{x:Static local:AppText.SortTitle}"
                                            FontAttributes="Bold"
                                            FontSize="16" />
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
-                                        <Label Text="Sortieren nach:"
+                                        <Label Text="{x:Static local:AppText.SortByLabel}"
                                                VerticalOptions="Center" />
                                         <Picker Grid.Column="1"
                                                 ItemsSource="{Binding SortOptions}"
@@ -556,14 +557,14 @@
                                     Padding="14"
                                     StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="12">
-                                    <Label Text="Wann?"
+                                    <Label Text="{x:Static local:AppText.WhenTitle}"
                                            FontAttributes="Bold"
                                            FontSize="16" />
 
                                     <Grid ColumnDefinitions="*,*"
                                           ColumnSpacing="8">
                                         <Button Grid.Column="0"
-                                                Text="Jetzt"
+                                                Text="{x:Static local:AppText.WhenNow}"
                                                 Command="{Binding SetWhenNowCommand}"
                                                 CornerRadius="10"
                                                 Padding="10,8">
@@ -587,7 +588,7 @@
                                             </Button.Triggers>
                                         </Button>
                                         <Button Grid.Column="1"
-                                                Text="Vorher"
+                                                Text="{x:Static local:AppText.WhenBefore}"
                                                 Command="{Binding SetWhenBeforeCommand}"
                                                 CornerRadius="10"
                                                 Padding="10,8">
@@ -623,10 +624,10 @@
                                             <DatePicker Grid.Column="0"
                                                         Date="{Binding SelectedDate}"
                                                         MaximumDate="{Binding MaxSelectableDate}"
-                                                        Format="dd.MM.yyyy" />
+                                                        Format="{x:Static local:AppFormats.DatePicker}" />
                                             <TimePicker Grid.Column="1"
                                                         Time="{Binding SelectedTime}"
-                                                        Format="HH:mm" />
+                                                        Format="{x:Static local:AppFormats.TimePicker}" />
                                         </Grid>
                                     </Border>
                                 </VerticalStackLayout>
@@ -637,28 +638,28 @@
                                     Padding="14"
                                     StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="10">
-                                    <Label Text="Raumtyp"
+                                    <Label Text="{x:Static local:AppText.RoomTypeTitle}"
                                            FontAttributes="Bold"
                                            FontSize="16" />
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding IsGroupRoomSelected}" />
                                         <Label Grid.Column="1"
-                                               Text="Gruppenraum"
+                                               Text="{x:Static local:AppText.RoomTypeGroup}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding IsSilentStudySelected}" />
                                         <Label Grid.Column="1"
-                                               Text="Stillarbeitsraum"
+                                               Text="{x:Static local:AppText.RoomTypeSilent}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding IsNoReservationSelected}" />
                                         <Label Grid.Column="1"
-                                               Text="Ohne Reservierung"
+                                               Text="{x:Static local:AppText.RoomTypeNoReservation}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                 </VerticalStackLayout>
@@ -669,7 +670,7 @@
                                     Padding="14"
                                     StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="10">
-                                    <Label Text="Ausstattung"
+                                    <Label Text="{x:Static local:AppText.EquipmentTitle}"
                                            FontAttributes="Bold"
                                            FontSize="16" />
 
@@ -677,21 +678,21 @@
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding RequireFreeWifi}" />
                                         <Label Grid.Column="1"
-                                               Text="Free WiFi"
+                                               Text="{x:Static local:AppText.EquipmentWifi}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding RequirePowerOutlets}" />
                                         <Label Grid.Column="1"
-                                               Text="Steckdosen am Platz"
+                                               Text="{x:Static local:AppText.EquipmentPower}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding RequireWhiteboard}" />
                                         <Label Grid.Column="1"
-                                               Text="Whiteboard vorhanden"
+                                               Text="{x:Static local:AppText.EquipmentWhiteboard}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                 </VerticalStackLayout>
@@ -702,14 +703,14 @@
                                     Padding="14"
                                     StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="10">
-                                    <Label Text="Öffnungszeiten"
+                                    <Label Text="{x:Static local:AppText.OpeningHoursTitle}"
                                            FontAttributes="Bold"
                                            FontSize="16" />
                                     <Label Text="{Binding MinimumOpenHoursText}"
                                            FontSize="13"
                                            TextColor="Gray" />
-                                    <Slider Minimum="0"
-                                            Maximum="12"
+                                    <Slider Minimum="{Binding MinimumOpenHoursMin}"
+                                            Maximum="{Binding MinimumOpenHoursMax}"
                                             x:Name="OpeningHoursSlider"
                                             ValueChanged="OnOpeningHoursSliderValueChanged"
                                             Value="{Binding MinimumOpenHours}" />

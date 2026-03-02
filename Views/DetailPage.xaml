@@ -4,6 +4,7 @@
              xmlns:models="clr-namespace:PlatzPilot.Models"
              xmlns:views="clr-namespace:PlatzPilot.Views"
              xmlns:sys="clr-namespace:System;assembly=netstandard"
+             xmlns:local="clr-namespace:PlatzPilot"
              x:Class="PlatzPilot.Views.DetailPage"
              x:DataType="views:DetailPage"
              Shell.NavBarIsVisible="False"
@@ -13,7 +14,7 @@
           BackgroundColor="{AppThemeBinding Light=White, Dark=#1f1f1f}">
         
         <Grid Grid.Row="0" Padding="15,15,15,5">
-            <Label Text="◀" FontSize="28" TextColor="{AppThemeBinding Light=Black, Dark=White}" VerticalOptions="Center" HorizontalOptions="Start">
+            <Label Text="{x:Static local:AppText.BackGlyph}" FontSize="28" TextColor="{AppThemeBinding Light=Black, Dark=White}" VerticalOptions="Center" HorizontalOptions="Start">
                 <Label.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding GoBackCommand}" />
                 </Label.GestureRecognizers>
@@ -35,13 +36,13 @@
                     </VerticalStackLayout>
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
-                        <Button Grid.Column="0" Text="Auf Karte" 
+                        <Button Grid.Column="0" Text="{x:Static local:AppText.OpenMapLabel}" 
                                 Command="{Binding OpenMapCommand}" 
                                 IsVisible="{Binding LocationData.HasLocation}" 
                                 BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}" 
                                 TextColor="{AppThemeBinding Light=Black, Dark=White}" FontAttributes="Bold" CornerRadius="8" Padding="10"/>
 
-                        <Button Grid.Column="1" Text="Website" 
+                        <Button Grid.Column="1" Text="{x:Static local:AppText.OpenWebsiteLabel}" 
                                 Command="{Binding OpenUrlCommand}" 
                                 CommandParameter="{Binding LocationData.MainUrl}"
                                 BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}" 
@@ -56,13 +57,13 @@
 
                     <Border BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#1e1e1e}" Padding="15" StrokeShape="RoundRectangle 10" StrokeThickness="0">
                         <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                            <Label Grid.Row="0" Grid.Column="0" Text="Gebäude:" FontAttributes="Bold" Margin="0,0,10,10"/>
+                            <Label Grid.Row="0" Grid.Column="0" Text="{x:Static local:AppText.BuildingLabel}" FontAttributes="Bold" Margin="0,0,10,10"/>
                             <Label Grid.Row="0" Grid.Column="1" Text="{Binding LocationData.BuildingDisplayText}" Margin="0,0,0,10" />
                             
-                            <Label Grid.Row="1" Grid.Column="0" Text="Öffnungszeit:" FontAttributes="Bold" Margin="0,0,10,10"/>
+                            <Label Grid.Row="1" Grid.Column="0" Text="{x:Static local:AppText.OpeningHoursLabel}" FontAttributes="Bold" Margin="0,0,10,10"/>
                             <Label Grid.Row="1" Grid.Column="1" Text="{Binding LocationData.TodayOpeningHours}" TextColor="{AppThemeBinding Light=#2c3e50, Dark=#bdc3c7}" Margin="0,0,0,10" />
 
-                            <Label Grid.Row="2" Grid.Column="0" Text="Letzte Zählung:" FontAttributes="Bold" />
+                            <Label Grid.Row="2" Grid.Column="0" Text="{x:Static local:AppText.LastCountLabel}" FontAttributes="Bold" />
                             <Label Grid.Row="2" Grid.Column="1" Text="{Binding LocationData.LastUpdatedText}" TextColor="{AppThemeBinding Light=#2c3e50, Dark=#bdc3c7}" />
                         </Grid>
                     </Border>
@@ -87,7 +88,7 @@
                     </Border>
 
                     <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#e0e0e0, Dark=#333333}" />
-                    <Label Text="Räume in diesem Gebäude" FontAttributes="Bold" FontSize="18" TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                    <Label Text="{x:Static local:AppText.RoomsInBuildingLabel}" FontAttributes="Bold" FontSize="18" TextColor="{AppThemeBinding Light=Black, Dark=White}" />
                 </VerticalStackLayout>
             </CollectionView.Header>
 
@@ -122,19 +123,19 @@
                                        FontSize="18"
                                        HorizontalOptions="End"
                                        TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                                <Label Text="frei"
+                                <Label Text="{x:Static local:AppText.AvailabilitySuffix}"
                                        FontSize="11"
                                        HorizontalOptions="End"
                                        TextColor="Gray" />
                             </VerticalStackLayout>
                             <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" Margin="0,15,0,0">
-                                <Label Text="Auslastungsinformation"
+                                <Label Text="{x:Static local:AppText.OccupancyInfoTitle}"
                                        FontSize="12"
                                        FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light=#2c3e50, Dark=#d5dbe5}" />
                                 <Grid ColumnDefinitions="*, Auto">
-                                    <Label Text="Auslastung" FontSize="11" TextColor="Gray" VerticalOptions="Center" />
-                                    <Label Grid.Column="1" Text="Manuell gezählt" FontSize="9" TextColor="DarkOrange" IsVisible="{Binding IsManualCount}" VerticalOptions="Center" />
+                                    <Label Text="{x:Static local:AppText.OccupancyLabel}" FontSize="11" TextColor="Gray" VerticalOptions="Center" />
+                                    <Label Grid.Column="1" Text="{x:Static local:AppText.ManualCountLabel}" FontSize="9" TextColor="DarkOrange" IsVisible="{Binding IsManualCount}" VerticalOptions="Center" />
                                 </Grid>
                                 <ProgressBar Progress="{Binding OccupancyRate}" ProgressColor="{Binding OccupancyColor}" HeightRequest="6" Margin="0,5,0,0" />
                             </VerticalStackLayout>
