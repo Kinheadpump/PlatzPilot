@@ -18,8 +18,9 @@ Dieses Projekt wurde nach dem **Clean Architecture** Ansatz und dem **MVVM-Patte
 
 * **Framework:** .NET 10 MAUI (Multi-platform App UI)
 * **Sprache:** C# & XAML
-* **Pakete:** * `CommunityToolkit.Mvvm` (Source Generators für sauberes Daten-Binding)
-  * `Microcharts.Maui` (Für die 24h-Auslastungsgraphen)
+* **Pakete:** 
+ * `CommunityToolkit.Mvvm` (Source Generators für sauberes Daten-Binding)
+ * `Microcharts.Maui` (Für die 24h-Auslastungsgraphen)
 * **Datenquelle:** Öffentliche KIT SeatFinder JSONP-API. 
 * **Infrastruktur:** Serverless First – Alle Berechnungen, Filterungen und Parsings (inklusive komplexer JSON-Arrays und fehlerhafter Datumsformate) passieren lokal auf dem Client, um Serverkosten zu vermeiden.
 
