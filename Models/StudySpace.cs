@@ -1,4 +1,5 @@
 using Microsoft.Maui.Graphics;
+using PlatzPilot.Configuration;
 
 namespace PlatzPilot.Models;
 
@@ -28,8 +29,8 @@ public class StudySpace
     public bool IsOpen => OpeningHours?.IsCurrentlyOpen(ReferenceTime) ?? true;
     public bool HasLevel => !string.IsNullOrWhiteSpace(Level);
     public bool HasRoom => !string.IsNullOrWhiteSpace(Room);
-    public string LevelDisplayText => $"Ebene {Level}";
-    public string RoomDisplayText => $"Raum {Room}";
+    public string LevelDisplayText => string.Format(AppText.LevelFormat, Level);
+    public string RoomDisplayText => string.Format(AppText.RoomFormat, Room);
     public string ClosedStatusText
     {
         get
@@ -39,22 +40,23 @@ public class StudySpace
                 return string.Empty;
             }
 
+            var openingText = AppConfigProvider.Current.OpeningHoursText;
             if (OpeningHours?.TryGetNextOpeningTime(ReferenceTime, out var nextOpening) == true)
             {
                 if (nextOpening.Date == ReferenceTime.Date)
                 {
-                    return $"Geschlossen - öffnet heute um {nextOpening:HH:mm} Uhr";
+                    return string.Format(openingText.ClosedOpensTodayFormat, nextOpening);
                 }
 
                 if (nextOpening.Date == ReferenceTime.Date.AddDays(1))
                 {
-                    return $"Geschlossen - öffnet morgen um {nextOpening:HH:mm} Uhr";
+                    return string.Format(openingText.ClosedOpensTomorrowFormat, nextOpening);
                 }
 
-                return $"Geschlossen - öffnet am {nextOpening:dd.MM.} um {nextOpening:HH:mm} Uhr";
+                return string.Format(openingText.ClosedOpensOnDateFormat, nextOpening);
             }
 
-            return "Geschlossen";
+            return openingText.ClosedText;
         }
     }
 
@@ -64,7 +66,7 @@ public class StudySpace
     public SafeArrivalRecommendation? SafeArrivalRecommendation { get; set; }
 
     // --- DESIGNER PROPERTIES ---
-    public string AvailabilityText => $"{FreeSeats} von {TotalSeats}";
+    public string AvailabilityText => string.Format(AppText.AvailabilityFormat, FreeSeats, TotalSeats);
 
     public double OccupancyRate => TotalSeats > 0 ? (double)OccupiedSeats / TotalSeats : 0;
 
@@ -72,10 +74,11 @@ public class StudySpace
     {
         get
         {
-            if (OccupancyRate < 0.4) return Color.FromArgb("#2ecc71"); // Grün
-            if (OccupancyRate < 0.7) return Color.FromArgb("#f1c40f"); // Gelb
-            if (OccupancyRate < 0.9) return Color.FromArgb("#e67e22"); // Orange
-            return Color.FromArgb("#e74c3c"); // Rot
+            var config = AppConfigProvider.Current.Occupancy;
+            if (OccupancyRate < config.LowThreshold) return Color.FromArgb(config.LowColor);
+            if (OccupancyRate < config.MediumThreshold) return Color.FromArgb(config.MediumColor);
+            if (OccupancyRate < config.HighThreshold) return Color.FromArgb(config.HighColor);
+            return Color.FromArgb(config.FullColor);
         }
     }
 }

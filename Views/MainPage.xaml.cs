@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using PlatzPilot.Configuration;
 using PlatzPilot.ViewModels;
 
 namespace PlatzPilot.Views;
@@ -22,7 +23,7 @@ public partial class MainPage : ContentPage
 
         if (_viewModel.UiLocations.Count == 0)
         {
-            await Task.Delay(100);
+            await Task.Delay(AppConfigProvider.Current.UiNumbers.InitialLoadDelayMs);
             await _viewModel.LoadSpacesAsync();
         }
 
@@ -53,11 +54,12 @@ public partial class MainPage : ContentPage
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
             PastTimeFilterPanel.Opacity = 0;
-            PastTimeFilterPanel.TranslationY = -8;
+            PastTimeFilterPanel.TranslationY = AppConfigProvider.Current.UiNumbers.FilterSheetTranslationOffset;
 
+            var duration = (uint)AppConfigProvider.Current.UiNumbers.FilterSheetAnimationDurationMs;
             await Task.WhenAll(
-                PastTimeFilterPanel.FadeToAsync(1, 160, Easing.CubicOut),
-                PastTimeFilterPanel.TranslateToAsync(0, 0, 160, Easing.CubicOut));
+                PastTimeFilterPanel.FadeToAsync(1, duration, Easing.CubicOut),
+                PastTimeFilterPanel.TranslateToAsync(0, 0, duration, Easing.CubicOut));
         });
     }
 
@@ -68,9 +70,10 @@ public partial class MainPage : ContentPage
             return;
         }
 
+        var config = AppConfigProvider.Current.UiNumbers;
         var snappedValue = Math.Round(e.NewValue, MidpointRounding.AwayFromZero);
-        snappedValue = Math.Clamp(snappedValue, 0, 12);
-        if (Math.Abs(slider.Value - snappedValue) < 0.001)
+        snappedValue = Math.Clamp(snappedValue, config.MinOpeningHours, config.MaxOpeningHours);
+        if (Math.Abs(slider.Value - snappedValue) < config.OpeningHoursSliderSnapEpsilon)
         {
             return;
         }

@@ -1,26 +1,61 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using PlatzPilot.Configuration;
 
 namespace PlatzPilot.Models;
 
+internal static class SeatFinderJsonKeys
+{
+    public const string Date = "date";
+    public const string TimezoneType = "timezone_type";
+    public const string Timezone = "timezone";
+    public const string Start = "start";
+    public const string End = "end";
+    public const string OpeningHours = "opening_hours";
+    public const string BaseTimestamp = "base_timestamp";
+    public const string WeeklyOpeningHours = "weekly_opening_hours";
+    public const string ExceptionalOpeningHours = "exceptional_opening_hours";
+    public const string Timestamp = "timestamp";
+    public const string LocationName = "location_name";
+    public const string OccupiedSeats = "occupied_seats";
+    public const string FreeSeats = "free_seats";
+    public const string Name = "name";
+    public const string LongName = "long_name";
+    public const string Url = "url";
+    public const string Building = "building";
+    public const string Level = "level";
+    public const string Room = "room";
+    public const string GeoCoordinates = "geo_coordinates";
+    public const string AvailableSeats = "available_seats";
+    public const string SuperLocation = "super_location";
+    public const string SubLocations = "sub_locations";
+    public const string SeatEstimate = "seatestimate";
+    public const string ManualCount = "manualcount";
+    public const string Location = "location";
+}
+
 public class TimestampDto
 {
-    [JsonPropertyName("date")]
+    [JsonPropertyName(SeatFinderJsonKeys.Date)]
     public string? Date { get; set; }
 
-    [JsonPropertyName("timezone_type")]
+    [JsonPropertyName(SeatFinderJsonKeys.TimezoneType)]
     public int TimezoneType { get; set; }
 
-    [JsonPropertyName("timezone")]
+    [JsonPropertyName(SeatFinderJsonKeys.Timezone)]
     public string? Timezone { get; set; } 
 
     public DateTime? GetParsedDate()
     {
         if (string.IsNullOrWhiteSpace(Date)) return null;
 
-        if (DateTime.TryParseExact(Date, "yyyy-MM-dd HH:mm:ss.ffffff", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime exactDate))
+        var timestampFormat = AppConfigProvider.Current.SeatFinder.TimestampFormat;
+        if (!string.IsNullOrWhiteSpace(timestampFormat) &&
+            DateTime.TryParseExact(Date, timestampFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime exactDate))
+        {
             return exactDate;
+        }
 
         if (DateTime.TryParse(Date, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
             return parsedDate;
@@ -31,25 +66,25 @@ public class TimestampDto
 
 public class ExceptionalOpeningHoursDto
 {
-    [JsonPropertyName("start")]
+    [JsonPropertyName(SeatFinderJsonKeys.Start)]
     public TimestampDto? Start { get; set; }
 
-    [JsonPropertyName("end")]
+    [JsonPropertyName(SeatFinderJsonKeys.End)]
     public TimestampDto? End { get; set; }
 
-    [JsonPropertyName("opening_hours")]
+    [JsonPropertyName(SeatFinderJsonKeys.OpeningHours)]
     public List<List<TimestampDto>>? OpeningHours { get; set; } 
 }
 
 public class OpeningHoursDto
 {
-    [JsonPropertyName("base_timestamp")]
+    [JsonPropertyName(SeatFinderJsonKeys.BaseTimestamp)]
     public TimestampDto? BaseTimestamp { get; set; }
 
-    [JsonPropertyName("weekly_opening_hours")]
+    [JsonPropertyName(SeatFinderJsonKeys.WeeklyOpeningHours)]
     public List<List<TimestampDto>>? WeeklyOpeningHours { get; set; }
 
-    [JsonPropertyName("exceptional_opening_hours")]
+    [JsonPropertyName(SeatFinderJsonKeys.ExceptionalOpeningHours)]
     public List<ExceptionalOpeningHoursDto>? ExceptionalOpeningHours { get; set; }
 
     public bool IsCurrentlyOpen(DateTime? referenceTime = null)
@@ -77,6 +112,7 @@ public class OpeningHoursDto
     public string GetTodayOpeningHoursText(DateTime? referenceTime = null)
     {
         var now = referenceTime ?? DateTime.Now;
+        var textConfig = AppConfigProvider.Current.OpeningHoursText;
 
         // 1. VORRANGSCHALTUNG: Ausnahmen prüfen
         if (ExceptionalOpeningHours != null)
@@ -90,14 +126,14 @@ public class OpeningHoursDto
                 {
                     if (exception.OpeningHours == null || exception.OpeningHours.Count == 0)
                     {
-                        return "Geschlossen (Sonderöffnungszeiten)";
+                        return textConfig.ClosedSpecialText;
                     }
                 }
             }
         }
 
         // 2. NORMALE ZEITEN
-        if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0) return "Unbekannt";
+        if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0) return textConfig.UnknownText;
 
         if (WeeklyOpeningHours.Count == 1)
         {
@@ -108,12 +144,18 @@ public class OpeningHoursDto
                 var end = block[1].GetParsedDate();
                 if (start.HasValue && end.HasValue)
                 {
-                    if (start.Value.TimeOfDay == TimeSpan.Zero && end.Value.TimeOfDay.Hours >= 23)
-                        return "24 Stunden geöffnet";
-                    return $"{start.Value:HH:mm} - {end.Value:HH:mm} Uhr";
+                    var settings = AppConfigProvider.Current.OpeningHours;
+                    if (start.Value.TimeOfDay == TimeSpan.Zero && end.Value.TimeOfDay.Hours >= settings.AlwaysOpenHourThreshold)
+                        return textConfig.AlwaysOpenText;
+                    var timeRange = string.Format(
+                        CultureInfo.CurrentCulture,
+                        textConfig.TimeRangeFormat,
+                        start.Value,
+                        end.Value);
+                    return timeRange + textConfig.HoursSuffix;
                 }
             }
-            return "Unbekannt";
+            return textConfig.UnknownText;
         }
 
         var today = now.DayOfWeek;
@@ -128,13 +170,18 @@ public class OpeningHoursDto
 
             if (start.HasValue && end.HasValue && start.Value.DayOfWeek == today)
             {
-                todaysBlocks.Add($"{start.Value:HH:mm} - {end.Value:HH:mm}");
+                var timeRange = string.Format(
+                    CultureInfo.CurrentCulture,
+                    textConfig.TimeRangeFormat,
+                    start.Value,
+                    end.Value);
+                todaysBlocks.Add(timeRange);
             }
         }
 
-        if (todaysBlocks.Count == 0) return "Geschlossen";
+        if (todaysBlocks.Count == 0) return textConfig.ClosedText;
 
-        return string.Join(", ", todaysBlocks) + " Uhr";
+        return string.Join(textConfig.TimeRangeSeparator, todaysBlocks) + textConfig.HoursSuffix;
     }
 
     public double GetRemainingOpenHours(DateTime? referenceTime = null)
@@ -153,7 +200,7 @@ public class OpeningHoursDto
 
         if (WeeklyOpeningHours.Count == 1)
         {
-            return 24;
+            return AppConfigProvider.Current.OpeningHours.FullDayHours;
         }
 
         if (!TryGetCurrentOpeningIntervalEnd(reference, out var intervalEnd))
@@ -208,17 +255,19 @@ public class OpeningHoursDto
             var startDay = start.Value.DayOfWeek;
             var startTime = start.Value.TimeOfDay;
 
-            var daysUntilStart = ((int)startDay - (int)referenceTime.DayOfWeek + 7) % 7;
+            var daysPerWeek = Math.Max(1, AppConfigProvider.Current.OpeningHours.DaysPerWeek);
+            var daysUntilStart = ((int)startDay - (int)referenceTime.DayOfWeek + daysPerWeek) % daysPerWeek;
             var firstCandidate = referenceTime.Date.AddDays(daysUntilStart).Add(startTime);
             if (firstCandidate <= referenceTime)
             {
-                firstCandidate = firstCandidate.AddDays(7);
+                firstCandidate = firstCandidate.AddDays(daysPerWeek);
             }
 
             // Bis zu 3 Wochen vorausschauen, um längere Ausnahme-Schließungen zu überbrücken.
-            for (var weekOffset = 0; weekOffset < 3; weekOffset++)
+            var maxWeeks = Math.Max(1, AppConfigProvider.Current.OpeningHours.MaxNextOpeningWeeks);
+            for (var weekOffset = 0; weekOffset < maxWeeks; weekOffset++)
             {
-                candidates.Add(firstCandidate.AddDays(weekOffset * 7));
+                candidates.Add(firstCandidate.AddDays(weekOffset * daysPerWeek));
             }
         }
 
@@ -365,7 +414,8 @@ public class OpeningHoursDto
     {
         intervalEnd = DateTime.MinValue;
 
-        var daysUntilStartDay = ((int)startDay - (int)referenceTime.DayOfWeek + 7) % 7;
+        var daysPerWeek = Math.Max(1, AppConfigProvider.Current.OpeningHours.DaysPerWeek);
+        var daysUntilStartDay = ((int)startDay - (int)referenceTime.DayOfWeek + daysPerWeek) % daysPerWeek;
         var thisWeekStart = referenceTime.Date.AddDays(daysUntilStartDay).Add(startTime);
 
         if (IsReferenceInsideBlock(referenceTime, thisWeekStart, endTime, out intervalEnd))
@@ -373,7 +423,7 @@ public class OpeningHoursDto
             return true;
         }
 
-        var previousWeekStart = thisWeekStart.AddDays(-7);
+        var previousWeekStart = thisWeekStart.AddDays(-daysPerWeek);
         return IsReferenceInsideBlock(referenceTime, previousWeekStart, endTime, out intervalEnd);
     }
 
@@ -391,52 +441,52 @@ public class OpeningHoursDto
 
 public class SeatRecordDto
 {
-    [JsonPropertyName("timestamp")]
+    [JsonPropertyName(SeatFinderJsonKeys.Timestamp)]
     public TimestampDto? Timestamp { get; set; }
 
-    [JsonPropertyName("location_name")]
+    [JsonPropertyName(SeatFinderJsonKeys.LocationName)]
     public string LocationName { get; set; } = string.Empty;
 
-    [JsonPropertyName("occupied_seats")]
+    [JsonPropertyName(SeatFinderJsonKeys.OccupiedSeats)]
     public int OccupiedSeats { get; set; }
 
-    [JsonPropertyName("free_seats")]
+    [JsonPropertyName(SeatFinderJsonKeys.FreeSeats)]
     public int FreeSeats { get; set; }
 }
 
 public class LocationMetadataDto
 {
-    [JsonPropertyName("timestamp")]
+    [JsonPropertyName(SeatFinderJsonKeys.Timestamp)]
     public TimestampDto? Timestamp { get; set; }
 
-    [JsonPropertyName("name")]
+    [JsonPropertyName(SeatFinderJsonKeys.Name)]
     public string Name { get; set; } = string.Empty;
 
-    [JsonPropertyName("long_name")]
+    [JsonPropertyName(SeatFinderJsonKeys.LongName)]
     public string LongName { get; set; } = string.Empty;
 
-    [JsonPropertyName("url")]
+    [JsonPropertyName(SeatFinderJsonKeys.Url)]
     public string? Url { get; set; }
 
-    [JsonPropertyName("building")]
+    [JsonPropertyName(SeatFinderJsonKeys.Building)]
     public string? Building { get; set; }
 
-    [JsonPropertyName("level")]
+    [JsonPropertyName(SeatFinderJsonKeys.Level)]
     public string? Level { get; set; }
 
-    [JsonPropertyName("room")]
+    [JsonPropertyName(SeatFinderJsonKeys.Room)]
     public string? Room { get; set; }
 
-    [JsonPropertyName("geo_coordinates")]
+    [JsonPropertyName(SeatFinderJsonKeys.GeoCoordinates)]
     public string? GeoCoordinates { get; set; }
 
-    [JsonPropertyName("available_seats")]
+    [JsonPropertyName(SeatFinderJsonKeys.AvailableSeats)]
     public int AvailableSeats { get; set; }
 
    // Der interne Speicher für die fertigen Daten
     private OpeningHoursDto? _openingHours;
 
-    [JsonPropertyName("opening_hours")]
+    [JsonPropertyName(SeatFinderJsonKeys.OpeningHours)]
     public JsonElement? OpeningHoursRaw 
     { 
         get => null; 
@@ -464,21 +514,21 @@ public class LocationMetadataDto
         set => _openingHours = value; 
     }
 
-    [JsonPropertyName("super_location")]
+    [JsonPropertyName(SeatFinderJsonKeys.SuperLocation)]
     public string? SuperLocation { get; set; }
 
-    [JsonPropertyName("sub_locations")]
+    [JsonPropertyName(SeatFinderJsonKeys.SubLocations)]
     public List<string>? SubLocations { get; set; }
 }
 
 public class SeatFinderResponseDto
 {
-    [JsonPropertyName("seatestimate")]
+    [JsonPropertyName(SeatFinderJsonKeys.SeatEstimate)]
     public Dictionary<string, List<SeatRecordDto>>? SeatEstimates { get; set; }
 
-    [JsonPropertyName("manualcount")]
+    [JsonPropertyName(SeatFinderJsonKeys.ManualCount)]
     public Dictionary<string, List<SeatRecordDto>>? ManualCounts { get; set; }
 
-    [JsonPropertyName("location")]
+    [JsonPropertyName(SeatFinderJsonKeys.Location)]
     public Dictionary<string, List<LocationMetadataDto>>? Locations { get; set; }
 }

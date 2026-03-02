@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
+using PlatzPilot.Configuration;
 using PlatzPilot.Services;
 using PlatzPilot.ViewModels;
 using PlatzPilot.Views;
@@ -9,18 +10,30 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
+        var appConfig = AppConfigProvider.LoadFromPackage();
+
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
             .ConfigureFonts(fonts =>
             {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                foreach (var font in appConfig.Fonts.Entries)
+                {
+                    if (string.IsNullOrWhiteSpace(font.FileName) ||
+                        string.IsNullOrWhiteSpace(font.Alias))
+                    {
+                        continue;
+                    }
+
+                    fonts.AddFont(font.FileName, font.Alias);
+                }
             });
 
 #if DEBUG
         builder.Logging.AddDebug();
 #endif
+
+        builder.Services.AddSingleton(appConfig);
 
         // ==========================================
         // 1. SERVICES
