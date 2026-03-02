@@ -107,7 +107,7 @@ public partial class MainPageViewModel : ObservableObject
     public bool IsMainContentVisible => CurrentTab != _config.Tabs.Settings;
     public bool IsSettingsContentVisible => CurrentTab == _config.Tabs.Settings;
     public bool IsDataVisible => !IsBusy && UiLocations.Count > 0 && IsMainContentVisible;
-    public bool IsListEmpty => !IsBusy && UiLocations.Count == 0 && IsMainContentVisible;
+    public bool IsListEmpty => UiLocations.Count == 0 && IsMainContentVisible;
     public bool IsBeforeMode => !UseNow;
     public bool IsSearchInactive => !IsSearchActive;
     public DateTime MaxSelectableDate => DateTime.Today;

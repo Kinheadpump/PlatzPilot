@@ -65,6 +65,7 @@ public static class AppText
     public static string LastUpdatedUnknownText => Text.LastUpdatedUnknownText;
     public static string SettingsTitle => Text.SettingsTitle;
     public static string SettingsDesignLabel => Text.SettingsDesignLabel;
+    public static string SettingsDisplayTitle => Text.SettingsDisplayTitle;
     public static string SettingsVersionFormat => Text.SettingsVersionFormat;
     public static string SettingsDisclaimer => Text.SettingsDisclaimer;
     public static string GithubLabel => Text.GithubLabel;
