@@ -49,15 +49,15 @@ public static class MauiProgram
         // ==========================================
         // 2. VIEWMODELS
         // ==========================================
-        // AddTransient: Jedes Mal, wenn wir die Seite aufrufen, wird ein frisches ViewModel erstellt.
-        builder.Services.AddTransient<MainPageViewModel>();
+        // AddSingleton: Die MainPage bleibt stabil und behält Cache/State.
+        builder.Services.AddSingleton<MainPageViewModel>();
 
 
         // ==========================================
         // 3. VIEWS 
         // ==========================================
         // Damit MAUI weiß, dass es beim Erstellen der MainPage das ViewModel automatisch übergeben soll.
-        builder.Services.AddTransient<MainPage>();
+        builder.Services.AddSingleton<MainPage>();
         builder.Services.AddTransient<DetailPage>();
 
 

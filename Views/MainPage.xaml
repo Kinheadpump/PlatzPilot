@@ -302,13 +302,16 @@
                        FontSize="28"
                        Margin="0,10,0,10" />
 
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static local:AppText.SettingsDisplayTitle}"
+                <Grid RowDefinitions="Auto,Auto"
+                      RowSpacing="10">
+                    <Label Grid.Row="0"
+                           Text="{x:Static local:AppText.SettingsDisplayTitle}"
                            FontSize="16"
                            FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light=#4a4a4a, Dark=#cfcfcf}" />
 
-                    <Border Padding="14"
+                    <Border Grid.Row="1"
+                            Padding="14"
                             BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
                             Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
                             StrokeShape="RoundRectangle 12"
@@ -391,15 +394,18 @@
                             </Grid>
                         </VerticalStackLayout>
                     </Border>
-                </VerticalStackLayout>
+                </Grid>
 
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="{x:Static local:AppText.SettingsFeedbackTitle}"
+                <Grid RowDefinitions="Auto,Auto"
+                      RowSpacing="10">
+                    <Label Grid.Row="0"
+                           Text="{x:Static local:AppText.SettingsFeedbackTitle}"
                            FontSize="16"
                            FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light=#4a4a4a, Dark=#cfcfcf}" />
 
-                    <Border Padding="14"
+                    <Border Grid.Row="1"
+                            Padding="14"
                             BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
                             Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
                             StrokeShape="RoundRectangle 12"
@@ -432,7 +438,7 @@
                             </ImageButton>
                         </Grid>
                     </Border>
-                </VerticalStackLayout>
+                </Grid>
 
                 <Border Padding="15"
                         Margin="0,50,0,0"
