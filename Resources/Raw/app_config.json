@@ -4,6 +4,8 @@
     "homeTabLabel": "Home",
     "searchPlaceholder": "Nach Bib oder Kürzel suchen...",
     "emptyListText": "Herzlich Willkommen",
+    "favoritesEmptyText": "Hier ist noch nichts los! Tippe auf den Stern bei einem Gebäude, um es hier zu sehen.",
+    "offlineBannerText": "Keine Internetverbindung, veraltete Daten",
     "closedLabel": "Geschlossen",
     "closedStudentsLabel": "Geschlossen (Außer für Studierende)",
     "manualCountLabel": "Manuell gezählt",
@@ -60,6 +62,8 @@
     "settingsTitle": "Einstellungen",
     "settingsDesignLabel": "Design (Hell / Dunkel)",
     "settingsDisplayTitle": "Anzeige",
+    "settingsFeedbackTitle": "Feedback",
+    "settingsHapticLabel": "Haptisches Feedback",
     "settingsVersionFormat": "Version {0}",
     "settingsDisclaimer": "Diese App ist ein studentisches Projekt und steht in keiner offiziellen Verbindung zum Karlsruher Institut für Technologie (KIT) oder der KIT-Bibliothek.",
     "githubLabel": "Github",
@@ -100,6 +104,7 @@
     "themeKey": "PlatzPilot_Theme",
     "colorBlindModeKey": "PlatzPilot_ColorBlindMode",
     "campusSouthOnlyKey": "PlatzPilot_CampusSouthOnly",
+    "hapticFeedbackKey": "PlatzPilot_HapticFeedback",
     "emptyListJson": "[]"
   },
   "urls": {

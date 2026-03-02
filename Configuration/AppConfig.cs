@@ -35,6 +35,8 @@ public sealed class UiTextConfig
     public string HomeTabLabel { get; set; } = string.Empty;
     public string SearchPlaceholder { get; set; } = string.Empty;
     public string EmptyListText { get; set; } = string.Empty;
+    public string FavoritesEmptyText { get; set; } = string.Empty;
+    public string OfflineBannerText { get; set; } = string.Empty;
     public string ClosedLabel { get; set; } = string.Empty;
     public string ClosedStudentsLabel { get; set; } = string.Empty;
     public string ManualCountLabel { get; set; } = string.Empty;
@@ -91,6 +93,8 @@ public sealed class UiTextConfig
     public string SettingsTitle { get; set; } = string.Empty;
     public string SettingsDesignLabel { get; set; } = string.Empty;
     public string SettingsDisplayTitle { get; set; } = string.Empty;
+    public string SettingsFeedbackTitle { get; set; } = string.Empty;
+    public string SettingsHapticLabel { get; set; } = string.Empty;
     public string SettingsVersionFormat { get; set; } = string.Empty;
     public string SettingsDisclaimer { get; set; } = string.Empty;
     public string GithubLabel { get; set; } = string.Empty;
@@ -135,6 +139,7 @@ public sealed class PreferencesConfig
     public string ThemeKey { get; set; } = string.Empty;
     public string ColorBlindModeKey { get; set; } = string.Empty;
     public string CampusSouthOnlyKey { get; set; } = string.Empty;
+    public string HapticFeedbackKey { get; set; } = string.Empty;
     public string EmptyListJson { get; set; } = "[]";
 }
 

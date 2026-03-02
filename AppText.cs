@@ -10,6 +10,8 @@ public static class AppText
     public static string HomeTabLabel => Text.HomeTabLabel;
     public static string SearchPlaceholder => Text.SearchPlaceholder;
     public static string EmptyListText => Text.EmptyListText;
+    public static string FavoritesEmptyText => Text.FavoritesEmptyText;
+    public static string OfflineBannerText => Text.OfflineBannerText;
     public static string ClosedLabel => Text.ClosedLabel;
     public static string ClosedStudentsLabel => Text.ClosedStudentsLabel;
     public static string ManualCountLabel => Text.ManualCountLabel;
@@ -66,6 +68,8 @@ public static class AppText
     public static string SettingsTitle => Text.SettingsTitle;
     public static string SettingsDesignLabel => Text.SettingsDesignLabel;
     public static string SettingsDisplayTitle => Text.SettingsDisplayTitle;
+    public static string SettingsFeedbackTitle => Text.SettingsFeedbackTitle;
+    public static string SettingsHapticLabel => Text.SettingsHapticLabel;
     public static string SettingsVersionFormat => Text.SettingsVersionFormat;
     public static string SettingsDisclaimer => Text.SettingsDisclaimer;
     public static string GithubLabel => Text.GithubLabel;
