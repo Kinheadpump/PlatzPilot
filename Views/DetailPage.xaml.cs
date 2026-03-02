@@ -52,6 +52,16 @@ public partial class DetailPage : ContentPage, IQueryAttributable
         BindingContext = this;
     }
 
+    protected override bool OnBackButtonPressed()
+    {
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            await Shell.Current.GoToAsync(AppConfigProvider.Current.Internal.BackNavigationRoute);
+        });
+
+        return true;
+    }
+
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         var key = AppConfigProvider.Current.Internal.LocationDataKey;

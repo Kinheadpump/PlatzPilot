@@ -267,11 +267,18 @@
                                      HorizontalOptions="Center"
                                      Spacing="12"
                                      IsVisible="{Binding IsHomeEmpty}">
-                    <Label Text="{x:Static local:AppText.EmptyListText}"
+                    <Label Text="{Binding EmptyStateTitle}"
                            FontSize="20"
                            FontAttributes="Bold"
                            HorizontalTextAlignment="Center"
                            HorizontalOptions="Center" />
+                    <Label Text="{Binding EmptyStateSubtitle}"
+                           FontSize="14"
+                           TextColor="Gray"
+                           HorizontalTextAlignment="Center"
+                           HorizontalOptions="Center"
+                           LineBreakMode="WordWrap"
+                           IsVisible="{Binding IsEmptySubtitleVisible}" />
                     <ActivityIndicator IsRunning="{Binding IsBusy}"
                                        IsVisible="{Binding IsBusy}"
                                        Color="{AppThemeBinding Light=#1f6feb, Dark=#9ec1ff}"
@@ -889,6 +896,19 @@
                     </Border>
                 </Grid>
             </Border>
+        </Grid>
+
+        <Grid Grid.Row="0"
+              Grid.RowSpan="3"
+              IsVisible="{Binding IsBusy}"
+              BackgroundColor="{AppThemeBinding Light=#66FFFFFF, Dark=#66000000}"
+              ZIndex="30">
+            <ActivityIndicator IsRunning="True"
+                               Color="{AppThemeBinding Light=#1f6feb, Dark=#9ec1ff}"
+                               WidthRequest="40"
+                               HeightRequest="40"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
         </Grid>
     </Grid>
 </ContentPage>

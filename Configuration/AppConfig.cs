@@ -35,6 +35,8 @@ public sealed class UiTextConfig
     public string HomeTabLabel { get; set; } = string.Empty;
     public string SearchPlaceholder { get; set; } = string.Empty;
     public string EmptyListText { get; set; } = string.Empty;
+    public string NoResultsTitle { get; set; } = string.Empty;
+    public string NoResultsSubtitle { get; set; } = string.Empty;
     public string FavoritesEmptyText { get; set; } = string.Empty;
     public string OfflineBannerText { get; set; } = string.Empty;
     public string ClosedLabel { get; set; } = string.Empty;
@@ -155,7 +157,7 @@ public sealed class SeatFinderConfig
     public string BaseUrl { get; set; } = string.Empty;
     public string NowToken { get; set; } = string.Empty;
     public List<string> Locations { get; set; } = [];
-    public int WeeklyHistoryPoints { get; set; } = 2016;
+    public int WeeklyHistoryPoints { get; set; } = 2304;
     public int LiveSnapshotPoints { get; set; } = 1;
     public int LiveRefreshIntervalMinutes { get; set; } = 5;
     public int MetadataLimit { get; set; } = 1;

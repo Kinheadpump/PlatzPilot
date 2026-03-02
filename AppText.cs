@@ -10,6 +10,8 @@ public static class AppText
     public static string HomeTabLabel => Text.HomeTabLabel;
     public static string SearchPlaceholder => Text.SearchPlaceholder;
     public static string EmptyListText => Text.EmptyListText;
+    public static string NoResultsTitle => Text.NoResultsTitle;
+    public static string NoResultsSubtitle => Text.NoResultsSubtitle;
     public static string FavoritesEmptyText => Text.FavoritesEmptyText;
     public static string OfflineBannerText => Text.OfflineBannerText;
     public static string ClosedLabel => Text.ClosedLabel;
