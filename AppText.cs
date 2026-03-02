@@ -73,6 +73,8 @@ public static class AppText
     public static string LicensesLabel => Text.LicensesLabel;
     public static string LicensesTitle => Text.LicensesTitle;
     public static string LicensesText => Text.LicensesText;
+    public static string ColorBlindModeLabel => Text.ColorBlindModeLabel;
+    public static string CampusSouthOnlyLabel => Text.CampusSouthOnlyLabel;
     public static string BackGlyph => Text.BackGlyph;
     public static string OkButtonLabel => Text.OkButtonLabel;
     public static string FavoriteIconFilled => Text.FavoriteIconFilled;
@@ -80,4 +82,8 @@ public static class AppText
     public static string LevelFormat => Text.LevelFormat;
     public static string RoomFormat => Text.RoomFormat;
     public static string BuildingUnknownText => Text.BuildingUnknownText;
+    public static string ChartLabel6Hours => Text.ChartLabel6Hours;
+    public static string ChartLabel12Hours => Text.ChartLabel12Hours;
+    public static string ChartLabel18Hours => Text.ChartLabel18Hours;
+    public static string ChartLabel24Hours => Text.ChartLabel24Hours;
 }
