@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microcharts.Maui;
 using PlatzPilot.Configuration;
 using PlatzPilot.Services;
 using PlatzPilot.ViewModels;
@@ -15,6 +16,7 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
+            .UseMicrocharts()
             .ConfigureFonts(fonts =>
             {
                 foreach (var font in appConfig.Fonts.Entries)

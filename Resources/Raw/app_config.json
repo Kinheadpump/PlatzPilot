@@ -66,14 +66,20 @@
     "privacyLabel": "Datenschutz",
     "licensesLabel": "Lizenzen",
     "licensesTitle": "Open-Source-Lizenzen",
-    "licensesText": "Diese App verwendet folgende Open-Source-Bibliotheken unter der MIT-Lizenz:\\n\\n1. .NET MAUI Community Toolkit\\nCopyright (c) .NET Foundation and Contributors\\n\\n2. Microcharts\\nCopyright (c) 2017 Aloïs Deniel\\n\\nDie vollständige MIT-Lizenz lautet:\\nDie hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugehörigen Dokumentation zu nutzen, zu kopieren, zu ändern und zu vertreiben, wird unter der Bedingung erteilt, dass der obige Urheberrechtshinweis in allen Kopien enthalten ist. DIE SOFTWARE WIRD OHNE JEDE AUSDRÜCKLICHE ODER IMPLIZIERTE GARANTIE BEREITGESTELLT.",
+    "licensesText": "Diese App verwendet folgende Open-Source-Bibliotheken unter der MIT-Lizenz:\n\n1. .NET MAUI Community Toolkit\nCopyright (c) .NET Foundation and Contributors\n\n2. Microcharts\nCopyright (c) 2017 Aloïs Deniel\n\n3. Feather Icons\nCopyright (c) 2013-2022 Cole Bemis\n\nDie vollständige MIT-Lizenz lautet:\nDie hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugehörigen Dokumentation zu nutzen, zu kopieren, zu ändern und zu vertreiben, wird unter der Bedingung erteilt, dass der obige Urheberrechtshinweis in allen Kopien enthalten ist. DIE SOFTWARE WIRD OHNE JEDE AUSDRÜCKLICHE ODER IMPLIZIERTE GARANTIE BEREITGESTELLT.",
+    "colorBlindModeLabel": "Rot-Grün Schwäche",
+    "campusSouthOnlyLabel": "Nur Campus Süd",
     "backGlyph": "◀",
     "okButtonLabel": "OK",
     "favoriteIconFilled": "★",
     "favoriteIconOutline": "☆",
     "levelFormat": "Ebene {0}",
     "roomFormat": "Raum {0}",
-    "buildingUnknownText": "Keine Info"
+    "buildingUnknownText": "Keine Info",
+    "chartLabel6Hours": "vor 6 Std.",
+    "chartLabel12Hours": "vor 12 Std.",
+    "chartLabel18Hours": "vor 18 Std.",
+    "chartLabel24Hours": "vor 24 Std."
   },
   "uiNumbers": {
     "minOpeningHours": 0,
@@ -91,6 +97,8 @@
     "sortModeKey": "PlatzPilot_SortMode",
     "tabModeKey": "PlatzPilot_CurrentTab",
     "themeKey": "PlatzPilot_Theme",
+    "colorBlindModeKey": "PlatzPilot_ColorBlindMode",
+    "campusSouthOnlyKey": "PlatzPilot_CampusSouthOnly",
     "emptyListJson": "[]"
   },
   "urls": {
@@ -264,6 +272,20 @@
     "fullColor": "#e74c3c",
     "closedColor": "#b0b0b0"
   },
+  "colorBlindness": {
+    "lowColor": "#648FFF",
+    "mediumColor": "#FFB000",
+    "highColor": "#DC267F",
+    "fullColor": "#DC267F"
+  },
+  "campusSouth": {
+    "excludedNameContains": [
+      "KIT-Bibliothek Nord",
+      "Fachbibliothek HKA",
+      "Fachbibliothek DHBW",
+      "Badische Landesbibliothek"
+    ]
+  },
   "uiColors": {
     "favoriteOnColor": "#f1c40f",
     "favoriteOffColor": "#808080"
@@ -283,7 +305,33 @@
     "favoritesIconLight": "icon_favorite.png",
     "favoritesIconDark": "icon_favorite_white.png",
     "settingsIconLight": "icon_settings.png",
-    "settingsIconDark": "icon_settings_white.png"
+    "settingsIconDark": "icon_settings_white.png",
+    "colorBlindOnIconLight": "icon_color_blindness.png",
+    "colorBlindOnIconDark": "icon_color_blindness_white.png",
+    "colorBlindOffIconLight": "icon_no_color_blindness.png",
+    "colorBlindOffIconDark": "icon_no_color_blindness_white.png",
+    "campusSouthOnIconLight": "icon_check_square.png",
+    "campusSouthOnIconDark": "icon_check_square_white.png",
+    "campusSouthOffIconLight": "icon_square.png",
+    "campusSouthOffIconDark": "icon_square_white.png"
+  },
+  "charts": {
+    "historyHours": 24,
+    "binMinutes": 5,
+    "height": 120,
+    "lineSize": 2.0,
+    "lineAreaAlpha": 38,
+    "labelTextSize": 0,
+    "valueLabelTextSize": 0,
+    "serieLabelTextSize": 0,
+    "showYAxisLines": false,
+    "showYAxisText": false,
+    "minValue": 0,
+    "maxValue": 1,
+    "lineColorLight": "#1f6feb",
+    "lineColorDark": "#9ec1ff",
+    "backgroundColorLight": "#ffffff",
+    "backgroundColorDark": "#1e1e1e"
   },
   "internal": {
     "buildingAggregateIdPrefix": "building:",

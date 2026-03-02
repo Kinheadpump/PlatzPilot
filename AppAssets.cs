@@ -21,4 +21,12 @@ public static class AppAssets
     public static string FavoritesIconDark => Assets.FavoritesIconDark;
     public static string SettingsIconLight => Assets.SettingsIconLight;
     public static string SettingsIconDark => Assets.SettingsIconDark;
+    public static string ColorBlindOnIconLight => Assets.ColorBlindOnIconLight;
+    public static string ColorBlindOnIconDark => Assets.ColorBlindOnIconDark;
+    public static string ColorBlindOffIconLight => Assets.ColorBlindOffIconLight;
+    public static string ColorBlindOffIconDark => Assets.ColorBlindOffIconDark;
+    public static string CampusSouthOnIconLight => Assets.CampusSouthOnIconLight;
+    public static string CampusSouthOnIconDark => Assets.CampusSouthOnIconDark;
+    public static string CampusSouthOffIconLight => Assets.CampusSouthOffIconLight;
+    public static string CampusSouthOffIconDark => Assets.CampusSouthOffIconDark;
 }

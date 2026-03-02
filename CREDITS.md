@@ -12,3 +12,9 @@ Ein großes Dankeschön geht an KIT, dessen Ressourcen in diesem Projekt verwend
 * **KIT Bibliothek Öffnungszeiten**
   * **Beschreibung:** Informationen zu den regulären Öffnungszeiten sowie den Sonderöffnungszeiten exklusiv für Studierende.
   * **Quelle:** [KIT Bibliothek - Öffnungszeiten & Lernplätze](https://www.bibliothek.kit.edu/oeffnungszeiten.php)
+
+* **Feather Icons**
+  * **Beschreibung:** Verschiedene UI-Icons (wie z.B. Einstellungen, Filter, Dark Mode).
+  * **Autor:** Cole Bemis & Mitwirkende
+  * **Quelle:** [Feather Icons](https://feathericons.com/)
+  * **Lizenz:** MIT License

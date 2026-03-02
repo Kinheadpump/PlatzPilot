@@ -38,6 +38,12 @@ public partial class MainPageViewModel : ObservableObject
     private string _searchText = string.Empty;
 
     [ObservableProperty]
+    private bool _isColorBlindMode;
+
+    [ObservableProperty]
+    private bool _isCampusSouthOnly;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBeforeMode))]
     private bool _useNow = true;
 
@@ -85,10 +91,14 @@ public partial class MainPageViewModel : ObservableObject
     private readonly Dictionary<string, List<SeatHistoryPoint>> _historicalSeatDataByLocation = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, SafeArrivalRecommendation?> _spaceSafeArrivalCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, SafeArrivalRecommendation?> _buildingSafeArrivalCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, List<float>> _spaceChartSeriesCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, List<float>> _buildingChartSeriesCache = new(StringComparer.OrdinalIgnoreCase);
     private List<StudySpace> _allSpaces = [];
     private bool _spaceFeaturesLoaded;
     private bool _hasLoadedWeeklyHistory;
     private bool _hasComputedSafeArrival;
+    private bool _hasComputedChartSeries;
+    private DateTime _chartReferenceTime = DateTime.MinValue;
     private DateTime _safeArrivalReferenceDate = DateTime.MinValue;
     private bool _isUpdatingDateTimeSelection;
     private string _lastLoadedBeforeParameter = string.Empty;
@@ -130,6 +140,8 @@ public partial class MainPageViewModel : ObservableObject
         _minimumOpenHours = _config.UiNumbers.MinOpeningHours;
         _selectedSortOption = Preferences.Default.Get(_config.Preferences.SortModeKey, _config.Sort.Relevance);
         _currentTab = ResolveInitialTab(Preferences.Default.Get(_config.Preferences.TabModeKey, _config.Tabs.Home));
+        _isColorBlindMode = Preferences.Default.Get(_config.Preferences.ColorBlindModeKey, false);
+        _isCampusSouthOnly = Preferences.Default.Get(_config.Preferences.CampusSouthOnlyKey, false);
 
         if (!SortOptions.Contains(_selectedSortOption))
         {
@@ -243,6 +255,18 @@ public partial class MainPageViewModel : ObservableObject
         UpdateFilteredLocationPreviewCount();
     }
 
+    partial void OnIsColorBlindModeChanged(bool value)
+    {
+        Preferences.Default.Set(_config.Preferences.ColorBlindModeKey, value);
+        ApplyFilter();
+    }
+
+    partial void OnIsCampusSouthOnlyChanged(bool value)
+    {
+        Preferences.Default.Set(_config.Preferences.CampusSouthOnlyKey, value);
+        ApplyFilter();
+    }
+
     [RelayCommand]
     private void SwitchTab(string tabName)
     {
@@ -319,6 +343,18 @@ public partial class MainPageViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ToggleColorBlindMode()
+    {
+        IsColorBlindMode = !IsColorBlindMode;
+    }
+
+    [RelayCommand]
+    private void ToggleCampusSouthOnly()
+    {
+        IsCampusSouthOnly = !IsCampusSouthOnly;
+    }
+
+    [RelayCommand]
     private async Task OpenGithubAsync()
     {
         await Browser.Default.OpenAsync(_config.Urls.Github, BrowserLaunchMode.SystemPreferred);
@@ -380,6 +416,11 @@ public partial class MainPageViewModel : ObservableObject
             else
             {
                 ApplyCachedSafeArrivalRecommendations();
+            }
+            if (shouldReloadWeeklyHistory || !_hasComputedChartSeries)
+            {
+                UpdateChartSeriesCache();
+                _hasComputedChartSeries = true;
             }
             _lastLoadedBeforeParameter = GetApiBeforeParameter();
             _lastLiveSnapshotFetchUtc = DateTime.UtcNow;
@@ -627,6 +668,127 @@ public partial class MainPageViewModel : ObservableObject
         }
     }
 
+    private void UpdateChartSeriesCache()
+    {
+        _spaceChartSeriesCache.Clear();
+        _buildingChartSeriesCache.Clear();
+
+        if (_allSpaces.Count == 0)
+        {
+            return;
+        }
+
+        var chartConfig = _config.Charts;
+        var binMinutes = Math.Max(1, chartConfig.BinMinutes);
+        var endTime = NormalizeToChartBin(DateTime.Now, binMinutes);
+        var startTime = endTime.AddHours(-chartConfig.HistoryHours);
+        _chartReferenceTime = endTime;
+
+        foreach (var space in _allSpaces)
+        {
+            if (!_historicalSeatDataByLocation.TryGetValue(space.Id, out var history) || history.Count == 0)
+            {
+                continue;
+            }
+
+            var series = BuildOccupancySeries(history, startTime, endTime, binMinutes);
+            if (series.Count > 0)
+            {
+                _spaceChartSeriesCache[space.Id] = series;
+            }
+        }
+
+        foreach (var group in _allSpaces.GroupBy(space => space.Building))
+        {
+            var buildingKey = group.Key?.Trim();
+            var spacesInBuilding = group.ToList();
+
+            if (string.IsNullOrWhiteSpace(buildingKey) || spacesInBuilding.Count <= 1)
+            {
+                continue;
+            }
+
+            var aggregatedHistory = spacesInBuilding
+                .SelectMany(space =>
+                {
+                    return _historicalSeatDataByLocation.TryGetValue(space.Id, out var history)
+                        ? history
+                        : [];
+                });
+
+            var series = BuildOccupancySeries(aggregatedHistory, startTime, endTime, binMinutes);
+            if (series.Count > 0)
+            {
+                _buildingChartSeriesCache[buildingKey] = series;
+            }
+        }
+    }
+
+    private static List<float> BuildOccupancySeries(
+        IEnumerable<SeatHistoryPoint> history,
+        DateTime startTime,
+        DateTime endTime,
+        int binMinutes)
+    {
+        var buckets = new Dictionary<DateTime, (int free, int occupied)>();
+
+        foreach (var point in history)
+        {
+            if (point.Timestamp < startTime || point.Timestamp > endTime)
+            {
+                continue;
+            }
+
+            var bucketTime = NormalizeToChartBin(point.Timestamp, binMinutes);
+            if (!buckets.TryGetValue(bucketTime, out var totals))
+            {
+                totals = (0, 0);
+            }
+
+            totals.free += point.FreeSeats;
+            totals.occupied += point.OccupiedSeats;
+            buckets[bucketTime] = totals;
+        }
+
+        var series = new List<float>();
+        float lastValue = 0f;
+        var hasValue = false;
+
+        for (var time = startTime; time <= endTime; time = time.AddMinutes(binMinutes))
+        {
+            if (buckets.TryGetValue(time, out var totals))
+            {
+                var value = (float)CalculateOccupancyRate(totals.free, totals.occupied);
+                lastValue = value;
+                hasValue = true;
+                series.Add(value);
+                continue;
+            }
+
+            series.Add(hasValue ? lastValue : 0f);
+        }
+
+        return series;
+    }
+
+    private static DateTime NormalizeToChartBin(DateTime timestamp, int binMinutes)
+    {
+        var totalMinutes = (timestamp.Hour * 60) + timestamp.Minute;
+        var normalizedMinutes = (totalMinutes / binMinutes) * binMinutes;
+        return timestamp.Date.AddMinutes(normalizedMinutes);
+    }
+
+    private static double CalculateOccupancyRate(int freeSeats, int occupiedSeats)
+    {
+        var total = freeSeats + occupiedSeats;
+        if (total <= 0)
+        {
+            return 0;
+        }
+
+        return Math.Clamp(occupiedSeats / (double)total, 0, 1);
+    }
+
     private void ApplyFilter()
     {
         if (_allSpaces.Count == 0)
@@ -669,9 +831,49 @@ public partial class MainPageViewModel : ObservableObject
     private IEnumerable<StudySpace> ApplySpaceFilters(IEnumerable<StudySpace> spaces)
     {
         var searchFiltered = FilterSpacesBySearch(spaces);
-        var roomTypeFiltered = FilterSpacesByRoomType(searchFiltered);
+        var campusFiltered = FilterSpacesByCampusScope(searchFiltered);
+        var roomTypeFiltered = FilterSpacesByRoomType(campusFiltered);
         var equipmentFiltered = FilterSpacesByEquipment(roomTypeFiltered);
         return FilterSpacesByOpeningHours(equipmentFiltered);
+    }
+
+    private IEnumerable<StudySpace> FilterSpacesByCampusScope(IEnumerable<StudySpace> spaces)
+    {
+        if (!IsCampusSouthOnly)
+        {
+            return spaces;
+        }
+
+        var tokens = _config.CampusSouth.ExcludedNameContains;
+        if (tokens.Count == 0)
+        {
+            return spaces;
+        }
+
+        return spaces.Where(space => !IsExcludedByCampusScope(space.Name, tokens));
+    }
+
+    private static bool IsExcludedByCampusScope(string? name, List<string> tokens)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        foreach (var token in tokens)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                continue;
+            }
+
+            if (name.Contains(token, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private IEnumerable<StudySpace> FilterSpacesBySearch(IEnumerable<StudySpace> spaces)
@@ -882,9 +1084,10 @@ public partial class MainPageViewModel : ObservableObject
         return results;
     }
 
-    private static UiLocation CreateSingleLocation(StudySpace space, List<string> favoriteNames, DateTime referenceTime)
+    private UiLocation CreateSingleLocation(StudySpace space, List<string> favoriteNames, DateTime referenceTime)
     {
         var insight = BuildArrivalInsight(space.SafeArrivalRecommendation);
+        var series = GetChartSeriesForSpace(space.Id);
 
         return new UiLocation
         {
@@ -902,7 +1105,8 @@ public partial class MainPageViewModel : ObservableObject
             HasArrivalInsights = insight.HasInsights,
             PeakAverageText = insight.PeakAverageText,
             SafetyLevelText = insight.SafetyLevelText,
-            PeakTrendText = insight.PeakTrendText
+            PeakTrendText = insight.PeakTrendText,
+            OccupancySeries = series
         };
     }
 
@@ -914,6 +1118,7 @@ public partial class MainPageViewModel : ObservableObject
             : string.Format(CultureInfo.CurrentCulture, _config.UiText.BuildingFormat, normalizedBuildingKey);
 
         var buildingRecommendation = GetCachedBuildingRecommendation(normalizedBuildingKey);
+        var series = GetChartSeriesForBuilding(normalizedBuildingKey);
 
         var insight = BuildArrivalInsight(buildingRecommendation);
 
@@ -933,7 +1138,8 @@ public partial class MainPageViewModel : ObservableObject
             HasArrivalInsights = insight.HasInsights,
             PeakAverageText = insight.PeakAverageText,
             SafetyLevelText = insight.SafetyLevelText,
-            PeakTrendText = insight.PeakTrendText
+            PeakTrendText = insight.PeakTrendText,
+            OccupancySeries = series
         };
     }
 
@@ -947,6 +1153,20 @@ public partial class MainPageViewModel : ObservableObject
         return _buildingSafeArrivalCache.TryGetValue(buildingKey, out var recommendation)
             ? recommendation
             : null;
+    }
+
+    private IReadOnlyList<float> GetChartSeriesForSpace(string spaceId)
+    {
+        return _spaceChartSeriesCache.TryGetValue(spaceId, out var series)
+            ? series
+            : Array.Empty<float>();
+    }
+
+    private IReadOnlyList<float> GetChartSeriesForBuilding(string buildingKey)
+    {
+        return _buildingChartSeriesCache.TryGetValue(buildingKey, out var series)
+            ? series
+            : Array.Empty<float>();
     }
 
     private SafeArrivalRecommendation? CalculateBuildingRecommendation(List<StudySpace> spaces)

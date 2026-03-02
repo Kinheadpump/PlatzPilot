@@ -25,6 +25,7 @@ public partial class UiLocation : ObservableObject
     public string PeakAverageText { get; set; } = AppText.PeakNoneText;
     public string SafetyLevelText { get; set; } = string.Format(AppText.QualityFormat, AppText.QualityLow);
     public string PeakTrendText { get; set; } = string.Format(AppText.PeakTrendFormat, AppText.PeakTrendFlat);
+    public IReadOnlyList<float> OccupancySeries { get; set; } = Array.Empty<float>();
 
     public DateTime? LastUpdated => SubSpaces.Max(s => s.LastUpdated);
     
@@ -132,11 +133,20 @@ public partial class UiLocation : ObservableObject
     {
         get
         {
-            var config = AppConfigProvider.Current.Occupancy;
-            if (OccupancyRate < config.LowThreshold) return Color.FromArgb(config.LowColor);
-            if (OccupancyRate < config.MediumThreshold) return Color.FromArgb(config.MediumColor);
-            if (OccupancyRate < config.HighThreshold) return Color.FromArgb(config.HighColor);
-            return Color.FromArgb(config.FullColor);
+            var config = AppConfigProvider.Current;
+            var thresholds = config.Occupancy;
+            var isColorBlindMode = Preferences.Default.Get(config.Preferences.ColorBlindModeKey, false);
+            var palette = isColorBlindMode ? config.ColorBlindness : null;
+
+            var lowColor = isColorBlindMode ? palette!.LowColor : thresholds.LowColor;
+            var mediumColor = isColorBlindMode ? palette!.MediumColor : thresholds.MediumColor;
+            var highColor = isColorBlindMode ? palette!.HighColor : thresholds.HighColor;
+            var fullColor = isColorBlindMode ? palette!.FullColor : thresholds.FullColor;
+
+            if (OccupancyRate < thresholds.LowThreshold) return Color.FromArgb(lowColor);
+            if (OccupancyRate < thresholds.MediumThreshold) return Color.FromArgb(mediumColor);
+            if (OccupancyRate < thresholds.HighThreshold) return Color.FromArgb(highColor);
+            return Color.FromArgb(fullColor);
         }
     }
 

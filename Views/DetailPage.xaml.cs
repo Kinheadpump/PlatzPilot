@@ -3,8 +3,10 @@ using System.Windows.Input;
 using System.Globalization; // WICHTIG für die Formatierung der Koordinaten!
 using System.Text.RegularExpressions;
 using Microsoft.Maui.ApplicationModel;
+using Microcharts;
 using PlatzPilot.Configuration;
 using PlatzPilot.Models;
+using SkiaSharp;
 
 namespace PlatzPilot.Views;
 
@@ -23,6 +25,9 @@ public partial class DetailPage : ContentPage, IQueryAttributable
             SortedSubSpaces = SortByLevel(value?.SubSpaces);
             OnPropertyChanged();
             OnPropertyChanged(nameof(SortedSubSpaces));
+            UpdateChart();
+            OnPropertyChanged(nameof(OccupancyChart));
+            OnPropertyChanged(nameof(HasChartData));
         }
     }
 
@@ -31,6 +36,10 @@ public partial class DetailPage : ContentPage, IQueryAttributable
     public ICommand OpenUrlCommand { get; }
     public ICommand OpenMapCommand { get; }
     public ICommand GoBackCommand { get; }
+
+    public Chart? OccupancyChart { get; private set; }
+    public bool HasChartData => OccupancyChart != null;
+    public double ChartHeight => AppConfigProvider.Current.Charts.Height;
 
     public DetailPage()
     {
@@ -156,4 +165,53 @@ public partial class DetailPage : ContentPage, IQueryAttributable
 
         return parsedLevel;
     }
+
+    private void UpdateChart()
+    {
+        var location = LocationData;
+        if (location == null || location.SubSpaces.Count == 0)
+        {
+            OccupancyChart = null;
+            return;
+        }
+
+        var chartConfig = AppConfigProvider.Current.Charts;
+        var series = location.OccupancySeries;
+        if (series == null || series.Count < 2)
+        {
+            OccupancyChart = null;
+            return;
+        }
+
+        var isDarkTheme = Application.Current?.RequestedTheme == AppTheme.Dark;
+        var lineColor = SKColor.Parse(isDarkTheme ? chartConfig.LineColorDark : chartConfig.LineColorLight);
+        var backgroundColor = SKColor.Parse(isDarkTheme ? chartConfig.BackgroundColorDark : chartConfig.BackgroundColorLight);
+
+        var entries = series
+            .Select(value => new ChartEntry(value)
+            {
+                Label = string.Empty,
+                ValueLabel = string.Empty,
+                Color = lineColor
+            })
+            .ToList();
+
+        OccupancyChart = new LineChart
+        {
+            Entries = entries,
+            LineMode = LineMode.Spline,
+            LineSize = chartConfig.LineSize,
+            LineAreaAlpha = chartConfig.LineAreaAlpha,
+            MinValue = chartConfig.MinValue,
+            MaxValue = chartConfig.MaxValue,
+            LabelTextSize = chartConfig.LabelTextSize,
+            ValueLabelTextSize = chartConfig.ValueLabelTextSize,
+            SerieLabelTextSize = chartConfig.SerieLabelTextSize,
+            ShowYAxisLines = chartConfig.ShowYAxisLines,
+            ShowYAxisText = chartConfig.ShowYAxisText,
+            ValueLabelOption = ValueLabelOption.None,
+            BackgroundColor = backgroundColor
+        };
+    }
+
 }

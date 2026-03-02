@@ -20,8 +20,11 @@ public sealed class AppConfig
     public FontsConfig Fonts { get; set; } = new();
     public AppInfoConfig AppInfo { get; set; } = new();
     public OccupancyConfig Occupancy { get; set; } = new();
+    public ColorBlindnessConfig ColorBlindness { get; set; } = new();
+    public CampusSouthConfig CampusSouth { get; set; } = new();
     public UiColorsConfig UiColors { get; set; } = new();
     public UiAssetsConfig UiAssets { get; set; } = new();
+    public ChartConfig Charts { get; set; } = new();
     public InternalConfig Internal { get; set; } = new();
     public Dictionary<string, string> BuildingNames { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
@@ -95,6 +98,8 @@ public sealed class UiTextConfig
     public string LicensesLabel { get; set; } = string.Empty;
     public string LicensesTitle { get; set; } = string.Empty;
     public string LicensesText { get; set; } = string.Empty;
+    public string ColorBlindModeLabel { get; set; } = string.Empty;
+    public string CampusSouthOnlyLabel { get; set; } = string.Empty;
     public string BackGlyph { get; set; } = string.Empty;
     public string OkButtonLabel { get; set; } = string.Empty;
     public string FavoriteIconFilled { get; set; } = string.Empty;
@@ -102,6 +107,10 @@ public sealed class UiTextConfig
     public string LevelFormat { get; set; } = string.Empty;
     public string RoomFormat { get; set; } = string.Empty;
     public string BuildingUnknownText { get; set; } = string.Empty;
+    public string ChartLabel6Hours { get; set; } = string.Empty;
+    public string ChartLabel12Hours { get; set; } = string.Empty;
+    public string ChartLabel18Hours { get; set; } = string.Empty;
+    public string ChartLabel24Hours { get; set; } = string.Empty;
 }
 
 public sealed class UiNumbersConfig
@@ -123,6 +132,8 @@ public sealed class PreferencesConfig
     public string SortModeKey { get; set; } = string.Empty;
     public string TabModeKey { get; set; } = string.Empty;
     public string ThemeKey { get; set; } = string.Empty;
+    public string ColorBlindModeKey { get; set; } = string.Empty;
+    public string CampusSouthOnlyKey { get; set; } = string.Empty;
     public string EmptyListJson { get; set; } = "[]";
 }
 
@@ -294,6 +305,19 @@ public sealed class OccupancyConfig
     public string ClosedColor { get; set; } = "#b0b0b0";
 }
 
+public sealed class ColorBlindnessConfig
+{
+    public string LowColor { get; set; } = "#648FFF";
+    public string MediumColor { get; set; } = "#FFB000";
+    public string HighColor { get; set; } = "#DC267F";
+    public string FullColor { get; set; } = "#DC267F";
+}
+
+public sealed class CampusSouthConfig
+{
+    public List<string> ExcludedNameContains { get; set; } = [];
+}
+
 public sealed class UiColorsConfig
 {
     public string FavoriteOnColor { get; set; } = "#f1c40f";
@@ -317,6 +341,34 @@ public sealed class UiAssetsConfig
     public string FavoritesIconDark { get; set; } = string.Empty;
     public string SettingsIconLight { get; set; } = string.Empty;
     public string SettingsIconDark { get; set; } = string.Empty;
+    public string ColorBlindOnIconLight { get; set; } = string.Empty;
+    public string ColorBlindOnIconDark { get; set; } = string.Empty;
+    public string ColorBlindOffIconLight { get; set; } = string.Empty;
+    public string ColorBlindOffIconDark { get; set; } = string.Empty;
+    public string CampusSouthOnIconLight { get; set; } = string.Empty;
+    public string CampusSouthOnIconDark { get; set; } = string.Empty;
+    public string CampusSouthOffIconLight { get; set; } = string.Empty;
+    public string CampusSouthOffIconDark { get; set; } = string.Empty;
+}
+
+public sealed class ChartConfig
+{
+    public int HistoryHours { get; set; } = 24;
+    public int BinMinutes { get; set; } = 5;
+    public double Height { get; set; } = 120;
+    public float LineSize { get; set; } = 2f;
+    public byte LineAreaAlpha { get; set; } = 38;
+    public float LabelTextSize { get; set; } = 0f;
+    public float ValueLabelTextSize { get; set; } = 0f;
+    public float SerieLabelTextSize { get; set; } = 0f;
+    public bool ShowYAxisLines { get; set; }
+    public bool ShowYAxisText { get; set; }
+    public float MinValue { get; set; } = 0f;
+    public float MaxValue { get; set; } = 1f;
+    public string LineColorLight { get; set; } = "#1f6feb";
+    public string LineColorDark { get; set; } = "#9ec1ff";
+    public string BackgroundColorLight { get; set; } = "#ffffff";
+    public string BackgroundColorDark { get; set; } = "#1e1e1e";
 }
 
 public sealed class InternalConfig
