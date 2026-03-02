@@ -41,7 +41,8 @@
 	<ItemGroup>
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\app_logo.png"
-			  Color="#FFFFFF"
+			  ForegroundFile="Resources\AppIcon\app_logo.png"
+			  BackgroundFile="Resources\AppIcon\app_logo_background.png"
 			  Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'windows'" />
 
 		<MauiIcon Include="Resources\AppIcon\app_logo_win.ico" 
