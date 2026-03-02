@@ -26,6 +26,7 @@ public partial class MainPageViewModel : ObservableObject
     private ObservableCollection<UiLocation> _uiLocations = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsFavoritesEmpty))]
     private bool _isBusy;
 
     [ObservableProperty]
@@ -122,7 +123,7 @@ public partial class MainPageViewModel : ObservableObject
     public bool IsDataVisible => !IsBusy && UiLocations.Count > 0 && IsMainContentVisible;
     public bool IsListEmpty => UiLocations.Count == 0 && IsMainContentVisible;
     public bool IsHomeEmpty => UiLocations.Count == 0 && CurrentTab == _config.Tabs.Home;
-    public bool IsFavoritesEmpty => UiLocations.Count == 0 && CurrentTab == _config.Tabs.Favorites;
+    public bool IsFavoritesEmpty => !IsBusy && UiLocations.Count == 0 && CurrentTab == _config.Tabs.Favorites;
     public bool IsBeforeMode => !UseNow;
     public bool IsSearchInactive => !IsSearchActive;
     public DateTime MaxSelectableDate => DateTime.Today;
@@ -434,44 +435,58 @@ public partial class MainPageViewModel : ObservableObject
 
             var forceWeeklyReload = IsRefreshing;
             var shouldReloadWeeklyHistory = !_hasLoadedWeeklyHistory || forceWeeklyReload;
+            var requestedBeforeParameter = GetApiBeforeParameter();
             if (shouldReloadWeeklyHistory)
             {
                 _allSpaces = await _seatFinderService.FetchSeatDataAsync(
                     limit: _config.SeatFinder.WeeklyHistoryPoints,
                     before: _config.SeatFinder.NowToken);
-                ReplaceHistoricalSeatData(_allSpaces);
-                _hasLoadedWeeklyHistory = true;
             }
             else
             {
                 _allSpaces = await _seatFinderService.FetchSeatDataAsync(
                     limit: _config.SeatFinder.LiveSnapshotPoints,
-                    before: GetApiBeforeParameter());
-                AppendLatestSeatDataToHistory(_allSpaces);
+                    before: requestedBeforeParameter);
             }
 
-            if (shouldReloadWeeklyHistory || !_hasComputedSafeArrival)
+            await Task.Run(() =>
             {
-                UpdateSafeArrivalRecommendations();
-            }
-            else
-            {
-                ApplyCachedSafeArrivalRecommendations();
-            }
-            if (shouldReloadWeeklyHistory || !_hasComputedChartSeries)
-            {
-                UpdateChartSeriesCache();
-                _hasComputedChartSeries = true;
-            }
-            _lastLoadedBeforeParameter = GetApiBeforeParameter();
+                if (shouldReloadWeeklyHistory)
+                {
+                    ReplaceHistoricalSeatData(_allSpaces);
+                    _hasLoadedWeeklyHistory = true;
+                }
+                else
+                {
+                    AppendLatestSeatDataToHistory(_allSpaces);
+                }
+
+                if (shouldReloadWeeklyHistory || !_hasComputedSafeArrival)
+                {
+                    UpdateSafeArrivalRecommendations();
+                }
+                else
+                {
+                    ApplyCachedSafeArrivalRecommendations();
+                }
+
+                if (shouldReloadWeeklyHistory || !_hasComputedChartSeries)
+                {
+                    UpdateChartSeriesCache();
+                    _hasComputedChartSeries = true;
+                }
+            });
+
+            _lastLoadedBeforeParameter = requestedBeforeParameter;
             _lastLiveSnapshotFetchUtc = DateTime.UtcNow;
-            ApplyFilter();
         }
         finally
         {
             IsBusy = false;
             IsRefreshing = false;
         }
+
+        ApplyFilter();
     }
 
     private bool ShouldRefreshSnapshot(string requestedBeforeParameter)
@@ -832,6 +847,11 @@ public partial class MainPageViewModel : ObservableObject
 
     private void ApplyFilter()
     {
+        if (IsBusy)
+        {
+            return;
+        }
+
         if (_allSpaces.Count == 0)
         {
             ReplaceUiLocations([]);
@@ -852,6 +872,11 @@ public partial class MainPageViewModel : ObservableObject
 
     private void UpdateFilteredLocationPreviewCount()
     {
+        if (IsBusy)
+        {
+            return;
+        }
+
         if (_allSpaces.Count == 0)
         {
             FilteredLocationCount = 0;
@@ -1082,13 +1107,9 @@ public partial class MainPageViewModel : ObservableObject
 
     private void ReplaceUiLocations(IEnumerable<UiLocation> locations)
     {
-        UiLocations.Clear();
-        foreach (var location in locations)
-        {
-            UiLocations.Add(location);
-        }
-
-        FilteredLocationCount = UiLocations.Count;
+        var updatedLocations = locations as IList<UiLocation> ?? locations.ToList();
+        UiLocations = new ObservableCollection<UiLocation>(updatedLocations);
+        FilteredLocationCount = updatedLocations.Count;
         NotifyCollectionVisibilityChanged();
     }
 
@@ -1390,6 +1411,7 @@ public partial class MainPageViewModel : ObservableObject
     private async Task ShowOfflineBannerAsync()
     {
         _offlineBannerCts?.Cancel();
+        _offlineBannerCts?.Dispose();
         var cts = new CancellationTokenSource();
         _offlineBannerCts = cts;
 
