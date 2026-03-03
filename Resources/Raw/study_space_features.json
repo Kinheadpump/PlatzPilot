@@ -7,7 +7,7 @@
         "Stillarbeitsraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -19,7 +19,7 @@
         "Gruppenraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": true
     },
@@ -30,7 +30,7 @@
         "Stillarbeitsraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -41,7 +41,7 @@
         "Stillarbeitsraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": true
     },
@@ -50,7 +50,7 @@
       "nickname": "Lesesaal Wirtschaft",
       "roomTypes": [],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -61,7 +61,7 @@
         "Gruppenraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": true
     },
@@ -69,7 +69,7 @@
       "id": "BIB-N",
       "roomTypes": [],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -78,7 +78,7 @@
       "nickname": "Lernplatz 3. OG",
       "roomTypes": [],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -89,8 +89,8 @@
         "Gruppenraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
-      "whiteboard": false,
+      "powerOutlets": true,
+      "whiteboard": true,
       "requiresReservation": false
     },
     {
@@ -100,7 +100,7 @@
         "Stillarbeitsraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -109,7 +109,7 @@
       "nickname": "Lernplatz 1. OG",
       "roomTypes": [],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -118,7 +118,7 @@
       "nickname": "Lernplatz EG",
       "roomTypes": [],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -147,7 +147,7 @@
         "Stillarbeitsraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -168,7 +168,7 @@
         "Stillarbeitsraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -179,7 +179,7 @@
         "Stillarbeitsraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -190,7 +190,7 @@
         "Gruppenraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -199,7 +199,7 @@
       "nickname": "Fachbibliothek DHBW",
       "roomTypes": [],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -211,7 +211,7 @@
         "Stillarbeitsraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -222,7 +222,7 @@
         "Gruppenraum"
       ],
       "freeWifi": false,
-      "powerOutlets": false,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     }

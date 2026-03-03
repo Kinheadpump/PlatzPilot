@@ -185,7 +185,7 @@
     "minWeightedSamplesForCandidate": 0.2,
     "earlyPeakQuantile": 0.45,
     "earlyPeakBias": 0.7,
-    "dailyPeakThresholdRatio": 0.85,
+    "dailyPeakThresholdRatio": 0.8,
     "leadTimeBeforePeakMinutes": 15,
     "minCoveredDaysForConfidence": 2,
     "minWeightedSamplesForConfidence": 1.0,
