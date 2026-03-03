@@ -79,13 +79,20 @@ public class SeatFinderService
                 
                 if (metaInfo == null) continue;
 
+                var correctedLevel = metaInfo.Level;
+                // Korrektur für bekannte Inkonsistenz in den Daten (L3 hat Level "0" statt "3")
+                if (string.Equals(locationId, "L3", StringComparison.OrdinalIgnoreCase))
+                {
+                    correctedLevel = "3";
+                }
+                
                 var space = new StudySpace
                 {
                     Id = locationId,
                     Name = string.IsNullOrWhiteSpace(metaInfo.LongName) ? metaInfo.Name : metaInfo.LongName,
                     TotalSeats = metaInfo.AvailableSeats,
                     Building = metaInfo.Building,
-                    Level = metaInfo.Level,
+                    Level = correctedLevel,
                     Room = metaInfo.Room,
                     OpeningHours = metaInfo.OpeningHours,
                     Url = metaInfo.Url,
