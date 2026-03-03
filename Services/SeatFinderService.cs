@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Globalization;
+using System.Threading;
 using PlatzPilot.Configuration;
 using PlatzPilot.Models;
 
@@ -7,6 +8,7 @@ namespace PlatzPilot.Services;
 
 public class SeatFinderService
 {
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
     private readonly HttpClient _httpClient;
     private readonly SeatFinderConfig _settings;
     private readonly InternalConfig _internal;
@@ -51,7 +53,8 @@ public class SeatFinderService
 
         try
         {
-            var responseText = await _httpClient.GetStringAsync(requestUrl);
+            using var cts = new CancellationTokenSource(RequestTimeout);
+            var responseText = await _httpClient.GetStringAsync(requestUrl, cts.Token);
 
             int startIdx = responseText.IndexOf('(');
             int endIdx = responseText.LastIndexOf(')');
@@ -106,6 +109,14 @@ public class SeatFinderService
 
                 resultList.Add(space);
             }
+        }
+        catch (TaskCanceledException ex)
+        {
+            System.Diagnostics.Debug.WriteLine(string.Format(
+                CultureInfo.CurrentCulture,
+                _internal.HttpRequestErrorFormat,
+                ex.Message));
+            throw;
         }
         catch (Exception ex)
         {

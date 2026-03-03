@@ -20,9 +20,12 @@ Konstanten und Parameter
 - DailyMensaMeals = 9000 (Ground Truth)
   Durchschnittliche Anzahl der täglich ausgegebenen Essen in der Vorlesungszeit.
   Dient als fester Anker für die automatische Skalierung.
+  Saison-Override: Im März, August und September wird DailyMensaMeals = 5500 gesetzt.
 
-- MensaCapacity = 2500 (Physikalisches Limit)
-  Maximal mögliche Anzahl an Personen gleichzeitig im Gebäude (Sitzplätze + Schlangen).
+MensaPeakCapacity (dynamisch)
+- Statt einer festen Kapazität wird die maximale beobachtete Mensa-Belegung
+  der letzten 7 Tage verwendet:
+  MensaPeakCapacity = max( MensaOccupancy(t) ) über die letzten 7 Tage.
 
 - EatingBufferMinutes = 45 (Verweildauer-Puffer)
   Zusätzliche Minuten nach offiziellem Ende der Essensausgabe; simuliert Verweildauer.
@@ -30,9 +33,10 @@ Konstanten und Parameter
 - MinSpaceCapacity = 50 (Rauschfilter)
   Lernorte mit weniger als 50 Plätzen werden ignoriert (zu hoher prozentualer Noise).
 
-- DistanceDamper = 0.005 (Distanz-Dämpfung)
-  Faktor für den exponentiellen Relevanzabfall eines Lernorts mit wachsender Distanz
-  zur Mensa.
+- QueueBufferMinutes = 15 (Wartezeit-Puffer)
+  Zusätzliche Minuten, die von der empfohlenen Ankunftszeit abgezogen werden,
+  um Schlangenbildung in der Mensa zu berücksichtigen.
+
 
 Schritt-für-Schritt Ablauf
 --------------------------
@@ -42,11 +46,8 @@ Schritt 1: Dynamisches Zeitfenster bestimmen
   - Sa: 11:30–14:15 (offizielles Ende 13:30 + 45 Min Puffer)
   - So: Modell übersprungen (Auslastung = 0), Hauptmensa geschlossen
 
-Schritt 2: Gewichtung der Lernorte berechnen (w_i)
-- Kapazität < MinSpaceCapacity => w_i = 0
-- Sonst: Distanz d (in Metern) von Lernort zu Mensa-Koordinaten
-  (Lat: 49.0118, Lon: 8.4170) per Haversine berechnen.
-- Gewicht: w_i = exp(-DistanceDamper * d), mit w_i ∈ [0,1]
+Schritt 2: Lernorte filtern
+- Kapazität < MinSpaceCapacity => Lernort ignorieren (zu hoher Noise)
 
 Schritt 3: Campus-Defizit berechnen (D_campus)
 - Für jeden 5-Minuten-Zeitpunkt t im LunchInterval:
@@ -54,7 +55,7 @@ Schritt 3: Campus-Defizit berechnen (D_campus)
     und Ende (OccEnd) des Intervalls ermittelt und linear interpoliert.
     B(t) = erwartete Belegung ohne Mensa-Abfluss.
   - Raum-Defizit: Defizit_i(t) = max(0, B(t) - OccNow)
-  - Aggregation: D_campus(t) = sum_i( w_i * Defizit_i(t) )
+  - Aggregation: D_campus(t) = sum_i( Defizit_i(t) )
 
 Schritt 4: Auto-Kalibrierung (dynamisches Alpha α)
 - Einmal pro Nacht wird α selbstlernend angepasst:
@@ -65,10 +66,10 @@ Schritt 4: Auto-Kalibrierung (dynamisches Alpha α)
   - α wird auf einen sicheren Bereich limitiert (z.B. [1.5, 10.0]) um Feiertagsfehler zu vermeiden.
 
 Schritt 5: Absolute Auslastung & Forecast
-- MensaOccupancy(t) = min( D_campus(t) * α, MensaCapacity )
+- MensaOccupancy(t) = D_campus(t) * α (nicht fest gecappt)
 - Historische Zeitreihen werden in ein virtuelles StudySpace-Objekt verpackt:
   - ID: "MENSA_VIRTUAL"
-  - TotalSeats: 2500
+  - TotalSeats: MensaPeakCapacity (aus den letzten 7 Tagen)
 - Dieses Objekt wird an den SafeArrivalForecastService übergeben, welcher
   die empfohlene Ankunftszeit (Safe-Arrival) berechnet.
 
@@ -76,10 +77,14 @@ UI-Metriken (Ausgabe für Nutzer)
 --------------------------------
 Das Modell liefert drei Hauptwerte für die Mensa-Kachel:
 - Empfohlene Ankunftszeit:
-  Direkt vom SafeArrivalForecastService (z.B. "Sicher bis 12:15 Uhr").
+  Direkt vom SafeArrivalForecastService, anschließend QueueBufferMinutes abziehen
+  (z.B. "Sicher bis 12:15 Uhr" -> "Sicher bis 12:00 Uhr").
 
 - Auslastungs-Balken:
-  Live-Mensa-Auslastung geteilt durch MensaCapacity (z.B. 2000 / 2500 = 80%).
+  Live-Mensa-Auslastung geteilt durch MensaPeakCapacity (z.B. 2000 / 2400 = 83%).
+
+- Verfügbarkeits-Label:
+  Prozentuale Auslastung (z.B. "83% ausgelastet") statt "X von Y frei".
 
 - Tagesfortschritt (Trend):
   Kumulierte Anstiege des Defizits seit heute Morgen, multipliziert mit α.
@@ -88,7 +93,6 @@ Das Modell liefert drei Hauptwerte für die Mensa-Kachel:
 Hinweise & Implementationsdetails
 ---------------------------------
 - Zeitauflösung: 5-Minuten-Bins (konform mit bestehendem Safe Arrival System).
-- Haversine zur Distanzberechnung verwenden (Meter).
 - Fehlende oder schlechte Daten von Räumen mit geringer Kapazität ausfiltern.
 - Alpha-Nachtlauf: Robust gegen Ausreißer (Clipping im sicheren Bereich).
 - Virtuelles StudySpace-Objekt verhält sich identisch zu realen Gebäuden

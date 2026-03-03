@@ -202,13 +202,12 @@
     "mediumProbabilityThreshold": 0.8
   },
   "mensaForecast": {
-    "capacity": 2500,
     "dailyMensaMeals": 9000,
     "latitude": 49.0118,
     "longitude": 8.4169,
-    "distanceDamper": 0.001,
     "minSpaceCapacity": 50,
-    "eatingBufferMinutes": 45,
+    "queueBufferMinutes": 15,
+    "eatingBufferMinutes": 30,
     "windowStart": "11:00",
     "cashDeskClose": "14:00",
     "stepMinutes": 5
