@@ -7,12 +7,13 @@
     "noResultsTitle": "Verstecken sich die Plätze?",
     "noResultsSubtitle": "Wir konnten leider nichts finden.",
     "favoritesEmptyText": "Hier ist noch nichts los! Tippe auf den Stern bei einem Gebäude, um es hier zu sehen.",
-    "offlineBannerText": "Keine Internetverbindung, veraltete Daten",
+    "offlineBannerText": "Bist du im Bib-Keller? Wir haben gerade kein Internet.",
     "closedLabel": "Geschlossen",
     "closedStudentsLabel": "Geschlossen (Außer für Studierende)",
     "manualCountLabel": "Manuell gezählt",
-    "availabilityFormat": "{0} von {1}",
-    "noCurrentInfoText": "Keine aktuellen Infos",
+    "availabilityFormat": "{0} von {1} frei",
+    "noCurrentInfoText": "Keine Information",
+    "dataStaleText": "⚠️ Daten veraltet",
     "recommendationNoneText": "Empfohlene Ankunft: keine sichere Zeit",
     "recommendationFormat": "Empfohlene Ankunft bis {0:hh\\:mm}",
     "peakNoneText": "Auslastungs Peak ⌀: keine Daten",
@@ -64,8 +65,9 @@
     "settingsTitle": "Einstellungen",
     "settingsDesignLabel": "Design (Hell / Dunkel)",
     "settingsDisplayTitle": "Anzeige",
-    "settingsFeedbackTitle": "Feedback",
+    "settingsFeedbackTitle": "Präferenzen",
     "settingsHapticLabel": "Haptisches Feedback",
+    "hideClosedLocationsLabel": "Geschlossene Gebäude ausblenden",
     "settingsVersionFormat": "Version {0}",
     "settingsDisclaimer": "Diese App ist ein studentisches Projekt und steht in keiner offiziellen Verbindung zum Karlsruher Institut für Technologie (KIT) oder der KIT-Bibliothek.",
     "githubLabel": "Github",
@@ -107,6 +109,7 @@
     "colorBlindModeKey": "PlatzPilot_ColorBlindMode",
     "campusSouthOnlyKey": "PlatzPilot_CampusSouthOnly",
     "hapticFeedbackKey": "PlatzPilot_HapticFeedback",
+    "hideClosedLocationsKey": "PlatzPilot_HideClosedLocations",
     "emptyListJson": "[]"
   },
   "urls": {
@@ -366,6 +369,7 @@
   "buildingNames": {
     "30.50": "KIT-Bibliothek Süd Altbau",
     "30.51": "KIT-Bibliothek Süd Neubau",
-    "50.19": "Informatikom"
+    "50.19": "Informatikom",
+    "BLB_WIS": "Badische Landesbibliothek"
   }
 }

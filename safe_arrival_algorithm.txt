@@ -15,10 +15,11 @@ Zusätzlich liefern wir:
 
 Datenbasis
 ----------
-- Historie: bis zu 2016 Punkte aus der letzten Woche
+- Historie: bis zu 2304 Punkte ab Mitternacht vor einer Woche bis jetzt
 - Zeitauflösung: 5-Minuten-Bins
-- Historische Modellierung basiert auf seat-estimates
-- Aktuelle Anzeige kann manualcount priorisieren (nur Snapshot, nicht Historie)
+- Historische Modellierung nutzt seat-estimates + manualcount
+  (manualcount ueberschreibt seat-estimate bei gleichem Zeitstempel)
+- Aktuelle Anzeige priorisiert manualcount fuer den Live-Snapshot
 
 Gebaeudeaggregation (mehrere Raeume)
 ------------------------------------
@@ -38,6 +39,9 @@ beta_t  = beta0  + Summe_i( w_i * (C - free[i,t]) )
 
 mit
 w_i = exp(-days_ago_i / tau)
+
+Referenzdatum ist der neueste Tag in der Historie, damit "Vorher"-Filter
+die letzten Wochentage nicht komplett verwerfen.
 
 Danach wird geglaettet (Moving Average, Fenster=5).
 

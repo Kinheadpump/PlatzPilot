@@ -129,50 +129,50 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:StudySpace">
                     <Border Margin="0,0,0,15" Padding="15" BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}" StrokeShape="RoundRectangle 10" StrokeThickness="1" Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#333333}">
-                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
-                            <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="6">
-                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                                <Label Text="{Binding ClosedStatusText}"
-                                       FontSize="12"
-                                       TextColor="#e74c3c"
-                                       IsVisible="False"
-                                       MaxLines="2"
-                                       LineBreakMode="TailTruncation"
-                                       VerticalOptions="Center">
-                                    <Label.Triggers>
-                                        <DataTrigger TargetType="Label" Binding="{Binding IsOpen}" Value="False">
-                                            <Setter Property="IsVisible" Value="True" />
-                                        </DataTrigger>
-                                    </Label.Triggers>
-                                </Label>
-                            </HorizontalStackLayout>
-                            
-                            <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Spacing="8" Margin="0,2,0,0">
-                                <Label Text="{Binding LevelDisplayText}" FontSize="12" TextColor="Gray" IsVisible="{Binding HasLevel}" />
-                                <Label Text="{Binding RoomDisplayText}" FontSize="12" TextColor="Gray" IsVisible="{Binding HasRoom}" />
-                            </HorizontalStackLayout>
-                            <VerticalStackLayout Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Spacing="0" HorizontalOptions="End" VerticalOptions="Center">
-                                <Label Text="{Binding AvailabilityText}"
-                                       FontAttributes="Bold"
-                                       FontSize="18"
-                                       HorizontalOptions="End"
-                                       TextColor="{AppThemeBinding Light=Black, Dark=White}" />
-                                <Label Text="{x:Static local:AppText.AvailabilitySuffix}"
-                                       FontSize="11"
-                                       HorizontalOptions="End"
-                                       TextColor="Gray" />
+                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                            <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
+                                <Label Text="{Binding DisplayName}" FontAttributes="Bold" FontSize="16" TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                <HorizontalStackLayout Spacing="8">
+                                    <Label Text="{Binding LevelDisplayText}" FontSize="12" TextColor="Gray" IsVisible="{Binding HasLevel}" />
+                                    <Label Text="{Binding RoomDisplayText}" FontSize="12" TextColor="Gray" IsVisible="{Binding HasRoom}" />
+                                </HorizontalStackLayout>
                             </VerticalStackLayout>
-                            <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" Margin="0,15,0,0">
-                                <Label Text="{x:Static local:AppText.OccupancyInfoTitle}"
-                                       FontSize="12"
+
+                            <Label Grid.Row="1"
+                                   Grid.Column="0"
+                                   Text="{Binding StatusText}"
+                                   FontSize="12"
+                                   TextColor="{Binding StatusTextColor}"
+                                   MaxLines="2"
+                                   LineBreakMode="TailTruncation"
+                                   IsVisible="{Binding HasStatusText}" />
+
+                            <VerticalStackLayout Grid.Row="0"
+                                                 Grid.RowSpan="2"
+                                                 Grid.Column="1"
+                                                 Spacing="2"
+                                                 HorizontalOptions="End"
+                                                 VerticalOptions="Start">
+                                <Label Text="{x:Static local:AppText.ManualCountLabel}"
+                                       FontSize="10"
+                                       TextColor="DarkOrange"
+                                       IsVisible="{Binding IsManualCount}"
+                                       HorizontalTextAlignment="End" />
+                                <Label Text="{Binding AvailabilityDisplayText}"
                                        FontAttributes="Bold"
-                                       TextColor="{AppThemeBinding Light=#2c3e50, Dark=#d5dbe5}" />
-                                <Grid ColumnDefinitions="*, Auto">
-                                    <Label Text="{x:Static local:AppText.OccupancyLabel}" FontSize="11" TextColor="Gray" VerticalOptions="Center" />
-                                    <Label Grid.Column="1" Text="{x:Static local:AppText.ManualCountLabel}" FontSize="9" TextColor="DarkOrange" IsVisible="{Binding IsManualCount}" VerticalOptions="Center" />
-                                </Grid>
-                                <ProgressBar Progress="{Binding OccupancyRate}" ProgressColor="{Binding OccupancyColor}" HeightRequest="6" Margin="0,5,0,0" />
+                                       FontSize="15"
+                                       TextColor="{AppThemeBinding Light=#4a4a4a, Dark=#cfcfcf}"
+                                       HorizontalTextAlignment="End"
+                                       MaxLines="1"
+                                       LineBreakMode="TailTruncation" />
                             </VerticalStackLayout>
+
+                            <ProgressBar Grid.Row="2"
+                                         Grid.ColumnSpan="2"
+                                         Progress="{Binding TileOccupancyRate}"
+                                         ProgressColor="{Binding TileOccupancyColor}"
+                                         HeightRequest="6"
+                                         Margin="0,8,0,0" />
                         </Grid>
                     </Border>
                 </DataTemplate>

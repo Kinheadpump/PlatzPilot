@@ -122,14 +122,25 @@ public class SeatFinderService
 
     static private List<SeatHistoryPoint> BuildHistoricalEstimateHistory(string locationId, SeatFinderResponseDto liveData)
     {
+        var historyByTimestamp = new Dictionary<DateTime, SeatHistoryPoint>();
+
         if (liveData.SeatEstimates != null &&
             liveData.SeatEstimates.TryGetValue(locationId, out var estimateRecords) &&
             estimateRecords.Count > 0)
         {
-            return MapRecords(estimateRecords, isManual: false);
+            AddHistoryRecords(historyByTimestamp, estimateRecords, isManual: false);
         }
 
-        return [];
+        if (liveData.ManualCounts != null &&
+            liveData.ManualCounts.TryGetValue(locationId, out var manualRecords) &&
+            manualRecords.Count > 0)
+        {
+            AddHistoryRecords(historyByTimestamp, manualRecords, isManual: true);
+        }
+
+        return historyByTimestamp.Values
+            .OrderByDescending(point => point.Timestamp)
+            .ToList();
     }
 
     static private void AssignCurrentSeatData(string locationId, SeatFinderResponseDto liveData, StudySpace space)
@@ -188,6 +199,40 @@ public class SeatFinderService
             .Select(group => group.First())
             .OrderByDescending(point => point.Timestamp)
             .ToList();
+    }
+
+    static private void AddHistoryRecords(
+        Dictionary<DateTime, SeatHistoryPoint> historyByTimestamp,
+        List<SeatRecordDto> records,
+        bool isManual)
+    {
+        foreach (var record in records)
+        {
+            var timestamp = record.Timestamp?.GetParsedDate();
+            if (!timestamp.HasValue)
+            {
+                continue;
+            }
+
+            var point = new SeatHistoryPoint
+            {
+                Timestamp = timestamp.Value,
+                FreeSeats = Math.Max(0, record.FreeSeats),
+                OccupiedSeats = Math.Max(0, record.OccupiedSeats),
+                IsManualCount = isManual
+            };
+
+            if (!historyByTimestamp.TryGetValue(point.Timestamp, out var existing))
+            {
+                historyByTimestamp[point.Timestamp] = point;
+                continue;
+            }
+
+            if (point.IsManualCount && !existing.IsManualCount)
+            {
+                historyByTimestamp[point.Timestamp] = point;
+            }
+        }
     }
 
     static private void ParseCoordinates(string? geoString, StudySpace space)

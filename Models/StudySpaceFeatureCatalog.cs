@@ -8,7 +8,9 @@ public class StudySpaceFeatureCatalog
 public class StudySpaceFeatureEntry
 {
     public string Id { get; set; } = string.Empty;
+    public string? Nickname { get; set; }
     public List<string> RoomTypes { get; set; } = [];
+    public bool RequiresReservation { get; set; }
     public bool FreeWifi { get; set; }
     public bool PowerOutlets { get; set; }
     public bool Whiteboard { get; set; }
