@@ -1,3 +1,4 @@
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using PlatzPilot.Configuration;
 
@@ -30,6 +31,11 @@ public partial class UiLocation : ObservableObject
     public string SafetyLevelText { get; set; } = string.Format(AppText.QualityFormat, AppText.QualityLow);
     public string PeakTrendText { get; set; } = string.Format(AppText.PeakTrendFormat, AppText.PeakTrendFlat);
     public IReadOnlyList<float> OccupancySeries { get; set; } = Array.Empty<float>();
+    public bool IsMensaVirtual { get; set; }
+    public double MensaOccupancyRate { get; set; }
+    public string MensaDailyProgressText { get; set; } = string.Empty;
+    public TimeSpan? MensaOpeningStart { get; set; }
+    public TimeSpan? MensaOpeningEnd { get; set; }
 
     public DateTime? LastUpdated => SubSpaces.Max(s => s.LastUpdated);
     
@@ -73,6 +79,24 @@ public partial class UiLocation : ObservableObject
         {
             var firstSpace = SubSpaces.FirstOrDefault();
             var openingText = AppConfigProvider.Current.OpeningHoursText;
+
+            if (IsMensaVirtual && MensaOpeningStart.HasValue && MensaOpeningEnd.HasValue)
+            {
+                var day = ReferenceTime.DayOfWeek;
+                if (day < DayOfWeek.Monday || day > DayOfWeek.Friday)
+                {
+                    return openingText.ClosedText;
+                }
+
+                var start = ReferenceTime.Date.Add(MensaOpeningStart.Value);
+                var end = ReferenceTime.Date.Add(MensaOpeningEnd.Value);
+                var timeRange = string.Format(
+                    CultureInfo.CurrentCulture,
+                    openingText.TimeRangeFormat,
+                    start,
+                    end);
+                return timeRange + openingText.HoursSuffix;
+            }
             
             if (firstSpace == null)
             {
@@ -105,12 +129,28 @@ public partial class UiLocation : ObservableObject
         }
     }
     public double OccupancyRate => TotalSeats > 0 ? (double)OccupiedSeats / TotalSeats : 0;
-    public string AvailabilityText => string.Format(AppText.AvailabilityFormat, FreeSeats, TotalSeats);
+    public string AvailabilityText
+    {
+        get
+        {
+            var freeSeats = TotalSeats > 0
+                ? Math.Max(0, TotalSeats - OccupiedSeats)
+                : FreeSeats;
+            return string.Format(AppText.AvailabilityFormat, freeSeats, TotalSeats);
+        }
+    }
 
     public string HomeAvailabilityText => IsOpen ? AvailabilityText : AppText.NoCurrentInfoText;
     public string HomeAvailabilitySubText => string.Format(AppText.HomeAvailabilitySubFormat, TotalSeats);
     public bool IsHomeAvailabilitySubVisible => IsOpen;
-    public double HomeOccupancyRate => IsOpen ? OccupancyRate : 0;
+    public double HomeOccupancyRate
+    {
+        get
+        {
+            var rate = IsMensaVirtual ? MensaOccupancyRate : OccupancyRate;
+            return IsOpen ? rate : 0;
+        }
+    }
     public Color HomeOccupancyColor => IsOpen ? OccupancyColor : Color.FromArgb("#00000000");
 
     private bool IsWithinStudentAccessHours

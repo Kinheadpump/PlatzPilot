@@ -10,6 +10,7 @@ public sealed class AppConfig
     public UrlConfig Urls { get; set; } = new();
     public SeatFinderConfig SeatFinder { get; set; } = new();
     public SafeArrivalConfig SafeArrival { get; set; } = new();
+    public MensaForecastConfig MensaForecast { get; set; } = new();
     public StudentAccessConfig StudentAccess { get; set; } = new();
     public OpeningHoursTextConfig OpeningHoursText { get; set; } = new();
     public OpeningHoursSettings OpeningHours { get; set; } = new();
@@ -221,6 +222,20 @@ public sealed class SafeArrivalConfig
     public double DailyPeakThresholdMax { get; set; } = 0.98;
     public double HighProbabilityThreshold { get; set; } = 0.90;
     public double MediumProbabilityThreshold { get; set; } = 0.80;
+}
+
+public sealed class MensaForecastConfig
+{
+    public int Capacity { get; set; } = 2500;
+    public int DailyMensaMeals { get; set; } = 9000;
+    public double Latitude { get; set; } = 49.0118;
+    public double Longitude { get; set; } = 8.4169;
+    public double DistanceDamper { get; set; } = 0.005;
+    public int MinSpaceCapacity { get; set; } = 50;
+    public int EatingBufferMinutes { get; set; } = 45;
+    public TimeSpan WindowStart { get; set; } = new(11, 0, 0);
+    public TimeSpan CashDeskClose { get; set; } = new(14, 0, 0);
+    public int StepMinutes { get; set; } = 5;
 }
 
 public sealed class StudentAccessConfig

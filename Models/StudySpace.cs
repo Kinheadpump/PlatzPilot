@@ -69,7 +69,16 @@ public class StudySpace
     public SafeArrivalRecommendation? SafeArrivalRecommendation { get; set; }
 
     // --- DESIGNER PROPERTIES ---
-    public string AvailabilityText => string.Format(AppText.AvailabilityFormat, FreeSeats, TotalSeats);
+    public string AvailabilityText
+    {
+        get
+        {
+            var freeSeats = TotalSeats > 0
+                ? Math.Max(0, TotalSeats - OccupiedSeats)
+                : FreeSeats;
+            return string.Format(AppText.AvailabilityFormat, freeSeats, TotalSeats);
+        }
+    }
     public string AvailabilityDisplayText => IsOpen ? AvailabilityText : AppText.NoCurrentInfoText;
     public bool HasValidLastUpdated => LastUpdated.Year > AppConfigProvider.Current.UiNumbers.UnknownYearThreshold;
     public bool IsDataStale => IsOpen &&
