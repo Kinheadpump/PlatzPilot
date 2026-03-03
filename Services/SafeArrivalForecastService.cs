@@ -29,8 +29,11 @@ public sealed class SafeArrivalForecastService
             return EmptyResult();
         }
 
+        var includeToday = referenceTime.Hour >= 20; // Include today's data if it's already late in the day, otherwise it may add noise.
+
         var filteredHistory = history
             .Where(point => IsOpenAtTime(space, point.Timestamp))
+            .Where(point => includeToday || point.Timestamp.Date < referenceTime.Date)
             .ToList();
 
         if (filteredHistory.Count == 0)
