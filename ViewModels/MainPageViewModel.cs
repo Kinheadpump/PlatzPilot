@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -62,6 +63,12 @@ public partial class MainPageViewModel : ObservableObject
     private bool _isOfflineBannerVisible;
 
     [ObservableProperty]
+    private SafeArrivalRecommendation? _mensaSafeArrivalRecommendation;
+
+    [ObservableProperty]
+    private string _mensaFluxLabel = string.Empty;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBeforeMode))]
     private bool _useNow = true;
 
@@ -117,6 +124,9 @@ public partial class MainPageViewModel : ObservableObject
     private readonly Dictionary<string, SafeArrivalRecommendation?> _buildingSafeArrivalCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, List<float>> _spaceChartSeriesCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, List<float>> _buildingChartSeriesCache = new(StringComparer.OrdinalIgnoreCase);
+    private MensaForecastResult? _mensaForecastCache;
+    private double _mensaDynamicAlphaCache = double.NaN;
+    private DateTime _mensaDynamicAlphaCacheDate = DateTime.MinValue;
     private List<StudySpace> _allSpaces = [];
     private bool _spaceFeaturesLoaded;
     private bool _hasLoadedWeeklyHistory;
@@ -134,6 +144,14 @@ public partial class MainPageViewModel : ObservableObject
         "WIS"
     };
     private const string BadischeLandesbibliothekKey = "BLB_WIS";
+    private const string MensaVirtualSpaceId = "MENSA_VIRTUAL";
+    private const double MensaFluxThreshold = 15;
+    private const int MensaDynamicAlphaCalibrationDays = 3;
+    private const double MensaDynamicAlphaMin = 1.5;
+    private const double MensaDynamicAlphaMax = 10.0;
+    private const int MensaFluxLookbackMinutes = 15;
+    private const string MensaFluxFillingFastLabel = "Mensa füllt sich schnell";
+    private const string MensaFluxEmptyingLabel = "Mensa leert sich";
 
     public bool IsMainContentVisible => CurrentTab != _config.Tabs.Settings;
     public bool IsSettingsContentVisible => CurrentTab == _config.Tabs.Settings;
@@ -142,12 +160,12 @@ public partial class MainPageViewModel : ObservableObject
     public bool IsHomeEmpty => UiLocations.Count == 0 && CurrentTab == _config.Tabs.Home;
     public bool IsFavoritesEmpty => !IsBusy && UiLocations.Count == 0 && CurrentTab == _config.Tabs.Favorites;
     public bool IsNoResultsEmpty => UiLocations.Count == 0 && _allSpaces.Count > 0 && CurrentTab == _config.Tabs.Home && IsMainContentVisible;
-    public string EmptyStateTitle => IsNoResultsEmpty ? _config.UiText.NoResultsTitle : WelcomeMessage;
+    public string EmptyStateTitle => IsNoResultsEmpty ? _config.UiText.NoResultsTitle : MainPageViewModel.WelcomeMessage;
     public string EmptyStateSubtitle => IsNoResultsEmpty ? _config.UiText.NoResultsSubtitle : string.Empty;
     public bool IsEmptySubtitleVisible => IsNoResultsEmpty;
     public bool IsBeforeMode => !UseNow;
     public bool IsSearchInactive => !IsSearchActive;
-    public DateTime MaxSelectableDate => DateTime.Today;
+    public static DateTime MaxSelectableDate => DateTime.Today;
     public double MinimumOpenHoursMin => _config.UiNumbers.MinOpeningHours;
     public double MinimumOpenHoursMax => _config.UiNumbers.MaxOpeningHours;
     public string MinimumOpenHoursText =>
@@ -156,7 +174,7 @@ public partial class MainPageViewModel : ObservableObject
         string.Format(CultureInfo.CurrentCulture, _config.UiText.ShowResultsFormat, FilteredLocationCount);
     public string SettingsVersionText =>
         string.Format(CultureInfo.CurrentCulture, _config.UiText.SettingsVersionFormat, _config.AppInfo.Version);
-    public string WelcomeMessage => GetWelcomeMessage();
+    public static string WelcomeMessage => GetWelcomeMessage();
 
     public List<string> SortOptions { get; }
 
@@ -328,7 +346,7 @@ public partial class MainPageViewModel : ObservableObject
         _isUpdatingDateTimeSelection = true;
         if (SelectedDate.Date > DateTime.Today)
         {
-            SelectedDate = MaxSelectableDate;
+            SelectedDate = MainPageViewModel.MaxSelectableDate;
         }
 
         if (SelectedTime == TimeSpan.Zero)
@@ -546,6 +564,7 @@ public partial class MainPageViewModel : ObservableObject
 
             ApplySpaceFeatureOverrides(_allSpaces);
 
+            MensaForecastResult? mensaResult = null;
             await Task.Run(() =>
             {
                 if (shouldReloadWeeklyHistory)
@@ -572,7 +591,11 @@ public partial class MainPageViewModel : ObservableObject
                     UpdateChartSeriesCache();
                     _hasComputedChartSeries = true;
                 }
+
+                mensaResult = BuildMensaForecastResult();
             });
+
+            ApplyMensaForecastResult(mensaResult);
 
             _lastLoadedBeforeParameter = shouldReloadWeeklyHistory
                 ? _config.SeatFinder.NowToken
@@ -631,7 +654,7 @@ public partial class MainPageViewModel : ObservableObject
         if (value.Date > DateTime.Today)
         {
             _isUpdatingDateTimeSelection = true;
-            SelectedDate = MaxSelectableDate;
+            SelectedDate = MainPageViewModel.MaxSelectableDate;
             _isUpdatingDateTimeSelection = false;
         }
         UpdateFilteredLocationPreviewCount();
@@ -843,6 +866,924 @@ public partial class MainPageViewModel : ObservableObject
             }
         }
     }
+
+    private void ApplyMensaForecastResult(MensaForecastResult? result)
+    {
+        _mensaForecastCache = result;
+        MensaSafeArrivalRecommendation = result?.Recommendation;
+        MensaFluxLabel = result?.FluxLabel ?? string.Empty;
+
+        _spaceChartSeriesCache.Remove(MensaVirtualSpaceId);
+        if (result?.ChartSeries != null && result.ChartSeries.Count > 0)
+        {
+            _spaceChartSeriesCache[MensaVirtualSpaceId] = result.ChartSeries.ToList();
+        }
+    }
+
+    private MensaForecastResult? BuildMensaForecastResult()
+    {
+        if (_allSpaces.Count == 0 || _historicalSeatDataByLocation.Count == 0)
+        {
+            return null;
+        }
+
+        var mensaConfig = _config.MensaForecast;
+        if (mensaConfig.Capacity <= 0)
+        {
+            return null;
+        }
+
+        var stepMinutes = Math.Max(1, mensaConfig.StepMinutes);
+        var windowStart = mensaConfig.WindowStart;
+        var bufferMinutes = Math.Max(0, mensaConfig.EatingBufferMinutes);
+        var windowEnd = mensaConfig.CashDeskClose.Add(TimeSpan.FromMinutes(bufferMinutes));
+        var openingHoursEnd = mensaConfig.CashDeskClose;
+
+        if (windowEnd <= windowStart)
+        {
+            return null;
+        }
+
+        var windowStartMinute = NormalizeToStepMinutes(windowStart, stepMinutes);
+        var windowEndMinute = NormalizeToStepMinutes(windowEnd, stepMinutes);
+        if (windowEndMinute <= windowStartMinute)
+        {
+            return null;
+        }
+
+        var referenceDate = _safeArrivalReferenceDate == DateTime.MinValue
+            ? DateTime.Today
+            : _safeArrivalReferenceDate;
+
+        var historyDays = Math.Max(1, _config.SafeArrival.HistoryWindowDays);
+        var endDate = referenceDate.Date.AddDays(-1);
+        var startDate = endDate.AddDays(-(historyDays - 1));
+
+        var snapshots = BuildMensaSpaceSnapshots(
+            startDate,
+            endDate,
+            windowStartMinute,
+            windowEndMinute,
+            stepMinutes,
+            mensaConfig);
+
+        var dynamicAlpha = GetDynamicMensaAlpha(
+            referenceDate,
+            mensaConfig,
+            snapshots,
+            windowStartMinute,
+            windowEndMinute,
+            stepMinutes);
+
+        var dailyProgressText = BuildMensaDailyProgressText(
+            DateTime.Now,
+            windowStartMinute,
+            windowEndMinute,
+            stepMinutes,
+            dynamicAlpha,
+            mensaConfig,
+            snapshots,
+            out var servedTodayEstimate);
+
+        var fluxLabel = BuildMensaFluxLabel(
+            DateTime.Now,
+            windowStartMinute,
+            windowEndMinute,
+            stepMinutes,
+            dynamicAlpha,
+            snapshots);
+
+        if (snapshots.Count == 0)
+        {
+            return new MensaForecastResult(
+                null,
+                fluxLabel,
+                snapshots,
+                windowStartMinute,
+                windowEndMinute,
+                stepMinutes,
+                windowStart,
+                windowEnd,
+                openingHoursEnd,
+                referenceDate,
+                Array.Empty<float>(),
+                dynamicAlpha,
+                dailyProgressText,
+                mensaConfig.DailyMensaMeals,
+                servedTodayEstimate);
+        }
+
+        var history = BuildMensaVirtualHistory(
+            startDate,
+            endDate,
+            windowStartMinute,
+            windowEndMinute,
+            stepMinutes,
+            dynamicAlpha,
+            mensaConfig,
+            snapshots);
+        AppendMensaLiveHistoryPoints(
+            history,
+            DateTime.Today,
+            DateTime.Now,
+            windowStartMinute,
+            windowEndMinute,
+            stepMinutes,
+            dynamicAlpha,
+            mensaConfig,
+            snapshots);
+
+        SafeArrivalRecommendation? recommendation = null;
+        IReadOnlyList<float> chartSeries = Array.Empty<float>();
+        if (history.Count > 0)
+        {
+            history.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
+
+            var virtualSpace = new StudySpace
+            {
+                Id = MensaVirtualSpaceId,
+                Name = "Mensa (virtuell)",
+                TotalSeats = mensaConfig.Capacity,
+                OpeningHours = BuildMensaOpeningHours(referenceDate, windowStart, windowEnd),
+                ReferenceTime = referenceDate
+            };
+
+            recommendation = _safeArrivalForecastService.Calculate(virtualSpace, history, referenceDate);
+
+            var chartConfig = _config.Charts;
+            var binMinutes = Math.Max(1, chartConfig.BinMinutes);
+            var endTime = NormalizeToChartBin(DateTime.Now, binMinutes);
+            var startTime = endTime.AddHours(-chartConfig.HistoryHours);
+            chartSeries = BuildOccupancySeries(history, startTime, endTime, binMinutes);
+        }
+
+        return new MensaForecastResult(
+            recommendation,
+            fluxLabel,
+            snapshots,
+            windowStartMinute,
+            windowEndMinute,
+            stepMinutes,
+            windowStart,
+            windowEnd,
+            openingHoursEnd,
+            referenceDate,
+            chartSeries,
+            dynamicAlpha,
+            dailyProgressText,
+            mensaConfig.DailyMensaMeals,
+            servedTodayEstimate);
+    }
+
+    private List<MensaSpaceSnapshot> BuildMensaSpaceSnapshots(
+        DateTime startDate,
+        DateTime endDate,
+        int windowStartMinute,
+        int windowEndMinute,
+        int stepMinutes,
+        MensaForecastConfig mensaConfig)
+    {
+        var snapshots = new List<MensaSpaceSnapshot>();
+        if (!IsValidCoordinate(mensaConfig.Latitude, mensaConfig.Longitude))
+        {
+            return snapshots;
+        }
+
+        foreach (var space in _allSpaces)
+        {
+            if (space.TotalSeats < mensaConfig.MinSpaceCapacity)
+            {
+                continue;
+            }
+
+            if (!IsValidCoordinate(space.Latitude, space.Longitude))
+            {
+                continue;
+            }
+
+            if (!_historicalSeatDataByLocation.TryGetValue(space.Id, out var history) || history.Count == 0)
+            {
+                continue;
+            }
+
+            var distance = HaversineDistanceMeters(
+                mensaConfig.Latitude,
+                mensaConfig.Longitude,
+                space.Latitude,
+                space.Longitude);
+            var weight = Math.Exp(-mensaConfig.DistanceDamper * distance);
+            if (weight <= 0)
+            {
+                continue;
+            }
+
+            var occupiedByDay = BuildOccupiedByDay(
+                history,
+                startDate,
+                endDate,
+                windowStartMinute,
+                windowEndMinute,
+                stepMinutes);
+
+            if (occupiedByDay.Count == 0)
+            {
+                continue;
+            }
+
+            var occupiedToday = BuildOccupiedForDay(
+                history,
+                DateTime.Today,
+                windowStartMinute,
+                windowEndMinute,
+                stepMinutes);
+
+            snapshots.Add(new MensaSpaceSnapshot(weight, occupiedByDay, occupiedToday));
+        }
+
+        return snapshots;
+    }
+
+    private static Dictionary<DateTime, Dictionary<int, int>> BuildOccupiedByDay(
+        IReadOnlyList<SeatHistoryPoint> history,
+        DateTime startDate,
+        DateTime endDate,
+        int windowStartMinute,
+        int windowEndMinute,
+        int stepMinutes)
+    {
+        var occupiedByDay = new Dictionary<DateTime, Dictionary<int, int>>();
+
+        foreach (var point in history)
+        {
+            var day = point.Timestamp.Date;
+            if (day < startDate || day > endDate)
+            {
+                continue;
+            }
+
+            if (!IsMensaOpenDay(day))
+            {
+                continue;
+            }
+
+            var minute = NormalizeToStepMinutes(point.Timestamp.TimeOfDay, stepMinutes);
+            if (minute < windowStartMinute || minute > windowEndMinute)
+            {
+                continue;
+            }
+
+            if (!occupiedByDay.TryGetValue(day, out var dayMap))
+            {
+                dayMap = new Dictionary<int, int>();
+                occupiedByDay[day] = dayMap;
+            }
+
+            if (!dayMap.ContainsKey(minute))
+            {
+                dayMap[minute] = Math.Max(0, point.OccupiedSeats);
+            }
+        }
+
+        return occupiedByDay;
+    }
+
+    private static Dictionary<int, int> BuildOccupiedForDay(
+        IReadOnlyList<SeatHistoryPoint> history,
+        DateTime day,
+        int windowStartMinute,
+        int windowEndMinute,
+        int stepMinutes)
+    {
+        var occupiedByMinute = new Dictionary<int, int>();
+
+        foreach (var point in history)
+        {
+            if (point.Timestamp.Date != day)
+            {
+                continue;
+            }
+
+            var minute = NormalizeToStepMinutes(point.Timestamp.TimeOfDay, stepMinutes);
+            if (minute < windowStartMinute || minute > windowEndMinute)
+            {
+                continue;
+            }
+
+            if (!occupiedByMinute.ContainsKey(minute))
+            {
+                occupiedByMinute[minute] = Math.Max(0, point.OccupiedSeats);
+            }
+        }
+
+        return occupiedByMinute;
+    }
+
+    private static List<SeatHistoryPoint> BuildMensaVirtualHistory(
+        DateTime startDate,
+        DateTime endDate,
+        int windowStartMinute,
+        int windowEndMinute,
+        int stepMinutes,
+        double dynamicAlpha,
+        MensaForecastConfig mensaConfig,
+        List<MensaSpaceSnapshot> snapshots)
+    {
+        var history = new List<SeatHistoryPoint>();
+        var alpha = double.IsFinite(dynamicAlpha) ? dynamicAlpha : MensaDynamicAlphaMin;
+
+        for (var day = startDate.Date; day <= endDate.Date; day = day.AddDays(1))
+        {
+            if (!IsMensaOpenDay(day))
+            {
+                continue;
+            }
+
+            for (var minute = windowStartMinute; minute <= windowEndMinute; minute += stepMinutes)
+            {
+                if (!TryCalculateTotalDeficit(
+                        day,
+                        minute,
+                        windowStartMinute,
+                        windowEndMinute,
+                        snapshots,
+                        out var totalDeficit))
+                {
+                    continue;
+                }
+
+                var occupancy = Math.Clamp((int)(totalDeficit * alpha), 0, mensaConfig.Capacity);
+                var freeSeats = Math.Max(0, mensaConfig.Capacity - occupancy);
+
+                history.Add(new SeatHistoryPoint
+                {
+                    Timestamp = day.AddMinutes(minute),
+                    FreeSeats = freeSeats,
+                    OccupiedSeats = occupancy,
+                    IsManualCount = false
+                });
+            }
+        }
+
+        return history;
+    }
+
+    private static void AppendMensaLiveHistoryPoints(
+        List<SeatHistoryPoint> history,
+        DateTime today,
+        DateTime now,
+        int windowStartMinute,
+        int windowEndMinute,
+        int stepMinutes,
+        double dynamicAlpha,
+        MensaForecastConfig mensaConfig,
+        List<MensaSpaceSnapshot> snapshots)
+    {
+        if (history == null || snapshots.Count == 0)
+        {
+            return;
+        }
+
+        if (!IsMensaOpenDay(today))
+        {
+            return;
+        }
+
+        if (!TryGetLastMensaReferenceDay(today, snapshots, out var referenceDay))
+        {
+            return;
+        }
+
+        if (now.Date != today.Date)
+        {
+            now = today.AddMinutes(windowEndMinute);
+        }
+
+        var nowMinute = NormalizeToStepMinutes(now.TimeOfDay, stepMinutes);
+        if (nowMinute < windowStartMinute)
+        {
+            return;
+        }
+
+        var lastMinute = Math.Min(nowMinute, windowEndMinute);
+        var alpha = double.IsFinite(dynamicAlpha) ? dynamicAlpha : MensaDynamicAlphaMin;
+
+        for (var minute = windowStartMinute; minute <= lastMinute; minute += stepMinutes)
+        {
+            var progressRatio = (minute - windowStartMinute) / (double)(windowEndMinute - windowStartMinute);
+            var hasData = false;
+            var totalDeficit = 0.0;
+
+            foreach (var snapshot in snapshots)
+            {
+                if (!snapshot.OccupiedByDay.TryGetValue(referenceDay, out var referenceDayMap))
+                {
+                    continue;
+                }
+
+                if (!TryGetNearestOccupied(referenceDayMap, windowStartMinute, out var occStartReference) ||
+                    !TryGetNearestOccupied(referenceDayMap, windowEndMinute, out var occEndReference))
+                {
+                    continue;
+                }
+
+                if (!TryGetNearestOccupied(snapshot.OccupiedToday, windowStartMinute, out var occStartToday) ||
+                    !TryGetNearestOccupied(snapshot.OccupiedToday, minute, out var occNow))
+                {
+                    continue;
+                }
+
+                var deltaHist = occEndReference - occStartReference;
+                var baseline = occStartToday + (progressRatio * deltaHist);
+                var deficit = Math.Max(0, baseline - occNow);
+                totalDeficit += deficit * snapshot.Weight;
+                hasData = true;
+            }
+
+            if (!hasData)
+            {
+                continue;
+            }
+
+            var occupancy = Math.Clamp((int)(totalDeficit * alpha), 0, mensaConfig.Capacity);
+            var freeSeats = Math.Max(0, mensaConfig.Capacity - occupancy);
+
+            history.Add(new SeatHistoryPoint
+            {
+                Timestamp = today.AddMinutes(minute),
+                FreeSeats = freeSeats,
+                OccupiedSeats = occupancy,
+                IsManualCount = false
+            });
+        }
+    }
+
+    private static bool TryGetLastMensaReferenceDay(
+        DateTime today,
+        List<MensaSpaceSnapshot> snapshots,
+        out DateTime referenceDay)
+    {
+        referenceDay = DateTime.MinValue;
+
+        foreach (var snapshot in snapshots)
+        {
+            foreach (var day in snapshot.OccupiedByDay.Keys)
+            {
+                if (day >= today || !IsMensaOpenDay(day))
+                {
+                    continue;
+                }
+
+                if (day > referenceDay)
+                {
+                    referenceDay = day;
+                }
+            }
+        }
+
+        return referenceDay != DateTime.MinValue;
+    }
+
+    private double GetDynamicMensaAlpha(
+        DateTime referenceDate,
+        MensaForecastConfig mensaConfig,
+        List<MensaSpaceSnapshot> snapshots,
+        int windowStartMinute,
+        int windowEndMinute,
+        int stepMinutes)
+    {
+        var referenceDay = referenceDate.Date;
+        if (_mensaDynamicAlphaCacheDate == referenceDay && !double.IsNaN(_mensaDynamicAlphaCache))
+        {
+            return _mensaDynamicAlphaCache;
+        }
+
+        var alpha = CalculateDynamicMensaAlpha(
+            referenceDay,
+            mensaConfig,
+            snapshots,
+            windowStartMinute,
+            windowEndMinute,
+            stepMinutes);
+
+        _mensaDynamicAlphaCacheDate = referenceDay;
+        _mensaDynamicAlphaCache = alpha;
+        return alpha;
+    }
+
+    private double CalculateDynamicMensaAlpha(
+        DateTime referenceDay,
+        MensaForecastConfig mensaConfig,
+        List<MensaSpaceSnapshot> snapshots,
+        int windowStartMinute,
+        int windowEndMinute,
+        int stepMinutes)
+    {
+        if (mensaConfig.DailyMensaMeals <= 0 || snapshots.Count == 0)
+        {
+            return MensaDynamicAlphaMin;
+        }
+
+        var historyWindowDays = Math.Max(1, _config.SafeArrival.HistoryWindowDays);
+        var calibrationDays = GetRecentMensaOpenDays(referenceDay, MensaDynamicAlphaCalibrationDays, historyWindowDays);
+        if (calibrationDays.Count == 0)
+        {
+            return MensaDynamicAlphaMin;
+        }
+
+        var visitorCounts = new List<double>();
+        foreach (var day in calibrationDays)
+        {
+            var deficits = BuildDeficitSeriesForDay(
+                day,
+                windowStartMinute,
+                windowEndMinute,
+                stepMinutes,
+                snapshots,
+                windowEndMinute);
+            var visitors = CalculatePositiveFlow(deficits);
+            if (visitors > 0)
+            {
+                visitorCounts.Add(visitors);
+            }
+        }
+
+        if (visitorCounts.Count == 0)
+        {
+            return MensaDynamicAlphaMin;
+        }
+
+        var averageVisitors = visitorCounts.Average();
+        if (averageVisitors <= 0)
+        {
+            return MensaDynamicAlphaMin;
+        }
+
+        var alpha = mensaConfig.DailyMensaMeals / averageVisitors;
+        return Math.Clamp(alpha, MensaDynamicAlphaMin, MensaDynamicAlphaMax);
+    }
+
+    private string BuildMensaDailyProgressText(
+        DateTime now,
+        int windowStartMinute,
+        int windowEndMinute,
+        int stepMinutes,
+        double dynamicAlpha,
+        MensaForecastConfig mensaConfig,
+        List<MensaSpaceSnapshot> snapshots,
+        out int servedTodayEstimate)
+    {
+        servedTodayEstimate = 0;
+
+        if (mensaConfig.DailyMensaMeals <= 0 || snapshots.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var today = now.Date;
+        if (!IsMensaOpenDay(today))
+        {
+            return string.Empty;
+        }
+
+        var nowMinute = NormalizeToStepMinutes(now.TimeOfDay, stepMinutes);
+        var lastMinute = Math.Clamp(nowMinute, windowStartMinute, windowEndMinute);
+        if (lastMinute < windowStartMinute)
+        {
+            return string.Empty;
+        }
+
+        var deficits = BuildDeficitSeriesForDay(
+            today,
+            windowStartMinute,
+            windowEndMinute,
+            stepMinutes,
+            snapshots,
+            lastMinute);
+        if (deficits.Count < 2)
+        {
+            return string.Empty;
+        }
+
+        var visitors = CalculatePositiveFlow(deficits);
+        var alpha = double.IsFinite(dynamicAlpha) ? dynamicAlpha : MensaDynamicAlphaMin;
+        servedTodayEstimate = Math.Clamp(
+            (int)Math.Round(visitors * alpha),
+            0,
+            mensaConfig.DailyMensaMeals);
+
+        var servedText = servedTodayEstimate.ToString("N0", CultureInfo.CurrentCulture);
+        var mealsText = mensaConfig.DailyMensaMeals.ToString("N0", CultureInfo.CurrentCulture);
+        return $"Heute schon ~ {servedText} von {mealsText} Portionen ausgegeben";
+    }
+
+    private static List<double> BuildDeficitSeriesForDay(
+        DateTime day,
+        int windowStartMinute,
+        int windowEndMinute,
+        int stepMinutes,
+        List<MensaSpaceSnapshot> snapshots,
+        int lastMinute)
+    {
+        var series = new List<double>();
+        var endMinute = Math.Min(windowEndMinute, lastMinute);
+
+        for (var minute = windowStartMinute; minute <= endMinute; minute += stepMinutes)
+        {
+            if (TryCalculateTotalDeficit(
+                    day,
+                    minute,
+                    windowStartMinute,
+                    windowEndMinute,
+                    snapshots,
+                    out var totalDeficit))
+            {
+                series.Add(totalDeficit);
+            }
+        }
+
+        return series;
+    }
+
+    private static double CalculatePositiveFlow(IReadOnlyList<double> deficits)
+    {
+        if (deficits.Count < 2)
+        {
+            return 0;
+        }
+
+        var sum = 0.0;
+        for (var i = 1; i < deficits.Count; i++)
+        {
+            var delta = deficits[i] - deficits[i - 1];
+            if (delta > 0)
+            {
+                sum += delta;
+            }
+        }
+
+        return sum;
+    }
+
+    private static List<DateTime> GetRecentMensaOpenDays(DateTime referenceDay, int maxDays, int historyWindowDays)
+    {
+        var days = new List<DateTime>();
+        var earliest = referenceDay.AddDays(-Math.Max(1, historyWindowDays));
+
+        for (var day = referenceDay.AddDays(-1); day >= earliest && days.Count < maxDays; day = day.AddDays(-1))
+        {
+            if (IsMensaOpenDay(day))
+            {
+                days.Add(day);
+            }
+        }
+
+        return days;
+    }
+
+    private string BuildMensaFluxLabel(
+        DateTime now,
+        int windowStartMinute,
+        int windowEndMinute,
+        int stepMinutes,
+        double dynamicAlpha,
+        List<MensaSpaceSnapshot> snapshots)
+    {
+        if (snapshots.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var nowDate = now.Date;
+        if (!IsMensaOpenDay(nowDate))
+        {
+            return string.Empty;
+        }
+
+        var past = now.AddMinutes(-MensaFluxLookbackMinutes);
+        if (past.Date != nowDate)
+        {
+            return string.Empty;
+        }
+
+        var nowMinute = NormalizeToStepMinutes(now.TimeOfDay, stepMinutes);
+        var pastMinute = NormalizeToStepMinutes(past.TimeOfDay, stepMinutes);
+
+        if (nowMinute < windowStartMinute || nowMinute > windowEndMinute ||
+            pastMinute < windowStartMinute || pastMinute > windowEndMinute)
+        {
+            return string.Empty;
+        }
+
+        if (!TryCalculateTotalDeficit(
+                nowDate,
+                nowMinute,
+                windowStartMinute,
+                windowEndMinute,
+                snapshots,
+                out var deficitNow))
+        {
+            return string.Empty;
+        }
+
+        if (!TryCalculateTotalDeficit(
+                nowDate,
+                pastMinute,
+                windowStartMinute,
+                windowEndMinute,
+                snapshots,
+                out var deficitPast))
+        {
+            return string.Empty;
+        }
+
+        var alpha = double.IsFinite(dynamicAlpha) ? dynamicAlpha : MensaDynamicAlphaMin;
+        var flux = (deficitNow - deficitPast) * alpha;
+        if (flux > MensaFluxThreshold)
+        {
+            return MensaFluxFillingFastLabel;
+        }
+
+        if (flux < -MensaFluxThreshold)
+        {
+            return MensaFluxEmptyingLabel;
+        }
+
+        return string.Empty;
+    }
+
+    private static bool TryCalculateTotalDeficit(
+        DateTime day,
+        int minute,
+        int windowStartMinute,
+        int windowEndMinute,
+        List<MensaSpaceSnapshot> snapshots,
+        out double totalDeficit)
+    {
+        totalDeficit = 0;
+        if (minute < windowStartMinute || minute > windowEndMinute || windowEndMinute <= windowStartMinute)
+        {
+            return false;
+        }
+
+        var frac = (minute - windowStartMinute) / (double)(windowEndMinute - windowStartMinute);
+        var hasData = false;
+
+        foreach (var snapshot in snapshots)
+        {
+            if (!snapshot.OccupiedByDay.TryGetValue(day, out var dayMap))
+            {
+                continue;
+            }
+
+            if (!TryGetNearestOccupied(dayMap, windowStartMinute, out var occStart) ||
+                !TryGetNearestOccupied(dayMap, windowEndMinute, out var occEnd) ||
+                !TryGetNearestOccupied(dayMap, minute, out var occNow))
+            {
+                continue;
+            }
+
+            hasData = true;
+            var baseline = occStart + (occEnd - occStart) * frac;
+            var deficit = Math.Max(0, baseline - occNow);
+            totalDeficit += deficit * snapshot.Weight;
+        }
+
+        return hasData;
+    }
+
+    private static bool TryGetNearestOccupied(Dictionary<int, int> dayMap, int targetMinute, out int occupied)
+    {
+        occupied = 0;
+        if (dayMap.Count == 0)
+        {
+            return false;
+        }
+
+        if (dayMap.TryGetValue(targetMinute, out occupied))
+        {
+            return true;
+        }
+
+        var bestDiff = int.MaxValue;
+        var bestValue = 0;
+
+        foreach (var entry in dayMap)
+        {
+            var diff = Math.Abs(entry.Key - targetMinute);
+            if (diff >= bestDiff)
+            {
+                continue;
+            }
+
+            bestDiff = diff;
+            bestValue = entry.Value;
+        }
+
+        if (bestDiff == int.MaxValue)
+        {
+            return false;
+        }
+
+        occupied = bestValue;
+        return true;
+    }
+
+    private OpeningHoursDto BuildMensaOpeningHours(DateTime referenceDate, TimeSpan windowStart, TimeSpan windowEnd)
+    {
+        var format = string.IsNullOrWhiteSpace(_config.SeatFinder.TimestampFormat)
+            ? "yyyy-MM-dd HH:mm:ss.ffffff"
+            : _config.SeatFinder.TimestampFormat;
+
+        var daysSinceMonday = ((int)referenceDate.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+        var monday = referenceDate.Date.AddDays(-daysSinceMonday);
+
+        var weeklyOpeningHours = new List<List<TimestampDto>>();
+        for (var dayOffset = 0; dayOffset < 5; dayOffset++)
+        {
+            var day = monday.AddDays(dayOffset);
+            weeklyOpeningHours.Add(
+            [
+                new TimestampDto { Date = day.Add(windowStart).ToString(format, CultureInfo.InvariantCulture) },
+                new TimestampDto { Date = day.Add(windowEnd).ToString(format, CultureInfo.InvariantCulture) }
+            ]);
+        }
+
+        return new OpeningHoursDto
+        {
+            WeeklyOpeningHours = weeklyOpeningHours
+        };
+    }
+
+    private static int NormalizeToStepMinutes(TimeSpan timeOfDay, int stepMinutes)
+    {
+        var minutes = timeOfDay.TotalMinutes;
+        var normalized = (int)Math.Round(minutes / stepMinutes, MidpointRounding.AwayFromZero) * stepMinutes;
+        var maxMinute = (24 * 60) - stepMinutes;
+        return Math.Clamp(normalized, 0, maxMinute);
+    }
+
+    private static bool IsMensaOpenDay(DateTime date)
+    {
+        return date.DayOfWeek >= DayOfWeek.Monday && date.DayOfWeek <= DayOfWeek.Friday;
+    }
+
+    private static bool IsValidCoordinate(double latitude, double longitude)
+    {
+        if (double.IsNaN(latitude) || double.IsNaN(longitude))
+        {
+            return false;
+        }
+
+        if (latitude == 0 || longitude == 0)
+        {
+            return false;
+        }
+
+        return Math.Abs(latitude) <= 90 && Math.Abs(longitude) <= 180;
+    }
+
+    private static double HaversineDistanceMeters(double latitude1, double longitude1, double latitude2, double longitude2)
+    {
+        const double earthRadiusMeters = 6371000;
+        var dLat = DegreesToRadians(latitude2 - latitude1);
+        var dLon = DegreesToRadians(longitude2 - longitude1);
+        var lat1Rad = DegreesToRadians(latitude1);
+        var lat2Rad = DegreesToRadians(latitude2);
+
+        var sinLat = Math.Sin(dLat / 2);
+        var sinLon = Math.Sin(dLon / 2);
+        var a = (sinLat * sinLat) +
+                (Math.Cos(lat1Rad) * Math.Cos(lat2Rad) * sinLon * sinLon);
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return earthRadiusMeters * c;
+    }
+
+    private static double DegreesToRadians(double degrees)
+    {
+        return degrees * (Math.PI / 180.0);
+    }
+
+    private sealed record MensaForecastResult(
+        SafeArrivalRecommendation? Recommendation,
+        string FluxLabel,
+        List<MensaSpaceSnapshot> Snapshots,
+        int WindowStartMinute,
+        int WindowEndMinute,
+        int StepMinutes,
+        TimeSpan WindowStart,
+        TimeSpan WindowEnd,
+        TimeSpan OpeningHoursEnd,
+        DateTime ReferenceDate,
+        IReadOnlyList<float> ChartSeries,
+        double DynamicAlpha,
+        string DailyProgressText,
+        int DailyMealsTarget,
+        int ServedTodayEstimate);
+
+    private sealed record MensaSpaceSnapshot(
+        double Weight,
+        Dictionary<DateTime, Dictionary<int, int>> OccupiedByDay,
+        Dictionary<int, int> OccupiedToday);
 
     private void UpdateChartSeriesCache()
     {
@@ -1076,7 +2017,7 @@ public partial class MainPageViewModel : ObservableObject
             return;
         }
 
-        var filteredSpaces = ApplySpaceFilters(_allSpaces);
+        var filteredSpaces = ApplySpaceFilters(GetSpacesWithMensa());
         var results = MapSpacesToUiLocations(filteredSpaces);
 
         if (CurrentTab == _config.Tabs.Home && IsHideClosedLocations)
@@ -1095,6 +2036,152 @@ public partial class MainPageViewModel : ObservableObject
         ReplaceUiLocations(sortedResults);
     }
 
+    private IEnumerable<StudySpace> GetSpacesWithMensa()
+    {
+        if (_allSpaces.Count == 0)
+        {
+            return _allSpaces;
+        }
+
+        var spaces = new List<StudySpace>(_allSpaces);
+        var mensaSpace = BuildMensaVirtualSpace();
+        if (mensaSpace != null)
+        {
+            spaces.Add(mensaSpace);
+        }
+
+        return spaces;
+    }
+
+    private StudySpace? BuildMensaVirtualSpace()
+    {
+        var cache = _mensaForecastCache;
+        if (cache == null || cache.Snapshots.Count == 0)
+        {
+            return null;
+        }
+
+        var mensaConfig = _config.MensaForecast;
+        if (mensaConfig.Capacity <= 0)
+        {
+            return null;
+        }
+
+        var referenceTime = GetReferenceDateTime();
+        var occupiedSeats = 0;
+        var hasOccupancy = TryGetMensaOccupancy(referenceTime, mensaConfig, cache, out occupiedSeats);
+        var freeSeats = hasOccupancy
+            ? Math.Max(0, mensaConfig.Capacity - occupiedSeats)
+            : 0;
+
+        return new StudySpace
+        {
+            Id = MensaVirtualSpaceId,
+            Name = "Mensa am Adenauerring",
+            TotalSeats = mensaConfig.Capacity,
+            OccupiedSeats = occupiedSeats,
+            FreeSeats = freeSeats,
+            IsManualCount = false,
+            Latitude = mensaConfig.Latitude,
+            Longitude = mensaConfig.Longitude,
+            OpeningHours = BuildMensaOpeningHours(cache.ReferenceDate, cache.WindowStart, cache.OpeningHoursEnd),
+            LastUpdated = hasOccupancy ? referenceTime : DateTime.MinValue,
+            ReferenceTime = referenceTime,
+            SafeArrivalRecommendation = MensaSafeArrivalRecommendation
+        };
+    }
+
+    private static bool TryGetMensaOccupancy(
+        DateTime referenceTime,
+        MensaForecastConfig mensaConfig,
+        MensaForecastResult cache,
+        out int occupiedSeats)
+    {
+        occupiedSeats = 0;
+
+        if (!IsMensaOpenDay(referenceTime.Date))
+        {
+            return false;
+        }
+
+        var minute = NormalizeToStepMinutes(referenceTime.TimeOfDay, cache.StepMinutes);
+        if (!TryCalculateTotalDeficit(
+                referenceTime.Date,
+                minute,
+                cache.WindowStartMinute,
+                cache.WindowEndMinute,
+                cache.Snapshots,
+                out var totalDeficit))
+        {
+            if (referenceTime.Date != DateTime.Today ||
+                !TryCalculateLiveTotalDeficit(
+                    referenceTime.Date,
+                    minute,
+                    cache.WindowStartMinute,
+                    cache.WindowEndMinute,
+                    cache.Snapshots,
+                    out totalDeficit))
+            {
+                return false;
+            }
+        }
+
+        var alpha = double.IsFinite(cache.DynamicAlpha) ? cache.DynamicAlpha : MensaDynamicAlphaMin;
+        occupiedSeats = Math.Clamp((int)(totalDeficit * alpha), 0, mensaConfig.Capacity);
+        return true;
+    }
+
+    private static bool TryCalculateLiveTotalDeficit(
+        DateTime today,
+        int minute,
+        int windowStartMinute,
+        int windowEndMinute,
+        List<MensaSpaceSnapshot> snapshots,
+        out double totalDeficit)
+    {
+        totalDeficit = 0;
+        if (minute < windowStartMinute || minute > windowEndMinute || windowEndMinute <= windowStartMinute)
+        {
+            return false;
+        }
+
+        if (!TryGetLastMensaReferenceDay(today, snapshots, out var referenceDay))
+        {
+            return false;
+        }
+
+        var progressRatio = (minute - windowStartMinute) / (double)(windowEndMinute - windowStartMinute);
+        var hasData = false;
+
+        foreach (var snapshot in snapshots)
+        {
+            if (!snapshot.OccupiedByDay.TryGetValue(referenceDay, out var referenceDayMap))
+            {
+                continue;
+            }
+
+            if (!TryGetNearestOccupied(referenceDayMap, windowStartMinute, out var occStartReference) ||
+                !TryGetNearestOccupied(referenceDayMap, windowEndMinute, out var occEndReference))
+            {
+                continue;
+            }
+
+            if (!TryGetNearestOccupied(snapshot.OccupiedToday, windowStartMinute, out var occStartToday) ||
+                !TryGetNearestOccupied(snapshot.OccupiedToday, minute, out var occNow))
+            {
+                continue;
+            }
+
+            var deltaHist = occEndReference - occStartReference;
+            var baseline = occStartToday + (progressRatio * deltaHist);
+            var deficit = Math.Max(0, baseline - occNow);
+            totalDeficit += deficit * snapshot.Weight;
+            hasData = true;
+        }
+
+        return hasData;
+    }
+
     private void UpdateFilteredLocationPreviewCount()
     {
         if (IsBusy)
@@ -1108,7 +2195,7 @@ public partial class MainPageViewModel : ObservableObject
             return;
         }
 
-        var filteredSpaces = ApplySpaceFilters(_allSpaces);
+        var filteredSpaces = ApplySpaceFilters(GetSpacesWithMensa());
         var results = MapSpacesToUiLocations(filteredSpaces);
 
         if (CurrentTab == _config.Tabs.Home && IsHideClosedLocations)
@@ -1411,6 +2498,15 @@ public partial class MainPageViewModel : ObservableObject
     {
         var insight = BuildArrivalInsight(space.SafeArrivalRecommendation);
         var series = GetChartSeriesForSpace(space.Id);
+        var isMensa = string.Equals(space.Id, MensaVirtualSpaceId, StringComparison.OrdinalIgnoreCase);
+        var mensaOccupancyRate = isMensa && space.TotalSeats > 0
+            ? (double)space.OccupiedSeats / space.TotalSeats
+            : 0;
+        var mensaProgressText = isMensa
+            ? _mensaForecastCache?.DailyProgressText ?? string.Empty
+            : string.Empty;
+        var mensaOpeningStart = isMensa ? _mensaForecastCache?.WindowStart : null;
+        var mensaOpeningEnd = isMensa ? _mensaForecastCache?.OpeningHoursEnd : null;
 
         return new UiLocation
         {
@@ -1430,7 +2526,12 @@ public partial class MainPageViewModel : ObservableObject
             PeakAverageText = insight.PeakAverageText,
             SafetyLevelText = insight.SafetyLevelText,
             PeakTrendText = insight.PeakTrendText,
-            OccupancySeries = series
+            OccupancySeries = series,
+            IsMensaVirtual = isMensa,
+            MensaOccupancyRate = mensaOccupancyRate,
+            MensaDailyProgressText = mensaProgressText,
+            MensaOpeningStart = mensaOpeningStart,
+            MensaOpeningEnd = mensaOpeningEnd
         };
     }
 
