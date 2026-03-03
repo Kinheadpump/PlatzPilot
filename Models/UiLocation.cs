@@ -8,6 +8,7 @@ public partial class UiLocation : ObservableObject
 {
 
     public string Name { get; set; } = string.Empty;
+    public string TileName { get; set; } = string.Empty;
     public string Subtitle { get; set; } = string.Empty;
     public int TotalSeats { get; set; }
     public int FreeSeats { get; set; }
@@ -16,9 +17,12 @@ public partial class UiLocation : ObservableObject
     public List<StudySpace> SubSpaces { get; set; } = new();
     public string? MainUrl => SubSpaces.FirstOrDefault()?.Url;
     public string? BuildingNumber { get; set; }
-    public string BuildingDisplayText => string.IsNullOrWhiteSpace(BuildingNumber)
-        ? AppText.BuildingUnknownText
-        : BuildingNumber;
+    public string? BuildingDisplayOverride { get; set; }
+    public string BuildingDisplayText => !string.IsNullOrWhiteSpace(BuildingDisplayOverride)
+        ? BuildingDisplayOverride
+        : string.IsNullOrWhiteSpace(BuildingNumber)
+            ? AppText.BuildingUnknownText
+            : BuildingNumber;
     public DateTime ReferenceTime { get; set; } = DateTime.Now;
     public string BestArrivalText { get; set; } = AppText.RecommendationNoneText;
     public bool HasArrivalInsights { get; set; }
@@ -45,6 +49,18 @@ public partial class UiLocation : ObservableObject
 
     public bool IsStudentOnlyClosed => !IsOpen && IsStudentAccessLocation && IsWithinStudentAccessHours;
     public string ClosedStatusText => IsStudentOnlyClosed ? AppText.ClosedStudentsLabel : AppText.ClosedLabel;
+    public bool IsDataStale => IsOpen &&
+                               LastUpdated.HasValue &&
+                               DateTime.Now - LastUpdated.Value > TimeSpan.FromMinutes(30);
+    public string StatusText => !IsOpen
+        ? ClosedStatusText
+        : IsDataStale
+            ? AppText.DataStaleText
+            : string.Empty;
+    public bool HasStatusText => !string.IsNullOrWhiteSpace(StatusText);
+    public Color StatusTextColor => !IsOpen
+        ? Color.FromArgb("#e74c3c")
+        : Color.FromArgb("#f39c12");
     public bool ShowBestArrivalInTile => IsOpen || IsStudentOnlyClosed;
     public Microsoft.Maui.Thickness ClosedLabelMargin => IsStudentOnlyClosed
         ? new Microsoft.Maui.Thickness(0, AppConfigProvider.Current.UiNumbers.StudentClosedLabelTopMargin, 0, 0)
@@ -91,11 +107,11 @@ public partial class UiLocation : ObservableObject
     public double OccupancyRate => TotalSeats > 0 ? (double)OccupiedSeats / TotalSeats : 0;
     public string AvailabilityText => string.Format(AppText.AvailabilityFormat, FreeSeats, TotalSeats);
 
-    public string HomeAvailabilityText => IsOpen ? FreeSeats.ToString() : AppText.NoCurrentInfoText;
+    public string HomeAvailabilityText => IsOpen ? AvailabilityText : AppText.NoCurrentInfoText;
     public string HomeAvailabilitySubText => string.Format(AppText.HomeAvailabilitySubFormat, TotalSeats);
     public bool IsHomeAvailabilitySubVisible => IsOpen;
     public double HomeOccupancyRate => IsOpen ? OccupancyRate : 0;
-    public Color HomeOccupancyColor => IsOpen ? OccupancyColor : Color.FromArgb(AppConfigProvider.Current.Occupancy.ClosedColor);
+    public Color HomeOccupancyColor => IsOpen ? OccupancyColor : Color.FromArgb("#00000000");
 
     private bool IsWithinStudentAccessHours
     {

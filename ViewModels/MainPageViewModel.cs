@@ -56,6 +56,9 @@ public partial class MainPageViewModel : ObservableObject
     private bool _isHapticFeedbackEnabled;
 
     [ObservableProperty]
+    private bool _isHideClosedLocations;
+
+    [ObservableProperty]
     private bool _isOfflineBannerVisible;
 
     [ObservableProperty]
@@ -125,6 +128,12 @@ public partial class MainPageViewModel : ObservableObject
     private string _lastLoadedBeforeParameter = string.Empty;
     private DateTime _lastLiveSnapshotFetchUtc = DateTime.MinValue;
     private CancellationTokenSource? _offlineBannerCts;
+    private static readonly HashSet<string> BadischeLandesbibliothekIds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "BLB",
+        "WIS"
+    };
+    private const string BadischeLandesbibliothekKey = "BLB_WIS";
 
     public bool IsMainContentVisible => CurrentTab != _config.Tabs.Settings;
     public bool IsSettingsContentVisible => CurrentTab == _config.Tabs.Settings;
@@ -133,7 +142,7 @@ public partial class MainPageViewModel : ObservableObject
     public bool IsHomeEmpty => UiLocations.Count == 0 && CurrentTab == _config.Tabs.Home;
     public bool IsFavoritesEmpty => !IsBusy && UiLocations.Count == 0 && CurrentTab == _config.Tabs.Favorites;
     public bool IsNoResultsEmpty => UiLocations.Count == 0 && _allSpaces.Count > 0 && CurrentTab == _config.Tabs.Home && IsMainContentVisible;
-    public string EmptyStateTitle => IsNoResultsEmpty ? _config.UiText.NoResultsTitle : _config.UiText.EmptyListText;
+    public string EmptyStateTitle => IsNoResultsEmpty ? _config.UiText.NoResultsTitle : WelcomeMessage;
     public string EmptyStateSubtitle => IsNoResultsEmpty ? _config.UiText.NoResultsSubtitle : string.Empty;
     public bool IsEmptySubtitleVisible => IsNoResultsEmpty;
     public bool IsBeforeMode => !UseNow;
@@ -147,8 +156,30 @@ public partial class MainPageViewModel : ObservableObject
         string.Format(CultureInfo.CurrentCulture, _config.UiText.ShowResultsFormat, FilteredLocationCount);
     public string SettingsVersionText =>
         string.Format(CultureInfo.CurrentCulture, _config.UiText.SettingsVersionFormat, _config.AppInfo.Version);
+    public string WelcomeMessage => GetWelcomeMessage();
 
     public List<string> SortOptions { get; }
+
+    private static string GetWelcomeMessage()
+    {
+        var time = DateTime.Now.TimeOfDay;
+        if (time >= new TimeSpan(6, 0, 0) && time < new TimeSpan(9, 0, 0))
+        {
+            return "Guten Morgen! ☕";
+        }
+
+        if (time >= new TimeSpan(9, 0, 0) && time < new TimeSpan(18, 0, 0))
+        {
+            return "Zeit zum produktiv sein! 📚";
+        }
+
+        if (time >= new TimeSpan(18, 0, 0) && time < new TimeSpan(22, 0, 0))
+        {
+            return "Spätschicht heute? 🌙";
+        }
+
+        return "Willkommen Nachteule! 🦉";
+    }
 
     public MainPageViewModel(
         SeatFinderService seatFinderService,
@@ -158,19 +189,20 @@ public partial class MainPageViewModel : ObservableObject
         _config = config;
         _seatFinderService = seatFinderService;
         _safeArrivalForecastService = safeArrivalForecastService;
-        SortOptions = new List<string>
-        {
+        SortOptions =
+        [
             _config.Sort.Relevance,
             _config.Sort.MostFree,
             _config.Sort.MostTotal,
             _config.Sort.Alphabetical
-        };
+        ];
         _minimumOpenHours = _config.UiNumbers.MinOpeningHours;
         _selectedSortOption = Preferences.Default.Get(_config.Preferences.SortModeKey, _config.Sort.Relevance);
         _currentTab = ResolveInitialTab(Preferences.Default.Get(_config.Preferences.TabModeKey, _config.Tabs.Home));
         _isColorBlindMode = Preferences.Default.Get(_config.Preferences.ColorBlindModeKey, false);
         _isCampusSouthOnly = Preferences.Default.Get(_config.Preferences.CampusSouthOnlyKey, false);
         _isHapticFeedbackEnabled = Preferences.Default.Get(_config.Preferences.HapticFeedbackKey, true);
+        _isHideClosedLocations = Preferences.Default.Get(_config.Preferences.HideClosedLocationsKey, false);
 
         if (!SortOptions.Contains(_selectedSortOption))
         {
@@ -338,6 +370,12 @@ public partial class MainPageViewModel : ObservableObject
         Preferences.Default.Set(_config.Preferences.HapticFeedbackKey, value);
     }
 
+    partial void OnIsHideClosedLocationsChanged(bool value)
+    {
+        Preferences.Default.Set(_config.Preferences.HideClosedLocationsKey, value);
+        ApplyFilter();
+    }
+
     [RelayCommand]
     private void SwitchTab(string tabName)
     {
@@ -438,6 +476,12 @@ public partial class MainPageViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ToggleHideClosedLocations()
+    {
+        IsHideClosedLocations = !IsHideClosedLocations;
+    }
+
+    [RelayCommand]
     private async Task OpenGithubAsync()
     {
         await Browser.Default.OpenAsync(_config.Urls.Github, BrowserLaunchMode.SystemPreferred);
@@ -499,6 +543,8 @@ public partial class MainPageViewModel : ObservableObject
                     limit: _config.SeatFinder.LiveSnapshotPoints,
                     before: requestedBeforeParameter);
             }
+
+            ApplySpaceFeatureOverrides(_allSpaces);
 
             await Task.Run(() =>
             {
@@ -681,6 +727,22 @@ public partial class MainPageViewModel : ObservableObject
         }
     }
 
+    private void ApplySpaceFeatureOverrides(IEnumerable<StudySpace> spaces)
+    {
+        foreach (var space in spaces)
+        {
+            if (_spaceFeaturesById.TryGetValue(space.Id, out var features) &&
+                !string.IsNullOrWhiteSpace(features.Nickname))
+            {
+                space.Nickname = features.Nickname.Trim();
+            }
+            else
+            {
+                space.Nickname = string.Empty;
+            }
+        }
+    }
+
     private void ReplaceHistoricalSeatData(IEnumerable<StudySpace> spaces)
     {
         _historicalSeatDataByLocation.Clear();
@@ -750,7 +812,7 @@ public partial class MainPageViewModel : ObservableObject
             _spaceSafeArrivalCache[space.Id] = space.SafeArrivalRecommendation;
         }
 
-        foreach (var group in _allSpaces.GroupBy(space => space.Building))
+        foreach (var group in _allSpaces.GroupBy(GetBuildingGroupKey))
         {
             var buildingKey = group.Key?.Trim();
             var spacesInBuilding = group.ToList();
@@ -812,7 +874,7 @@ public partial class MainPageViewModel : ObservableObject
             }
         }
 
-        foreach (var group in _allSpaces.GroupBy(space => space.Building))
+        foreach (var group in _allSpaces.GroupBy(GetBuildingGroupKey))
         {
             var buildingKey = group.Key?.Trim();
             var spacesInBuilding = group.ToList();
@@ -822,15 +884,7 @@ public partial class MainPageViewModel : ObservableObject
                 continue;
             }
 
-            var aggregatedHistory = spacesInBuilding
-                .SelectMany(space =>
-                {
-                    return _historicalSeatDataByLocation.TryGetValue(space.Id, out var history)
-                        ? history
-                        : [];
-                });
-
-            var series = BuildOccupancySeries(aggregatedHistory, startTime, endTime, binMinutes);
+            var series = BuildAggregateOccupancySeries(spacesInBuilding, startTime, endTime, binMinutes);
             if (series.Count > 0)
             {
                 _buildingChartSeriesCache[buildingKey] = series;
@@ -885,6 +939,112 @@ public partial class MainPageViewModel : ObservableObject
         return series;
     }
 
+    private List<float> BuildAggregateOccupancySeries(
+        List<StudySpace> spaces,
+        DateTime startTime,
+        DateTime endTime,
+        int binMinutes)
+    {
+        var bucketCount = GetBucketCount(startTime, endTime, binMinutes);
+        if (bucketCount == 0)
+        {
+            return [];
+        }
+
+        var totals = new (int free, int occupied)[bucketCount];
+
+        foreach (var space in spaces)
+        {
+            if (!_historicalSeatDataByLocation.TryGetValue(space.Id, out var history) || history.Count == 0)
+            {
+                continue;
+            }
+
+            var series = BuildBucketSeries(history, startTime, endTime, binMinutes, bucketCount);
+            for (var i = 0; i < bucketCount; i++)
+            {
+                totals[i].free += series[i].free;
+                totals[i].occupied += series[i].occupied;
+            }
+        }
+
+        var output = new List<float>(bucketCount);
+        for (var i = 0; i < bucketCount; i++)
+        {
+            var value = (float)CalculateOccupancyRate(totals[i].free, totals[i].occupied);
+            output.Add(value);
+        }
+
+        return output;
+    }
+
+    private static List<(int free, int occupied)> BuildBucketSeries(
+        IEnumerable<SeatHistoryPoint> history,
+        DateTime startTime,
+        DateTime endTime,
+        int binMinutes,
+        int bucketCount)
+    {
+        var buckets = new Dictionary<DateTime, (int free, int occupied)>();
+
+        foreach (var point in history)
+        {
+            if (point.Timestamp < startTime || point.Timestamp > endTime)
+            {
+                continue;
+            }
+
+            var bucketTime = NormalizeToChartBin(point.Timestamp, binMinutes);
+            if (!buckets.TryGetValue(bucketTime, out var totals))
+            {
+                totals = (0, 0);
+            }
+
+            totals.free += point.FreeSeats;
+            totals.occupied += point.OccupiedSeats;
+            buckets[bucketTime] = totals;
+        }
+
+        var series = new List<(int free, int occupied)>(bucketCount);
+        var hasValue = false;
+        var lastTotals = (free: 0, occupied: 0);
+
+        var index = 0;
+        for (var time = startTime; time <= endTime && index < bucketCount; time = time.AddMinutes(binMinutes))
+        {
+            if (buckets.TryGetValue(time, out var totals))
+            {
+                lastTotals = totals;
+                hasValue = true;
+                series.Add(totals);
+            }
+            else
+            {
+                series.Add(hasValue ? lastTotals : (0, 0));
+            }
+
+            index++;
+        }
+
+        while (series.Count < bucketCount)
+        {
+            series.Add(hasValue ? lastTotals : (0, 0));
+        }
+
+        return series;
+    }
+
+    private static int GetBucketCount(DateTime startTime, DateTime endTime, int binMinutes)
+    {
+        if (endTime < startTime || binMinutes <= 0)
+        {
+            return 0;
+        }
+
+        var totalMinutes = (endTime - startTime).TotalMinutes;
+        return (int)Math.Floor(totalMinutes / binMinutes) + 1;
+    }
+
     private static DateTime NormalizeToChartBin(DateTime timestamp, int binMinutes)
     {
         var totalMinutes = (timestamp.Hour * 60) + timestamp.Minute;
@@ -919,6 +1079,13 @@ public partial class MainPageViewModel : ObservableObject
         var filteredSpaces = ApplySpaceFilters(_allSpaces);
         var results = MapSpacesToUiLocations(filteredSpaces);
 
+        if (CurrentTab == _config.Tabs.Home && IsHideClosedLocations)
+        {
+            results = results
+                .Where(location => location.IsOpen || location.IsStudentOnlyClosed)
+                .ToList();
+        }
+
         if (CurrentTab == _config.Tabs.Favorites)
         {
             results = results.Where(location => location.IsFavorite).ToList();
@@ -944,6 +1111,13 @@ public partial class MainPageViewModel : ObservableObject
         var filteredSpaces = ApplySpaceFilters(_allSpaces);
         var results = MapSpacesToUiLocations(filteredSpaces);
 
+        if (CurrentTab == _config.Tabs.Home && IsHideClosedLocations)
+        {
+            results = results
+                .Where(location => location.IsOpen || location.IsStudentOnlyClosed)
+                .ToList();
+        }
+
         if (CurrentTab == _config.Tabs.Favorites)
         {
             results = results.Where(location => location.IsFavorite).ToList();
@@ -957,7 +1131,8 @@ public partial class MainPageViewModel : ObservableObject
         var searchFiltered = FilterSpacesBySearch(spaces);
         var campusFiltered = FilterSpacesByCampusScope(searchFiltered);
         var roomTypeFiltered = FilterSpacesByRoomType(campusFiltered);
-        var equipmentFiltered = FilterSpacesByEquipment(roomTypeFiltered);
+        var reservationFiltered = FilterSpacesByReservation(roomTypeFiltered);
+        var equipmentFiltered = FilterSpacesByEquipment(reservationFiltered);
         return FilterSpacesByOpeningHours(equipmentFiltered);
     }
 
@@ -1044,7 +1219,7 @@ public partial class MainPageViewModel : ObservableObject
 
     private bool IsRoomTypeFilterActive()
     {
-        return IsGroupRoomSelected || IsSilentStudySelected || IsNoReservationSelected;
+        return IsGroupRoomSelected || IsSilentStudySelected;
     }
 
     private HashSet<string> GetSelectedRoomTypes()
@@ -1062,13 +1237,25 @@ public partial class MainPageViewModel : ObservableObject
             selectedRoomTypes.Add(_config.RoomTypes.SilentStudyLegacy);
         }
 
-        if (IsNoReservationSelected)
+        return selectedRoomTypes;
+    }
+
+    private IEnumerable<StudySpace> FilterSpacesByReservation(IEnumerable<StudySpace> spaces)
+    {
+        if (!IsNoReservationSelected)
         {
-            selectedRoomTypes.Add(_config.RoomTypes.NoReservation);
-            selectedRoomTypes.Add(_config.RoomTypes.NoReservationLegacy);
+            return spaces;
         }
 
-        return selectedRoomTypes;
+        return spaces.Where(space =>
+        {
+            if (!_spaceFeaturesById.TryGetValue(space.Id, out var features))
+            {
+                return false;
+            }
+
+            return !features.RequiresReservation;
+        });
     }
 
     private static string NormalizeRoomType(string roomType)
@@ -1183,12 +1370,22 @@ public partial class MainPageViewModel : ObservableObject
         OnPropertyChanged(nameof(IsEmptySubtitleVisible));
     }
 
+    private string GetBuildingGroupKey(StudySpace space)
+    {
+        if (BadischeLandesbibliothekIds.Contains(space.Id))
+        {
+            return BadischeLandesbibliothekKey;
+        }
+
+        return space.Building ?? string.Empty;
+    }
+
     private List<UiLocation> MapSpacesToUiLocations(IEnumerable<StudySpace> spaces)
     {
         var referenceTime = GetReferenceDateTime();
         var favoriteNames = GetFavoriteNames();
         var results = new List<UiLocation>();
-        var buildingGroups = spaces.GroupBy(space => space.Building);
+        var buildingGroups = spaces.GroupBy(GetBuildingGroupKey);
 
         foreach (var group in buildingGroups)
         {
@@ -1218,6 +1415,7 @@ public partial class MainPageViewModel : ObservableObject
         return new UiLocation
         {
             Name = space.Name,
+            TileName = space.DisplayName,
             Subtitle = AppText.SingleLocationSubtitle,
             BuildingNumber = space.Building,
             TotalSeats = space.TotalSeats,
@@ -1239,9 +1437,12 @@ public partial class MainPageViewModel : ObservableObject
     private UiLocation CreateGroupedLocation(string buildingKey, List<StudySpace> spaces, List<string> favoriteNames, DateTime referenceTime)
     {
         var normalizedBuildingKey = buildingKey.Trim();
+        var isBadischeLandesbibliothek = string.Equals(normalizedBuildingKey, BadischeLandesbibliothekKey, StringComparison.OrdinalIgnoreCase);
         var displayName = _config.BuildingNames.TryGetValue(normalizedBuildingKey, out var mappedName)
             ? mappedName
-            : string.Format(CultureInfo.CurrentCulture, _config.UiText.BuildingFormat, normalizedBuildingKey);
+            : isBadischeLandesbibliothek
+                ? "Badische Landesbibliothek"
+                : string.Format(CultureInfo.CurrentCulture, _config.UiText.BuildingFormat, normalizedBuildingKey);
 
         var buildingRecommendation = GetCachedBuildingRecommendation(normalizedBuildingKey);
         var series = GetChartSeriesForBuilding(normalizedBuildingKey);
@@ -1251,8 +1452,10 @@ public partial class MainPageViewModel : ObservableObject
         return new UiLocation
         {
             Name = displayName,
+            TileName = displayName,
             Subtitle = string.Format(CultureInfo.CurrentCulture, _config.UiText.GroupedLocationSubtitleFormat, spaces.Count),
-            BuildingNumber = normalizedBuildingKey,
+            BuildingNumber = isBadischeLandesbibliothek ? null : normalizedBuildingKey,
+            BuildingDisplayOverride = isBadischeLandesbibliothek ? displayName : null,
             TotalSeats = spaces.Sum(space => space.TotalSeats),
             FreeSeats = spaces.Sum(space => space.FreeSeats),
             OccupiedSeats = spaces.Sum(space => space.OccupiedSeats),

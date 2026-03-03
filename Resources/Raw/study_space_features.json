@@ -2,157 +2,229 @@
   "spaces": [
     {
       "id": "LSG",
-      "roomTypes": [],
+      "nickname": "Lesesaal Geisteswissenschaften",
+      "roomTypes": [
+        "Stillarbeitsraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "LSM",
-      "roomTypes": [],
+      "nickname": "Lesesaal Medienzentrum",
+      "roomTypes": [
+        "Stillarbeitsraum",
+        "Gruppenraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": true
     },
     {
       "id": "LST",
-      "roomTypes": [],
+      "nickname": "Lesesaal Technik",
+      "roomTypes": [
+        "Stillarbeitsraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "LSN",
-      "roomTypes": [],
+      "nickname": "Lesesaal Naturwissenschaften",
+      "roomTypes": [
+        "Stillarbeitsraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": true
     },
     {
       "id": "LSW",
+      "nickname": "Lesesaal Wirtschaft",
       "roomTypes": [],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "LBS",
-      "roomTypes": [],
+      "nickname": "Lehrbuchsammlung",
+      "roomTypes": [
+        "Gruppenraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": true
     },
     {
       "id": "BIB-N",
       "roomTypes": [],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "L3",
+      "nickname": "Lernplatz 3. OG",
       "roomTypes": [],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "L2",
-      "roomTypes": [],
+      "nickname": "Lernplatz 2. OG",
+      "roomTypes": [
+        "Gruppenraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "SAR",
-      "roomTypes": [],
+      "nickname": "Stillarbeitsraum",
+      "roomTypes": [
+        "Stillarbeitsraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "L1",
+      "nickname": "Lernplatz 1. OG",
       "roomTypes": [],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "LEG",
+      "nickname": "Lernplatz EG",
       "roomTypes": [],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "FBC",
+      "nickname": "Fachbibliothek Chemie",
       "roomTypes": [],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "FBP",
+      "nickname": "Fachbibliothek Physik",
       "roomTypes": [],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "LAF",
-      "roomTypes": [],
+      "nickname": "Lernzentrum am Fasanenschloss",
+      "roomTypes": [
+        "Stillarbeitsraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "FBA",
+      "nickname": "Fakultätsbibliothek Architektur",
       "roomTypes": [],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "FBI",
-      "roomTypes": [],
+      "nickname": "Informatikbibliothek",
+      "roomTypes": [
+        "Gruppenraum",
+        "Stillarbeitsraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "FBM",
-      "roomTypes": [],
+      "nickname": "Fachbibliothek Mathematik",
+      "roomTypes": [
+        "Stillarbeitsraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "FBH",
-      "roomTypes": [],
+      "nickname": "Fachbibliothek HKA",
+      "roomTypes": [
+        "Gruppenraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "FBD",
+      "nickname": "Fachbibliothek DHBW",
       "roomTypes": [],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "BLB",
-      "roomTypes": [],
+      "nickname": "Hauptgebäude",
+      "roomTypes": [
+        "Gruppenraum",
+        "Stillarbeitsraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     },
     {
       "id": "WIS",
-      "roomTypes": [],
+      "nickname": "Wissenstor",
+      "roomTypes": [
+        "Gruppenraum"
+      ],
       "freeWifi": false,
       "powerOutlets": false,
-      "whiteboard": false
+      "whiteboard": false,
+      "requiresReservation": false
     }
   ]
 }

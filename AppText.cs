@@ -19,6 +19,7 @@ public static class AppText
     public static string ManualCountLabel => Text.ManualCountLabel;
     public static string AvailabilityFormat => Text.AvailabilityFormat;
     public static string NoCurrentInfoText => Text.NoCurrentInfoText;
+    public static string DataStaleText => Text.DataStaleText;
     public static string RecommendationNoneText => Text.RecommendationNoneText;
     public static string RecommendationFormat => Text.RecommendationFormat;
     public static string PeakNoneText => Text.PeakNoneText;
@@ -72,6 +73,7 @@ public static class AppText
     public static string SettingsDisplayTitle => Text.SettingsDisplayTitle;
     public static string SettingsFeedbackTitle => Text.SettingsFeedbackTitle;
     public static string SettingsHapticLabel => Text.SettingsHapticLabel;
+    public static string HideClosedLocationsLabel => Text.HideClosedLocationsLabel;
     public static string SettingsVersionFormat => Text.SettingsVersionFormat;
     public static string SettingsDisclaimer => Text.SettingsDisclaimer;
     public static string GithubLabel => Text.GithubLabel;

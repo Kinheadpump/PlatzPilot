@@ -7,6 +7,8 @@ public class StudySpace
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public string? Nickname { get; set; }
+    public string DisplayName => string.IsNullOrWhiteSpace(Nickname) ? Name : Nickname;
     
     public int TotalSeats { get; set; }
     public int OccupiedSeats { get; set; }
@@ -27,6 +29,7 @@ public class StudySpace
     public OpeningHoursDto? OpeningHours { get; set; }
     public DateTime ReferenceTime { get; set; } = DateTime.Now;
     public bool IsOpen => OpeningHours?.IsCurrentlyOpen(ReferenceTime) ?? true;
+    public bool IsStudentOnlyClosed => !IsOpen && IsStudentAccessLocation && IsWithinStudentAccessHours;
     public bool HasLevel => !string.IsNullOrWhiteSpace(Level);
     public bool HasRoom => !string.IsNullOrWhiteSpace(Room);
     public string LevelDisplayText => string.Format(AppText.LevelFormat, Level);
@@ -67,8 +70,24 @@ public class StudySpace
 
     // --- DESIGNER PROPERTIES ---
     public string AvailabilityText => string.Format(AppText.AvailabilityFormat, FreeSeats, TotalSeats);
+    public string AvailabilityDisplayText => IsOpen ? AvailabilityText : AppText.NoCurrentInfoText;
+    public bool HasValidLastUpdated => LastUpdated.Year > AppConfigProvider.Current.UiNumbers.UnknownYearThreshold;
+    public bool IsDataStale => IsOpen &&
+                               HasValidLastUpdated &&
+                               DateTime.Now - LastUpdated > TimeSpan.FromMinutes(30);
+    public string ClosedLabelText => IsStudentOnlyClosed ? AppText.ClosedStudentsLabel : AppText.ClosedLabel;
+    public string StatusText => !IsOpen
+        ? ClosedLabelText
+        : IsDataStale
+            ? AppText.DataStaleText
+            : string.Empty;
+    public bool HasStatusText => !string.IsNullOrWhiteSpace(StatusText);
+    public Color StatusTextColor => !IsOpen
+        ? Color.FromArgb("#e74c3c")
+        : Color.FromArgb("#f39c12");
 
     public double OccupancyRate => TotalSeats > 0 ? (double)OccupiedSeats / TotalSeats : 0;
+    public double TileOccupancyRate => IsOpen ? OccupancyRate : 0;
 
     public Color OccupancyColor
     {
@@ -88,6 +107,40 @@ public class StudySpace
             if (OccupancyRate < thresholds.MediumThreshold) return Color.FromArgb(mediumColor);
             if (OccupancyRate < thresholds.HighThreshold) return Color.FromArgb(highColor);
             return Color.FromArgb(fullColor);
+        }
+    }
+
+    public Color TileOccupancyColor => IsOpen ? OccupancyColor : Color.FromArgb("#00000000");
+
+    private bool IsWithinStudentAccessHours
+    {
+        get
+        {
+            var time = ReferenceTime.TimeOfDay;
+            return time >= AppConfigProvider.Current.StudentAccess.Start &&
+                   time <= AppConfigProvider.Current.StudentAccess.End;
+        }
+    }
+
+    private bool IsStudentAccessLocation
+    {
+        get
+        {
+            if (AppConfigProvider.Current.StudentAccess.LocationIds
+                .Any(id => string.Equals(Id, id, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(Building) &&
+                AppConfigProvider.Current.StudentAccess.BuildingIds
+                    .Any(id => string.Equals(Building.Trim(), id, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+
+            return AppConfigProvider.Current.StudentAccess.NameContains
+                .Any(token => Name.Contains(token, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

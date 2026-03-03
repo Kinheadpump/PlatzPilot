@@ -44,6 +44,7 @@ public sealed class UiTextConfig
     public string ManualCountLabel { get; set; } = string.Empty;
     public string AvailabilityFormat { get; set; } = string.Empty;
     public string NoCurrentInfoText { get; set; } = string.Empty;
+    public string DataStaleText { get; set; } = string.Empty;
     public string RecommendationNoneText { get; set; } = string.Empty;
     public string RecommendationFormat { get; set; } = string.Empty;
     public string PeakNoneText { get; set; } = string.Empty;
@@ -97,6 +98,7 @@ public sealed class UiTextConfig
     public string SettingsDisplayTitle { get; set; } = string.Empty;
     public string SettingsFeedbackTitle { get; set; } = string.Empty;
     public string SettingsHapticLabel { get; set; } = string.Empty;
+    public string HideClosedLocationsLabel { get; set; } = string.Empty;
     public string SettingsVersionFormat { get; set; } = string.Empty;
     public string SettingsDisclaimer { get; set; } = string.Empty;
     public string GithubLabel { get; set; } = string.Empty;
@@ -142,6 +144,7 @@ public sealed class PreferencesConfig
     public string ColorBlindModeKey { get; set; } = string.Empty;
     public string CampusSouthOnlyKey { get; set; } = string.Empty;
     public string HapticFeedbackKey { get; set; } = string.Empty;
+    public string HideClosedLocationsKey { get; set; } = string.Empty;
     public string EmptyListJson { get; set; } = "[]";
 }
 
