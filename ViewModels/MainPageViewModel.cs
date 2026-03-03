@@ -166,7 +166,7 @@ public partial class MainPageViewModel : ObservableObject
     public bool IsEmptySubtitleVisible => IsNoResultsEmpty;
     public bool IsBeforeMode => !UseNow;
     public bool IsSearchInactive => !IsSearchActive;
-    public static DateTime MaxSelectableDate => DateTime.Today;
+    public DateTime MaxSelectableDate => DateTime.Today;
     public double MinimumOpenHoursMin => _config.UiNumbers.MinOpeningHours;
     public double MinimumOpenHoursMax => _config.UiNumbers.MaxOpeningHours;
     public string MinimumOpenHoursText =>
@@ -347,7 +347,7 @@ public partial class MainPageViewModel : ObservableObject
         _isUpdatingDateTimeSelection = true;
         if (SelectedDate.Date > DateTime.Today)
         {
-            SelectedDate = MainPageViewModel.MaxSelectableDate;
+            SelectedDate = MaxSelectableDate;
         }
 
         if (SelectedTime == TimeSpan.Zero)
@@ -663,7 +663,7 @@ public partial class MainPageViewModel : ObservableObject
         if (value.Date > DateTime.Today)
         {
             _isUpdatingDateTimeSelection = true;
-            SelectedDate = MainPageViewModel.MaxSelectableDate;
+            SelectedDate = MaxSelectableDate;
             _isUpdatingDateTimeSelection = false;
         }
         UpdateFilteredLocationPreviewCount();
