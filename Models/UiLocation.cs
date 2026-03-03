@@ -133,6 +133,12 @@ public partial class UiLocation : ObservableObject
     {
         get
         {
+            if (IsMensaVirtual && TotalSeats > 0)
+            {
+                var rate = Math.Clamp(OccupiedSeats / (double)TotalSeats, 0, 1);
+                return string.Format(CultureInfo.CurrentCulture, "Geschätzte Fülle: {0:P0}", rate);
+            }
+
             var freeSeats = TotalSeats > 0
                 ? Math.Max(0, TotalSeats - OccupiedSeats)
                 : FreeSeats;
