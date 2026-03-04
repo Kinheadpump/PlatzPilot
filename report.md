@@ -20,8 +20,8 @@
 - Services/NavigationService.cs extracted from ViewModels/MainPageViewModel.cs
 
 ## Tests
-- Build: `dotnet clean -f net10.0-windows10.0.19041.0` then `dotnet build -f net10.0-windows10.0.19041.0` (success)
-- Tests: `dotnet test .\\PlatzPilot.Tests\\PlatzPilot.Tests.csproj` (fails: CS7065 Win32 resources symbol stream format)
+- Build: `dotnet build -f net10.0-windows10.0.19041.0` fails with CS7065 unless preceded by `dotnet clean -f net10.0-windows10.0.19041.0` (clean + build succeeds with MVVMTK0045 warnings)
+- Tests: `dotnet test .\\PlatzPilot.Tests\\PlatzPilot.Tests.csproj` fails (CS7065 Win32 resources symbol stream format)
 
 ## Migrations / Notes
 - Test project still fails with CS7065; no safe code deletions until resolved. Documented for follow-up.
