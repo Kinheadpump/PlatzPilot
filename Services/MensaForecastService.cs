@@ -14,8 +14,6 @@ public sealed class MensaForecastService
     private const int MensaCapacityMin = 200;
     private const double MensaCoverageMinRatio = 0.5;
     private const int MensaCoverageStaleMinutes = 30;
-    private const string MensaFluxFillingFastLabel = "Mensa füllt sich schnell";
-    private const string MensaFluxEmptyingLabel = "Mensa leert sich";
 
     private readonly AppConfig _config;
     private readonly SafeArrivalForecastService _safeArrivalForecastService;
@@ -134,7 +132,7 @@ public sealed class MensaForecastService
             var virtualSpace = new StudySpace
             {
                 Id = MensaVirtualSpaceId,
-                Name = "Mensa (virtuell)",
+                Name = _config.UiText.MensaVirtualName,
                 TotalSeats = capacity,
                 OpeningHours = BuildMensaOpeningHours(referenceDate, windowStart, windowEnd),
                 ReferenceTime = referenceDate
@@ -189,7 +187,7 @@ public sealed class MensaForecastService
         return new StudySpace
         {
             Id = MensaVirtualSpaceId,
-            Name = "Mensa am Adenauerring",
+            Name = _config.UiText.MensaDisplayName,
             TotalSeats = capacity,
             OccupiedSeats = occupiedSeats,
             FreeSeats = freeSeats,
@@ -284,7 +282,7 @@ public sealed class MensaForecastService
         return snapshots;
     }
 
-    private static Dictionary<DateTime, Dictionary<int, int>> BuildOccupiedByDay(
+    private static Dictionary<DateTime, SortedList<int, int>> BuildOccupiedByDay(
         IReadOnlyList<SeatHistoryPoint> history,
         DateTime startDate,
         DateTime endDate,
@@ -292,7 +290,7 @@ public sealed class MensaForecastService
         int windowEndMinute,
         int stepMinutes)
     {
-        var occupiedByDay = new Dictionary<DateTime, Dictionary<int, int>>();
+        var occupiedByDay = new Dictionary<DateTime, SortedList<int, int>>();
 
         foreach (var point in history)
         {
@@ -315,7 +313,7 @@ public sealed class MensaForecastService
 
             if (!occupiedByDay.TryGetValue(day, out var dayMap))
             {
-                dayMap = new Dictionary<int, int>();
+                dayMap = new SortedList<int, int>();
                 occupiedByDay[day] = dayMap;
             }
 
@@ -328,14 +326,14 @@ public sealed class MensaForecastService
         return occupiedByDay;
     }
 
-    private static Dictionary<int, int> BuildOccupiedForDay(
+    private static SortedList<int, int> BuildOccupiedForDay(
         IReadOnlyList<SeatHistoryPoint> history,
         DateTime day,
         int windowStartMinute,
         int windowEndMinute,
         int stepMinutes)
     {
-        var occupiedByMinute = new Dictionary<int, int>();
+        var occupiedByMinute = new SortedList<int, int>();
 
         foreach (var point in history)
         {
@@ -637,12 +635,12 @@ public sealed class MensaForecastService
         var flux = (nowDeficit - pastDeficit) / deltaMinutes * MensaFluxLookbackMinutes;
         if (flux > MensaFluxThreshold)
         {
-            return MensaFluxFillingFastLabel;
+            return _config.UiText.MensaFluxFillingFastLabel;
         }
 
         if (flux < -MensaFluxThreshold)
         {
-            return MensaFluxEmptyingLabel;
+            return _config.UiText.MensaFluxEmptyingLabel;
         }
 
         return string.Empty;
@@ -688,7 +686,7 @@ public sealed class MensaForecastService
         return hasData;
     }
 
-    private static bool TryGetNearestOccupied(Dictionary<int, int> dayMap, int targetMinute, out int occupied)
+    private static bool TryGetNearestOccupied(SortedList<int, int> dayMap, int targetMinute, out int occupied)
     {
         occupied = 0;
         if (dayMap.Count == 0)
@@ -696,32 +694,55 @@ public sealed class MensaForecastService
             return false;
         }
 
-        if (dayMap.TryGetValue(targetMinute, out occupied))
-        {
-            return true;
-        }
+        var keys = dayMap.Keys;
+        var values = dayMap.Values;
 
-        var bestDiff = int.MaxValue;
-        var bestValue = 0;
-
-        foreach (var entry in dayMap)
+        var lo = 0;
+        var hi = keys.Count - 1;
+        while (lo <= hi)
         {
-            var diff = Math.Abs(entry.Key - targetMinute);
-            if (diff >= bestDiff)
+            var mid = lo + ((hi - lo) / 2);
+            var key = keys[mid];
+            if (key == targetMinute)
             {
-                continue;
+                occupied = values[mid];
+                return true;
             }
 
-            bestDiff = diff;
-            bestValue = entry.Value;
+            if (key < targetMinute)
+            {
+                lo = mid + 1;
+            }
+            else
+            {
+                hi = mid - 1;
+            }
         }
 
+        var insertIndex = lo;
+        int bestIndex;
+        if (insertIndex <= 0)
+        {
+            bestIndex = 0;
+        }
+        else if (insertIndex >= keys.Count)
+        {
+            bestIndex = keys.Count - 1;
+        }
+        else
+        {
+            var leftDiff = Math.Abs(keys[insertIndex - 1] - targetMinute);
+            var rightDiff = Math.Abs(keys[insertIndex] - targetMinute);
+            bestIndex = leftDiff <= rightDiff ? insertIndex - 1 : insertIndex;
+        }
+
+        var bestDiff = Math.Abs(keys[bestIndex] - targetMinute);
         if (bestDiff > 30)
         {
             return false;
         }
 
-        occupied = bestValue;
+        occupied = values[bestIndex];
         return true;
     }
 
@@ -890,5 +911,5 @@ public sealed record MensaForecastResult(
     int Capacity);
 
 public sealed record MensaSpaceSnapshot(
-    Dictionary<DateTime, Dictionary<int, int>> OccupiedByDay,
-    Dictionary<int, int> OccupiedToday);
+    Dictionary<DateTime, SortedList<int, int>> OccupiedByDay,
+    SortedList<int, int> OccupiedToday);

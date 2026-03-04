@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +17,69 @@ public static class AppConfigProvider
 
     public static AppConfig Current { get; } = new();
     public static bool IsLoaded { get; private set; }
+
+    public static AppConfig LoadFromEmbeddedResource(string? resourceName = null)
+    {
+        var lockTaken = false;
+        try
+        {
+            LoadSemaphore.Wait();
+            lockTaken = true;
+
+            if (IsLoaded)
+            {
+                return Current;
+            }
+
+            var assembly = typeof(AppConfigProvider).Assembly;
+            var resolvedResourceName = string.IsNullOrWhiteSpace(resourceName)
+                ? assembly.GetManifestResourceNames()
+                    .FirstOrDefault(name => name.EndsWith(DefaultConfigFileName, StringComparison.OrdinalIgnoreCase))
+                : resourceName;
+
+            if (string.IsNullOrWhiteSpace(resolvedResourceName))
+            {
+                return Current;
+            }
+
+            using var stream = assembly.GetManifestResourceStream(resolvedResourceName);
+            if (stream == null)
+            {
+                return Current;
+            }
+
+            var loaded = JsonSerializer.Deserialize<AppConfig>(stream, SerializerOptions);
+            if (loaded != null)
+            {
+                ApplyLoadedConfig(loaded);
+                IsLoaded = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            var format = Current.Internal.ConfigLoadFailedFormat;
+            if (string.IsNullOrWhiteSpace(format))
+            {
+                Debug.WriteLine(ex.Message);
+                return Current;
+            }
+
+            Debug.WriteLine(string.Format(
+                CultureInfo.CurrentCulture,
+                format,
+                DefaultConfigFileName,
+                ex.Message));
+        }
+        finally
+        {
+            if (lockTaken)
+            {
+                LoadSemaphore.Release();
+            }
+        }
+
+        return Current;
+    }
 
     public static async Task<AppConfig> LoadFromPackageAsync(string? fileName = null, CancellationToken cancellationToken = default)
     {

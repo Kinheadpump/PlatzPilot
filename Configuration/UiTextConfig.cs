@@ -31,6 +31,10 @@ public sealed class UiTextConfig
     public string PeakTrendEarlier { get; set; } = string.Empty;
     public string PeakTrendLater { get; set; } = string.Empty;
     public string PeakTrendFlat { get; set; } = string.Empty;
+    public string MensaVirtualName { get; set; } = string.Empty;
+    public string MensaDisplayName { get; set; } = string.Empty;
+    public string MensaFluxFillingFastLabel { get; set; } = string.Empty;
+    public string MensaFluxEmptyingLabel { get; set; } = string.Empty;
     public string FavoritesLabel { get; set; } = string.Empty;
     public string SettingsLabel { get; set; } = string.Empty;
     public string FilterTitle { get; set; } = string.Empty;

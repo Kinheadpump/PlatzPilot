@@ -11,7 +11,7 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
-        var appConfig = AppConfigProvider.Current;
+        var appConfig = AppConfigProvider.LoadFromEmbeddedResource();
 
         var builder = MauiApp.CreateBuilder();
         builder

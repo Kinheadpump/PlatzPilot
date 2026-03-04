@@ -14,20 +14,21 @@ public partial class MainPage : ContentPage
 
         _viewModel = viewModel;
         BindingContext = _viewModel;
-        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        _viewModel.Filters.PropertyChanged += OnFiltersPropertyChanged;
+        _viewModel.Settings.PropertyChanged += OnSettingsPropertyChanged;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
 
-        if (_viewModel.UiLocations.Count == 0)
+        if (_viewModel.SeatList.UiLocations.Count == 0)
         {
             await Task.Delay(AppConfigProvider.Current.UiNumbers.InitialLoadDelayMs);
-            await _viewModel.LoadSpacesAsync();
+            await _viewModel.SeatList.LoadSpacesAsync();
         }
 
-        if (_viewModel.IsBeforeMode && PastTimeFilterPanel != null)
+        if (_viewModel.Filters.IsBeforeMode && PastTimeFilterPanel != null)
         {
             PastTimeFilterPanel.Opacity = 1;
             PastTimeFilterPanel.TranslationY = 0;
@@ -36,31 +37,31 @@ public partial class MainPage : ContentPage
 
     protected override bool OnBackButtonPressed()
     {
-        if (_viewModel.IsAboutOpen)
+        if (_viewModel.Settings.IsAboutOpen)
         {
-            _viewModel.IsAboutOpen = false;
+            _viewModel.Settings.IsAboutOpen = false;
             return true;
         }
 
-        if (_viewModel.IsFilterExpanded)
+        if (_viewModel.Filters.IsFilterExpanded)
         {
-            _viewModel.IsFilterExpanded = false;
+            _viewModel.Filters.IsFilterExpanded = false;
             return true;
         }
 
-        if (_viewModel.IsSearchActive)
+        if (_viewModel.Filters.IsSearchActive)
         {
-            _viewModel.IsSearchActive = false;
+            _viewModel.Filters.IsSearchActive = false;
             return true;
         }
 
         return base.OnBackButtonPressed();
     }
 
-    private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private async void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainPageViewModel.IsAboutOpen) &&
-            _viewModel.IsAboutOpen &&
+        if (e.PropertyName == nameof(SettingsViewModel.IsAboutOpen) &&
+            _viewModel.Settings.IsAboutOpen &&
             AboutCloseButton != null)
         {
             await MainThread.InvokeOnMainThreadAsync(() =>
@@ -68,9 +69,12 @@ public partial class MainPage : ContentPage
                 AboutCloseButton.Focus();
             });
         }
+    }
 
-        if (e.PropertyName == nameof(MainPageViewModel.IsFilterExpanded) &&
-            _viewModel.IsFilterExpanded &&
+    private async void OnFiltersPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(FilterViewModel.IsFilterExpanded) &&
+            _viewModel.Filters.IsFilterExpanded &&
             FilterSheetScroll != null)
         {
             await MainThread.InvokeOnMainThreadAsync(async () =>
@@ -79,7 +83,7 @@ public partial class MainPage : ContentPage
             });
         }
 
-        if (e.PropertyName != nameof(MainPageViewModel.IsBeforeMode) || !_viewModel.IsBeforeMode || PastTimeFilterPanel == null)
+        if (e.PropertyName != nameof(FilterViewModel.IsBeforeMode) || !_viewModel.Filters.IsBeforeMode || PastTimeFilterPanel == null)
         {
             return;
         }

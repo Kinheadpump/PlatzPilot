@@ -13,9 +13,9 @@
         <Grid Grid.Row="0"
               RowDefinitions="Auto,Auto"
               Margin="15,15,15,8"
-              IsVisible="{Binding IsMainContentVisible}">
+              IsVisible="{Binding Navigation.IsMainContentVisible}">
             <Border Grid.Row="0"
-                    IsVisible="{Binding IsOfflineBannerVisible}"
+                    IsVisible="{Binding SeatList.IsOfflineBannerVisible}"
                     BackgroundColor="{AppThemeBinding Light=#fff4cc, Dark=#3a2f00}"
                     Stroke="{AppThemeBinding Light=#f0d48a, Dark=#4a3b00}"
                     StrokeThickness="1"
@@ -43,12 +43,12 @@
                            FontSize="22"
                            FontAttributes="Bold"
                            VerticalOptions="Center"
-                           IsVisible="{Binding IsSearchInactive}" />
+                           IsVisible="{Binding Filters.IsSearchInactive}" />
 
                     <SearchBar Grid.Column="0"
                                Placeholder="{x:Static local:AppText.SearchPlaceholder}"
-                               Text="{Binding SearchText}"
-                               IsVisible="{Binding IsSearchActive}"
+                               Text="{Binding Filters.SearchText}"
+                               IsVisible="{Binding Filters.IsSearchActive}"
                                BackgroundColor="Transparent" />
 
                     <Border Grid.Column="1"
@@ -59,7 +59,7 @@
                             WidthRequest="44"
                             Padding="0"
                             VerticalOptions="Center">
-                        <ImageButton Command="{Binding ToggleSearchCommand}"
+                        <ImageButton Command="{Binding Filters.ToggleSearchCommand}"
                                      Source="{AppThemeBinding Light={x:Static local:AppAssets.SearchIconLight}, Dark={x:Static local:AppAssets.SearchIconDark}}"
                                      WidthRequest="44"
                                      HeightRequest="44"
@@ -81,7 +81,7 @@
                             Padding="0"
                             VerticalOptions="Center">
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ToggleFilterCommand}" />
+                            <TapGestureRecognizer Command="{Binding Filters.ToggleFilterCommand}" />
                         </Border.GestureRecognizers>
                         <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.FilterIconLight}, Dark={x:Static local:AppAssets.FilterIconDark}}"
                                WidthRequest="24"
@@ -91,13 +91,13 @@
                                VerticalOptions="Center">
                             <Image.Triggers>
                                 <DataTrigger TargetType="Image"
-                                             Binding="{Binding IsFilterActive}"
+                                             Binding="{Binding Filters.IsFilterActive}"
                                              Value="True">
                                     <Setter Property="Source"
                                             Value="{x:Static local:AppAssets.FilterIconActive}" />
                                 </DataTrigger>
                                 <DataTrigger TargetType="Image"
-                                             Binding="{Binding IsFilterActive}"
+                                             Binding="{Binding Filters.IsFilterActive}"
                                              Value="False">
                                     <Setter Property="Source"
                                             Value="{AppThemeBinding Light={x:Static local:AppAssets.FilterIconLight}, Dark={x:Static local:AppAssets.FilterIconDark}}" />
@@ -110,14 +110,14 @@
         </Grid>
 
         <RefreshView Grid.Row="1"
-                     IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}"
-                     Command="{Binding LoadSpacesCommand}"
-                     IsVisible="{Binding IsMainContentVisible}"
+                     IsRefreshing="{Binding SeatList.IsRefreshing, Mode=TwoWay}"
+                     Command="{Binding SeatList.LoadSpacesCommand}"
+                     IsVisible="{Binding Navigation.IsMainContentVisible}"
                      BackgroundColor="Transparent">
             <Grid>
-                <CollectionView ItemsSource="{Binding UiLocations}"
+                <CollectionView ItemsSource="{Binding SeatList.UiLocations}"
                                 SelectionMode="Single"
-                                SelectedItem="{Binding SelectedLocation, Mode=TwoWay}"
+                                SelectedItem="{Binding SeatList.SelectedLocation, Mode=TwoWay}"
                                 BackgroundColor="Transparent"
                                 Margin="10,0,10,10">
                     <CollectionView.ItemTemplate>
@@ -205,7 +205,7 @@
                                                      HorizontalOptions="End"
                                                      VerticalOptions="Start"
                                                      BackgroundColor="Transparent"
-                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainPageViewModel}}, Path=ToggleFavoriteCommand}"
+                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainPageViewModel}}, Path=SeatList.ToggleFavoriteCommand}"
                                                      CommandParameter="{Binding .}">
                                             <ImageButton.Triggers>
                                                 <DataTrigger TargetType="ImageButton"
@@ -245,21 +245,21 @@
                 <VerticalStackLayout VerticalOptions="Center"
                                      HorizontalOptions="Center"
                                      Spacing="12"
-                                     IsVisible="{Binding IsHomeEmpty}">
-                    <Label Text="{Binding EmptyStateTitle}"
+                                     IsVisible="{Binding SeatList.IsHomeEmpty}">
+                    <Label Text="{Binding SeatList.EmptyStateTitle}"
                            FontSize="20"
                            FontAttributes="Bold"
                            HorizontalTextAlignment="Center"
                            HorizontalOptions="Center" />
-                    <Label Text="{Binding EmptyStateSubtitle}"
+                    <Label Text="{Binding SeatList.EmptyStateSubtitle}"
                            FontSize="14"
                            TextColor="Gray"
                            HorizontalTextAlignment="Center"
                            HorizontalOptions="Center"
                            LineBreakMode="WordWrap"
-                           IsVisible="{Binding IsEmptySubtitleVisible}" />
-                    <ActivityIndicator IsRunning="{Binding IsBusy}"
-                                       IsVisible="{Binding IsBusy}"
+                           IsVisible="{Binding SeatList.IsEmptySubtitleVisible}" />
+                    <ActivityIndicator IsRunning="{Binding SeatList.IsBusy}"
+                                       IsVisible="{Binding SeatList.IsBusy}"
                                        Color="{AppThemeBinding Light=#1f6feb, Dark=#9ec1ff}"
                                        WidthRequest="32"
                                        HeightRequest="32" />
@@ -268,7 +268,7 @@
                 <VerticalStackLayout VerticalOptions="Center"
                                      HorizontalOptions="Center"
                                      Spacing="10"
-                                     IsVisible="{Binding IsFavoritesEmpty}">
+                                     IsVisible="{Binding SeatList.IsFavoritesEmpty}">
                     <Label Text="{x:Static local:AppText.FavoritesEmptyText}"
                            FontSize="16"
                            HorizontalTextAlignment="Center"
@@ -280,7 +280,7 @@
 
         <ScrollView Grid.Row="0"
                     Grid.RowSpan="2"
-                    IsVisible="{Binding IsSettingsContentVisible}"
+                    IsVisible="{Binding Navigation.IsSettingsContentVisible}"
                     Margin="15,30,15,15">
             <VerticalStackLayout Spacing="25">
                 <Label Text="{x:Static local:AppText.SettingsTitle}"
@@ -310,7 +310,7 @@
 
                                 <ImageButton Grid.Column="1"
                                              Source="{AppThemeBinding Light={x:Static local:AppAssets.DarkModeIconLight}, Dark={x:Static local:AppAssets.DarkModeIconDark}}"
-                                             Command="{Binding ToggleThemeCommand}"
+                                             Command="{Binding Settings.ToggleThemeCommand}"
                                              BackgroundColor="Transparent"
                                              HeightRequest="40"
                                              WidthRequest="40"
@@ -340,13 +340,13 @@
                                                InputTransparent="True">
                                             <Image.Triggers>
                                                 <DataTrigger TargetType="Image"
-                                                             Binding="{Binding IsColorBlindMode}"
+                                                             Binding="{Binding Settings.IsColorBlindMode}"
                                                              Value="True">
                                                     <Setter Property="Source"
                                                             Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOnIconLight}, Dark={x:Static local:AppAssets.ColorBlindOnIconDark}}" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Image"
-                                                             Binding="{Binding IsColorBlindMode}"
+                                                             Binding="{Binding Settings.IsColorBlindMode}"
                                                              Value="False">
                                                     <Setter Property="Source"
                                                             Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOffIconLight}, Dark={x:Static local:AppAssets.ColorBlindOffIconDark}}" />
@@ -354,7 +354,7 @@
                                             </Image.Triggers>
                                         </Image>
                                         <Grid.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding ToggleColorBlindModeCommand}" />
+                                            <TapGestureRecognizer Command="{Binding Settings.ToggleColorBlindModeCommand}" />
                                         </Grid.GestureRecognizers>
                                     </Grid>
                                 </Border>
@@ -396,13 +396,13 @@
                                                InputTransparent="True">
                                             <Image.Triggers>
                                                 <DataTrigger TargetType="Image"
-                                                             Binding="{Binding IsCampusSouthOnly}"
+                                                             Binding="{Binding Settings.IsCampusSouthOnly}"
                                                              Value="True">
                                                     <Setter Property="Source"
                                                             Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Image"
-                                                             Binding="{Binding IsCampusSouthOnly}"
+                                                             Binding="{Binding Settings.IsCampusSouthOnly}"
                                                              Value="False">
                                                     <Setter Property="Source"
                                                             Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
@@ -410,7 +410,7 @@
                                             </Image.Triggers>
                                         </Image>
                                         <Grid.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding ToggleCampusSouthOnlyCommand}" />
+                                            <TapGestureRecognizer Command="{Binding Settings.ToggleCampusSouthOnlyCommand}" />
                                         </Grid.GestureRecognizers>
                                     </Grid>
                                 </Border>
@@ -439,13 +439,13 @@
                                                InputTransparent="True">
                                             <Image.Triggers>
                                                 <DataTrigger TargetType="Image"
-                                                             Binding="{Binding IsHapticFeedbackEnabled}"
+                                                             Binding="{Binding Settings.IsHapticFeedbackEnabled}"
                                                              Value="True">
                                                     <Setter Property="Source"
                                                             Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Image"
-                                                             Binding="{Binding IsHapticFeedbackEnabled}"
+                                                             Binding="{Binding Settings.IsHapticFeedbackEnabled}"
                                                              Value="False">
                                                     <Setter Property="Source"
                                                             Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
@@ -453,7 +453,7 @@
                                             </Image.Triggers>
                                         </Image>
                                         <Grid.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding ToggleHapticFeedbackCommand}" />
+                                            <TapGestureRecognizer Command="{Binding Settings.ToggleHapticFeedbackCommand}" />
                                         </Grid.GestureRecognizers>
                                     </Grid>
                                 </Border>
@@ -482,13 +482,13 @@
                                                InputTransparent="True">
                                             <Image.Triggers>
                                                 <DataTrigger TargetType="Image"
-                                                             Binding="{Binding IsHideClosedLocations}"
+                                                             Binding="{Binding Settings.IsHideClosedLocations}"
                                                              Value="True">
                                                     <Setter Property="Source"
                                                             Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Image"
-                                                             Binding="{Binding IsHideClosedLocations}"
+                                                             Binding="{Binding Settings.IsHideClosedLocations}"
                                                              Value="False">
                                                     <Setter Property="Source"
                                                             Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
@@ -496,7 +496,7 @@
                                             </Image.Triggers>
                                         </Image>
                                         <Grid.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding ToggleHideClosedLocationsCommand}" />
+                                            <TapGestureRecognizer Command="{Binding Settings.ToggleHideClosedLocationsCommand}" />
                                         </Grid.GestureRecognizers>
                                     </Grid>
                                 </Border>
@@ -524,7 +524,7 @@
                                 <Button Grid.Row="0"
                                         Grid.Column="0"
                                         Text="{x:Static local:AppText.ImpressumLabel}"
-                                        Command="{Binding ShowImpressumCommand}"
+                                        Command="{Binding Settings.ShowImpressumCommand}"
                                         BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
                                         TextColor="{AppThemeBinding Light=Black, Dark=White}"
                                         FontAttributes="Bold"
@@ -536,7 +536,7 @@
                                 <Button Grid.Row="0"
                                         Grid.Column="1"
                                         Text="{x:Static local:AppText.PrivacyLabel}"
-                                        Command="{Binding ShowPrivacyCommand}"
+                                        Command="{Binding Settings.ShowPrivacyCommand}"
                                         BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
                                         TextColor="{AppThemeBinding Light=Black, Dark=White}"
                                         FontAttributes="Bold"
@@ -548,7 +548,7 @@
                                 <Button Grid.Row="1"
                                         Grid.Column="0"
                                         Text="{x:Static local:AppText.LicensesLabel}"
-                                        Command="{Binding ShowLicensesCommand}"
+                                        Command="{Binding Settings.ShowLicensesCommand}"
                                         BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
                                         TextColor="{AppThemeBinding Light=Black, Dark=White}"
                                         FontAttributes="Bold"
@@ -560,7 +560,7 @@
                                 <Button Grid.Row="1"
                                         Grid.Column="1"
                                         Text="{x:Static local:AppText.GithubLabel}"
-                                        Command="{Binding OpenGithubCommand}"
+                                        Command="{Binding Settings.OpenGithubCommand}"
                                         BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
                                         TextColor="{AppThemeBinding Light=Black, Dark=White}"
                                         FontAttributes="Bold"
@@ -572,7 +572,7 @@
                             </Grid>
 
                             <Button Text="{x:Static local:AppText.AboutButtonLabel}"
-                                    Command="{Binding OpenAboutCommand}"
+                                    Command="{Binding Settings.OpenAboutCommand}"
                                     BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
                                     TextColor="{AppThemeBinding Light=Black, Dark=White}"
                                     FontAttributes="Bold"
@@ -607,7 +607,7 @@
                                      Padding="0,10"
                                      Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding SwitchTabCommand}"
+                        <TapGestureRecognizer Command="{Binding Navigation.SwitchTabCommand}"
                                               CommandParameter="{x:Static local:AppTabs.Home}" />
                     </VerticalStackLayout.GestureRecognizers>
                     <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.HomeIconLight}, Dark={x:Static local:AppAssets.HomeIconDark}}"
@@ -620,19 +620,19 @@
                            FontAttributes="Bold" />
                     <VerticalStackLayout.Triggers>
                         <DataTrigger TargetType="VerticalStackLayout"
-                                     Binding="{Binding CurrentTab}"
+                                     Binding="{Binding Navigation.CurrentTab}"
                                      Value="{x:Static local:AppTabs.Home}">
                             <Setter Property="Opacity"
                                     Value="1.0" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
-                                     Binding="{Binding CurrentTab}"
+                                     Binding="{Binding Navigation.CurrentTab}"
                                      Value="{x:Static local:AppTabs.Favorites}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
-                                     Binding="{Binding CurrentTab}"
+                                     Binding="{Binding Navigation.CurrentTab}"
                                      Value="{x:Static local:AppTabs.Settings}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
@@ -646,7 +646,7 @@
                                      Padding="0,10"
                                      Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding SwitchTabCommand}"
+                        <TapGestureRecognizer Command="{Binding Navigation.SwitchTabCommand}"
                                               CommandParameter="{x:Static local:AppTabs.Favorites}" />
                     </VerticalStackLayout.GestureRecognizers>
                     <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.FavoritesIconLight}, Dark={x:Static local:AppAssets.FavoritesIconDark}}"
@@ -659,19 +659,19 @@
                            FontAttributes="Bold" />
                     <VerticalStackLayout.Triggers>
                         <DataTrigger TargetType="VerticalStackLayout"
-                                     Binding="{Binding CurrentTab}"
+                                     Binding="{Binding Navigation.CurrentTab}"
                                      Value="{x:Static local:AppTabs.Favorites}">
                             <Setter Property="Opacity"
                                     Value="1.0" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
-                                     Binding="{Binding CurrentTab}"
+                                     Binding="{Binding Navigation.CurrentTab}"
                                      Value="{x:Static local:AppTabs.Home}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
-                                     Binding="{Binding CurrentTab}"
+                                     Binding="{Binding Navigation.CurrentTab}"
                                      Value="{x:Static local:AppTabs.Settings}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
@@ -685,7 +685,7 @@
                                      Padding="0,10"
                                      Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding SwitchTabCommand}"
+                        <TapGestureRecognizer Command="{Binding Navigation.SwitchTabCommand}"
                                               CommandParameter="{x:Static local:AppTabs.Settings}" />
                     </VerticalStackLayout.GestureRecognizers>
                     <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.SettingsIconLight}, Dark={x:Static local:AppAssets.SettingsIconDark}}"
@@ -698,19 +698,19 @@
                            FontAttributes="Bold" />
                     <VerticalStackLayout.Triggers>
                         <DataTrigger TargetType="VerticalStackLayout"
-                                     Binding="{Binding CurrentTab}"
+                                     Binding="{Binding Navigation.CurrentTab}"
                                      Value="{x:Static local:AppTabs.Settings}">
                             <Setter Property="Opacity"
                                     Value="1.0" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
-                                     Binding="{Binding CurrentTab}"
+                                     Binding="{Binding Navigation.CurrentTab}"
                                      Value="{x:Static local:AppTabs.Home}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
-                                     Binding="{Binding CurrentTab}"
+                                     Binding="{Binding Navigation.CurrentTab}"
                                      Value="{x:Static local:AppTabs.Favorites}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
@@ -722,12 +722,12 @@
 
         <Grid Grid.Row="1"
               Grid.RowSpan="2"
-              IsVisible="{Binding IsFilterExpanded}"
+              IsVisible="{Binding Filters.IsFilterExpanded}"
               ZIndex="20">
             <Border StrokeThickness="0"
                     BackgroundColor="{AppThemeBinding Light=#1A000000, Dark=#33000000}">
                 <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding CloseFilterSheetCommand}" />
+                    <TapGestureRecognizer Command="{Binding Filters.CloseFilterSheetCommand}" />
                 </Border.GestureRecognizers>
             </Border>
 
@@ -751,7 +751,7 @@
                                    FontAttributes="Bold" />
                         </VerticalStackLayout>
                         <Button Text="{x:Static local:AppText.FilterReset}"
-                                Command="{Binding ResetFiltersCommand}"
+                                Command="{Binding SeatList.ResetFiltersCommand}"
                                 BackgroundColor="{AppThemeBinding Light=#e9f0ff, Dark=#24324d}"
                                 TextColor="{AppThemeBinding Light=#1f4db8, Dark=#9ec1ff}"
                                 CornerRadius="8"
@@ -779,8 +779,8 @@
                                         <Label Text="{x:Static local:AppText.SortByLabel}"
                                                VerticalOptions="Center" />
                                         <Picker Grid.Column="1"
-                                                ItemsSource="{Binding SortOptions}"
-                                                SelectedItem="{Binding SelectedSortOption}" />
+                                                ItemsSource="{Binding Filters.SortOptions}"
+                                                SelectedItem="{Binding Filters.SelectedSortOption}" />
                                     </Grid>
                                 </VerticalStackLayout>
                             </Border>
@@ -798,12 +798,12 @@
                                           ColumnSpacing="8">
                                         <Button Grid.Column="0"
                                                 Text="{x:Static local:AppText.WhenNow}"
-                                                Command="{Binding SetWhenNowCommand}"
+                                                Command="{Binding Filters.SetWhenNowCommand}"
                                                 CornerRadius="10"
                                                 Padding="10,8">
                                             <Button.Triggers>
                                                 <DataTrigger TargetType="Button"
-                                                             Binding="{Binding UseNow}"
+                                                             Binding="{Binding Filters.UseNow}"
                                                              Value="True">
                                                     <Setter Property="BackgroundColor"
                                                             Value="#1f6feb" />
@@ -811,7 +811,7 @@
                                                             Value="White" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Button"
-                                                             Binding="{Binding UseNow}"
+                                                             Binding="{Binding Filters.UseNow}"
                                                              Value="False">
                                                     <Setter Property="BackgroundColor"
                                                             Value="{AppThemeBinding Light=White, Dark=#2a2a2a}" />
@@ -822,12 +822,12 @@
                                         </Button>
                                         <Button Grid.Column="1"
                                                 Text="{x:Static local:AppText.WhenBefore}"
-                                                Command="{Binding SetWhenBeforeCommand}"
+                                                Command="{Binding Filters.SetWhenBeforeCommand}"
                                                 CornerRadius="10"
                                                 Padding="10,8">
                                             <Button.Triggers>
                                                 <DataTrigger TargetType="Button"
-                                                             Binding="{Binding UseNow}"
+                                                             Binding="{Binding Filters.UseNow}"
                                                              Value="False">
                                                     <Setter Property="BackgroundColor"
                                                             Value="#1f6feb" />
@@ -835,7 +835,7 @@
                                                             Value="White" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Button"
-                                                             Binding="{Binding UseNow}"
+                                                             Binding="{Binding Filters.UseNow}"
                                                              Value="True">
                                                     <Setter Property="BackgroundColor"
                                                             Value="{AppThemeBinding Light=White, Dark=#2a2a2a}" />
@@ -847,7 +847,7 @@
                                     </Grid>
 
                                     <Border x:Name="PastTimeFilterPanel"
-                                            IsVisible="{Binding IsBeforeMode}"
+                                            IsVisible="{Binding Filters.IsBeforeMode}"
                                             StrokeThickness="0"
                                             BackgroundColor="{AppThemeBinding Light=White, Dark=#202020}"
                                             Padding="12"
@@ -855,11 +855,11 @@
                                         <Grid ColumnDefinitions="*,*"
                                               ColumnSpacing="10">
                                             <DatePicker Grid.Column="0"
-                                                        Date="{Binding SelectedDate}"
-                                                        MaximumDate="{Binding MaxSelectableDate}"
+                                                        Date="{Binding Filters.SelectedDate}"
+                                                        MaximumDate="{Binding Filters.MaxSelectableDate}"
                                                         Format="{x:Static local:AppFormats.DatePicker}" />
                                             <TimePicker Grid.Column="1"
-                                                        Time="{Binding SelectedTime}"
+                                                        Time="{Binding Filters.SelectedTime}"
                                                         Format="{x:Static local:AppFormats.TimePicker}" />
                                         </Grid>
                                     </Border>
@@ -876,21 +876,21 @@
                                            FontSize="16" />
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
-                                        <CheckBox IsChecked="{Binding IsGroupRoomSelected}" />
+                                        <CheckBox IsChecked="{Binding Filters.IsGroupRoomSelected}" />
                                         <Label Grid.Column="1"
                                                Text="{x:Static local:AppText.RoomTypeGroup}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
-                                        <CheckBox IsChecked="{Binding IsSilentStudySelected}" />
+                                        <CheckBox IsChecked="{Binding Filters.IsSilentStudySelected}" />
                                         <Label Grid.Column="1"
                                                Text="{x:Static local:AppText.RoomTypeSilent}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
-                                        <CheckBox IsChecked="{Binding IsNoReservationSelected}" />
+                                        <CheckBox IsChecked="{Binding Filters.IsNoReservationSelected}" />
                                         <Label Grid.Column="1"
                                                Text="{x:Static local:AppText.RoomTypeNoReservation}"
                                                VerticalOptions="Center" />
@@ -909,21 +909,21 @@
 
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
-                                        <CheckBox IsChecked="{Binding RequireFreeWifi}" />
+                                        <CheckBox IsChecked="{Binding Filters.RequireFreeWifi}" />
                                         <Label Grid.Column="1"
                                                Text="{x:Static local:AppText.EquipmentWifi}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
-                                        <CheckBox IsChecked="{Binding RequirePowerOutlets}" />
+                                        <CheckBox IsChecked="{Binding Filters.RequirePowerOutlets}" />
                                         <Label Grid.Column="1"
                                                Text="{x:Static local:AppText.EquipmentPower}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
-                                        <CheckBox IsChecked="{Binding RequireWhiteboard}" />
+                                        <CheckBox IsChecked="{Binding Filters.RequireWhiteboard}" />
                                         <Label Grid.Column="1"
                                                Text="{x:Static local:AppText.EquipmentWhiteboard}"
                                                VerticalOptions="Center" />
@@ -939,14 +939,14 @@
                                     <Label Text="{x:Static local:AppText.OpeningHoursTitle}"
                                            FontAttributes="Bold"
                                            FontSize="16" />
-                                    <Label Text="{Binding MinimumOpenHoursText}"
+                                    <Label Text="{Binding Filters.MinimumOpenHoursText}"
                                            FontSize="13"
                                            TextColor="Gray" />
-                                    <Slider Minimum="{Binding MinimumOpenHoursMin}"
-                                            Maximum="{Binding MinimumOpenHoursMax}"
+                                    <Slider Minimum="{Binding Filters.MinimumOpenHoursMin}"
+                                            Maximum="{Binding Filters.MinimumOpenHoursMax}"
                                             x:Name="OpeningHoursSlider"
                                             ValueChanged="OnOpeningHoursSliderValueChanged"
-                                            Value="{Binding MinimumOpenHours}" />
+                                            Value="{Binding Filters.MinimumOpenHours}" />
                                 </VerticalStackLayout>
                             </Border>
                         </VerticalStackLayout>
@@ -956,8 +956,8 @@
                             StrokeThickness="0"
                             Padding="16,10,16,16"
                             BackgroundColor="{AppThemeBinding Light=White, Dark=#151515}">
-                        <Button Text="{Binding ShowResultsButtonText}"
-                                Command="{Binding ApplySheetFiltersCommand}"
+                        <Button Text="{Binding SeatList.ShowResultsButtonText}"
+                                Command="{Binding SeatList.ApplySheetFiltersCommand}"
                                 FontAttributes="Bold"
                                 FontSize="16"
                                 HeightRequest="52"
@@ -971,12 +971,12 @@
 
         <Grid Grid.Row="0"
               Grid.RowSpan="2"
-              IsVisible="{Binding IsAboutOpen}"
+              IsVisible="{Binding Settings.IsAboutOpen}"
               ZIndex="30">
             <Border StrokeThickness="0"
                     BackgroundColor="{AppThemeBinding Light=#1A000000, Dark=#33000000}">
                 <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding CloseAboutCommand}" />
+                    <TapGestureRecognizer Command="{Binding Settings.CloseAboutCommand}" />
                 </Border.GestureRecognizers>
             </Border>
 
@@ -997,7 +997,7 @@
                         <Button x:Name="AboutCloseButton"
                                 Grid.Column="1"
                                 Text="{x:Static local:AppText.AboutCloseLabel}"
-                                Command="{Binding CloseAboutCommand}"
+                                Command="{Binding Settings.CloseAboutCommand}"
                                 BackgroundColor="{AppThemeBinding Light=#e9f0ff, Dark=#24324d}"
                                 TextColor="{AppThemeBinding Light=#1f4db8, Dark=#9ec1ff}"
                                 FontAttributes="Bold"
@@ -1014,11 +1014,11 @@
                                    WidthRequest="72"
                                    Margin="0,4,0,0"
                                    HorizontalOptions="Center" />
-                            <Label Text="{Binding AboutAppName}"
+                            <Label Text="{Binding Settings.AboutAppName}"
                                    FontSize="18"
                                    FontAttributes="Bold"
                                    HorizontalOptions="Center" />
-                            <Label Text="{Binding AboutVersionText}"
+                            <Label Text="{Binding Settings.AboutVersionText}"
                                    FontSize="12"
                                    TextColor="Gray"
                                    HorizontalOptions="Center" />
