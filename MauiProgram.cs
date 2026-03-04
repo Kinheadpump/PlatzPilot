@@ -53,6 +53,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<SeatFinderService>();
         builder.Services.AddSingleton<IStudySpaceFeatureService, StudySpaceFeatureService>();
         builder.Services.AddSingleton<SafeArrivalForecastService>();
+        builder.Services.AddSingleton<MensaForecastService>();
         builder.Services.AddSingleton<INavigationService, NavigationService>();
 
 
@@ -60,6 +61,10 @@ public static class MauiProgram
         // 2. VIEWMODELS
         // ==========================================
         // AddSingleton: Die MainPage bleibt stabil und behält Cache/State.
+        builder.Services.AddSingleton<FilterViewModel>();
+        builder.Services.AddSingleton<NavigationViewModel>();
+        builder.Services.AddSingleton<SettingsViewModel>();
+        builder.Services.AddSingleton<SeatListViewModel>();
         builder.Services.AddSingleton<MainPageViewModel>();
 
 
