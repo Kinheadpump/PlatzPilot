@@ -1587,13 +1587,15 @@ public partial class SeatListViewModel : ObservableObject
         {
             if (HapticFeedback.Default.IsSupported)
             {
+                // MAUI doesn't expose a Success type across all platforms/versions.
+                // Use Click + longer vibration fallback to keep a "heavier" feel.
                 HapticFeedback.Default.Perform(HapticFeedbackType.Click);
                 return;
             }
 
             if (Vibration.Default.IsSupported)
             {
-                Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(20));
+                Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(40));
             }
         }
         catch (Exception)

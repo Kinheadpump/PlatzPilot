@@ -1,6 +1,7 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Devices;
 using PlatzPilot.Configuration;
 
 namespace PlatzPilot.ViewModels;
@@ -25,6 +26,7 @@ public partial class FilterViewModel : ObservableObject
 {
     private readonly AppConfig _config;
     private bool _isUpdatingDateTimeSelection;
+    private bool _suppressHaptics;
 
     private bool _isFilterExpanded;
     private bool _isSearchActive;
@@ -345,16 +347,24 @@ public partial class FilterViewModel : ObservableObject
 
     public void ResetToDefaults()
     {
-        SyncSelectedDateTimeToNow();
-        UseNow = true;
+        _suppressHaptics = true;
+        try
+        {
+            SyncSelectedDateTimeToNow();
+            UseNow = true;
 
-        IsGroupRoomSelected = false;
-        IsSilentStudySelected = false;
-        IsNoReservationSelected = false;
-        RequireFreeWifi = false;
-        RequirePowerOutlets = false;
-        RequireWhiteboard = false;
-        MinimumOpenHours = _config.UiNumbers.MinOpeningHours;
+            IsGroupRoomSelected = false;
+            IsSilentStudySelected = false;
+            IsNoReservationSelected = false;
+            RequireFreeWifi = false;
+            RequirePowerOutlets = false;
+            RequireWhiteboard = false;
+            MinimumOpenHours = _config.UiNumbers.MinOpeningHours;
+        }
+        finally
+        {
+            _suppressHaptics = false;
+        }
     }
 
     private void SyncSelectedDateTimeToNow()
@@ -411,12 +421,41 @@ public partial class FilterViewModel : ObservableObject
         RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
     }
 
-    private void OnIsGroupRoomSelectedChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
-    private void OnIsSilentStudySelectedChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
-    private void OnIsNoReservationSelectedChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
-    private void OnRequireFreeWifiChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
-    private void OnRequirePowerOutletsChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
-    private void OnRequireWhiteboardChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    private void OnIsGroupRoomSelectedChanged(bool value)
+    {
+        PerformFilterToggleHaptic();
+        RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    }
+
+    private void OnIsSilentStudySelectedChanged(bool value)
+    {
+        PerformFilterToggleHaptic();
+        RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    }
+
+    private void OnIsNoReservationSelectedChanged(bool value)
+    {
+        PerformFilterToggleHaptic();
+        RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    }
+
+    private void OnRequireFreeWifiChanged(bool value)
+    {
+        PerformFilterToggleHaptic();
+        RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    }
+
+    private void OnRequirePowerOutletsChanged(bool value)
+    {
+        PerformFilterToggleHaptic();
+        RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    }
+
+    private void OnRequireWhiteboardChanged(bool value)
+    {
+        PerformFilterToggleHaptic();
+        RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    }
 
     private void OnMinimumOpenHoursChanged(double value)
     {
@@ -448,5 +487,35 @@ public partial class FilterViewModel : ObservableObject
     private void RaiseFiltersChanged(FilterChangeKind changeKind)
     {
         FiltersChanged?.Invoke(this, new FilterChangedEventArgs(changeKind));
+    }
+
+    private void PerformFilterToggleHaptic()
+    {
+        if (_suppressHaptics)
+        {
+            return;
+        }
+
+        if (!Preferences.Default.Get(_config.Preferences.HapticFeedbackKey, true))
+        {
+            return;
+        }
+
+        try
+        {
+            if (HapticFeedback.Default.IsSupported)
+            {
+                HapticFeedback.Default.Perform(HapticFeedbackType.Click);
+                return;
+            }
+
+            if (Vibration.Default.IsSupported)
+            {
+                Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(10));
+            }
+        }
+        catch (Exception)
+        {
+        }
     }
 }
