@@ -319,8 +319,7 @@ public sealed class MensaForecastService
 
             if (!dayMap.ContainsKey(minute))
             {
-                // Mensa deficit uses missing free seats vs. baseline, so store free seats here.
-                dayMap[minute] = Math.Max(0, point.FreeSeats);
+                dayMap[minute] = Math.Max(0, point.OccupiedSeats);
             }
         }
 
@@ -351,8 +350,7 @@ public sealed class MensaForecastService
 
             if (!occupiedByMinute.ContainsKey(minute))
             {
-                // Mensa deficit uses missing free seats vs. baseline, so store free seats here.
-                occupiedByMinute[minute] = Math.Max(0, point.FreeSeats);
+                occupiedByMinute[minute] = Math.Max(0, point.OccupiedSeats);
             }
         }
 
@@ -534,12 +532,13 @@ public sealed class MensaForecastService
         }
 
         var nowMinute = NormalizeToStepMinutes(now.TimeOfDay, stepMinutes);
-        if (nowMinute < windowStartMinute || nowMinute > windowEndMinute)
+        if (nowMinute < windowStartMinute)
         {
             return;
         }
 
-        for (var minute = windowStartMinute; minute <= nowMinute; minute += stepMinutes)
+        var limitMinute = Math.Min(nowMinute, windowEndMinute);
+        for (var minute = windowStartMinute; minute <= limitMinute; minute += stepMinutes)
         {
             if (!TryCalculateHybridTotalDeficit(referenceDay, minute, windowStartMinute, windowEndMinute, snapshots, out var totalDeficit))
             {
@@ -551,6 +550,26 @@ public sealed class MensaForecastService
                 Timestamp = today.AddMinutes(minute),
                 FreeSeats = 0,
                 OccupiedSeats = Math.Max(0, (int)Math.Round(totalDeficit)),
+                IsManualCount = false
+            });
+        }
+
+        if (nowMinute >= windowEndMinute)
+        {
+            var endTimestamp = today.AddMinutes(windowEndMinute);
+            for (var i = history.Count - 1; i >= 0; i--)
+            {
+                if (history[i].Timestamp == endTimestamp)
+                {
+                    history.RemoveAt(i);
+                }
+            }
+
+            history.Add(new SeatHistoryPoint
+            {
+                Timestamp = endTimestamp,
+                FreeSeats = 0,
+                OccupiedSeats = 0,
                 IsManualCount = false
             });
         }
@@ -677,8 +696,8 @@ public sealed class MensaForecastService
                     windowEndMinute,
                     out var anchorStartMinute,
                     out var anchorEndMinute,
-                    out var freeStart,
-                    out var freeEnd))
+                    out var occStart,
+                    out var occEnd))
             {
                 continue;
             }
@@ -688,20 +707,20 @@ public sealed class MensaForecastService
                 continue;
             }
 
-            if (!TryGetNearestOccupied(dayMap, minute, out var freeNow))
+            if (!TryGetNearestOccupied(dayMap, minute, out var occNow))
             {
                 continue;
             }
 
             hasData = true;
-            var baseline = (double)freeStart;
+            var baseline = (double)occStart;
             if (anchorEndMinute > anchorStartMinute)
             {
                 var frac = (minute - anchorStartMinute) / (double)(anchorEndMinute - anchorStartMinute);
-                baseline = freeStart + (freeEnd - freeStart) * frac;
+                baseline = occStart + (occEnd - occStart) * frac;
             }
 
-            var deficit = Math.Max(0, baseline - freeNow);
+            var deficit = Math.Max(0, baseline - occNow);
             totalDeficit += deficit;
         }
 
@@ -866,8 +885,8 @@ public sealed class MensaForecastService
                     windowEndMinute,
                     out var anchorStartMinute,
                     out var anchorEndMinute,
-                    out var freeStartReference,
-                    out var freeEndReference))
+                    out var occStartReference,
+                    out var occEndReference))
             {
                 continue;
             }
@@ -877,18 +896,18 @@ public sealed class MensaForecastService
                 continue;
             }
 
-            if (!TryGetNearestOccupied(snapshot.OccupiedToday, anchorStartMinute, out var freeStartToday) ||
-                !TryGetNearestOccupied(snapshot.OccupiedToday, minute, out var freeNow))
+            if (!TryGetNearestOccupied(snapshot.OccupiedToday, anchorStartMinute, out var occStartToday) ||
+                !TryGetNearestOccupied(snapshot.OccupiedToday, minute, out var occNow))
             {
                 continue;
             }
 
-            var deltaHist = freeEndReference - freeStartReference;
+            var deltaHist = occEndReference - occStartReference;
             var progressRatio = anchorEndMinute > anchorStartMinute
                 ? (minute - anchorStartMinute) / (double)(anchorEndMinute - anchorStartMinute)
                 : 0;
-            var baseline = freeStartToday + (progressRatio * deltaHist);
-            var deficit = Math.Max(0, baseline - freeNow);
+            var baseline = occStartToday + (progressRatio * deltaHist);
+            var deficit = Math.Max(0, baseline - occNow);
             totalDeficit += deficit;
             hasData = true;
         }
