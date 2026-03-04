@@ -11,7 +11,7 @@ public static class MauiProgram
 {
     public static MauiApp CreateMauiApp()
     {
-        var appConfig = AppConfigProvider.LoadFromPackage();
+        var appConfig = AppConfigProvider.Current;
 
         var builder = MauiApp.CreateBuilder();
         builder
@@ -19,6 +19,13 @@ public static class MauiProgram
             .UseMicrocharts()
             .ConfigureFonts(fonts =>
             {
+                if (appConfig.Fonts.Entries.Count == 0)
+                {
+                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                    return;
+                }
+
                 foreach (var font in appConfig.Fonts.Entries)
                 {
                     if (string.IsNullOrWhiteSpace(font.FileName) ||
@@ -36,6 +43,7 @@ public static class MauiProgram
 #endif
 
         builder.Services.AddSingleton(appConfig);
+        builder.Services.AddHttpClient(SeatFinderService.HttpClientName);
 
         // ==========================================
         // 1. SERVICES

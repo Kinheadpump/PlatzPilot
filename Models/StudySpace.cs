@@ -78,7 +78,7 @@ public class StudySpace
             if (IsMensaVirtual && TotalSeats > 0)
             {
                 var rate = Math.Clamp(OccupiedSeats / (double)TotalSeats, 0, 1);
-                return string.Format(CultureInfo.CurrentCulture, "Geschätzte Fülle: {0:P0}", rate);
+                return string.Format(CultureInfo.CurrentCulture, "~ {0:P0} belegt", rate);
             }
 
             var freeSeats = TotalSeats > 0
@@ -103,7 +103,11 @@ public class StudySpace
         ? Color.FromArgb("#e74c3c")
         : Color.FromArgb("#f39c12");
 
-    public double OccupancyRate => TotalSeats > 0 ? (double)OccupiedSeats / TotalSeats : 0;
+    public double OccupancyRate => TotalSeats > 0
+        ? IsMensaVirtual
+            ? Math.Clamp((double)OccupiedSeats / TotalSeats, 0, 1)
+            : (double)OccupiedSeats / TotalSeats
+        : 0;
     public double TileOccupancyRate => IsOpen ? OccupancyRate : 0;
 
     public Color OccupancyColor

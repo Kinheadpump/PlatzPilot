@@ -202,7 +202,6 @@
     "mediumProbabilityThreshold": 0.8
   },
   "mensaForecast": {
-    "dailyMensaMeals": 9000,
     "latitude": 49.0118,
     "longitude": 8.4169,
     "minSpaceCapacity": 50,

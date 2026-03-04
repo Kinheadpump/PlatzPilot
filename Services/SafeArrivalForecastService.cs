@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Threading;
 using PlatzPilot.Configuration;
 using PlatzPilot.Models;
 
@@ -5,6 +7,24 @@ namespace PlatzPilot.Services;
 
 public sealed class SafeArrivalForecastService
 {
+    private const int LogGammaCacheLimit = 2048;
+    private const int LogBetaBinomialCacheLimit = 4096;
+    private static readonly ConcurrentDictionary<double, double> LogGammaCache = new();
+    private static readonly ConcurrentDictionary<LogBetaBinomialKey, double> LogBetaBinomialCache = new();
+    private static int _logGammaCacheSize;
+    private static int _logBetaBinomialCacheSize;
+    private static readonly double[] LogGammaCoefficients =
+    [
+        676.5203681218851,
+        -1259.1392167224028,
+        771.32342877765313,
+        -176.61502916214059,
+        12.507343278686905,
+        -0.13857109526572012,
+        9.9843695780195716e-6,
+        1.5056327351493116e-7
+    ];
+
     private readonly SafeArrivalConfig _settings;
     private readonly StudentAccessConfig _studentAccess;
     private readonly int _binMinutes;
@@ -513,10 +533,24 @@ public sealed class SafeArrivalForecastService
 
     private static double LogBetaBinomialPmf(int n, int k, double alpha, double beta)
     {
+        var cacheKey = new LogBetaBinomialKey(n, k, alpha, beta);
+        if (LogBetaBinomialCache.TryGetValue(cacheKey, out var cached))
+        {
+            return cached;
+        }
+
         var logCombination = LogGamma(n + 1) - LogGamma(k + 1) - LogGamma(n - k + 1);
         var logBetaPart = LogBeta(k + alpha, n - k + beta) - LogBeta(alpha, beta);
+        var value = logCombination + logBetaPart;
 
-        return logCombination + logBetaPart;
+        // Memoize to reduce CPU churn on repeated probability evaluations.
+        if (Volatile.Read(ref _logBetaBinomialCacheSize) < LogBetaBinomialCacheLimit &&
+            LogBetaBinomialCache.TryAdd(cacheKey, value))
+        {
+            Interlocked.Increment(ref _logBetaBinomialCacheSize);
+        }
+
+        return value;
     }
 
     private static double LogBeta(double a, double b)
@@ -566,34 +600,41 @@ public sealed class SafeArrivalForecastService
         return count;
     }
 
+    private readonly record struct LogBetaBinomialKey(int N, int K, double Alpha, double Beta);
+
     // Lanczos approximation for numerically stable log-gamma.
     private static double LogGamma(double x)
     {
-        double[] coefficients =
-        [
-            676.5203681218851,
-            -1259.1392167224028,
-            771.32342877765313,
-            -176.61502916214059,
-            12.507343278686905,
-            -0.13857109526572012,
-            9.9843695780195716e-6,
-            1.5056327351493116e-7
-        ];
+        if (LogGammaCache.TryGetValue(x, out var cached))
+        {
+            return cached;
+        }
 
+        double value;
         if (x < 0.5)
         {
-            return Math.Log(Math.PI) - Math.Log(Math.Sin(Math.PI * x)) - LogGamma(1 - x);
+            value = Math.Log(Math.PI) - Math.Log(Math.Sin(Math.PI * x)) - LogGamma(1 - x);
         }
-
-        x -= 1;
-        var accumulator = 0.99999999999980993;
-        for (var i = 0; i < coefficients.Length; i++)
+        else
         {
-            accumulator += coefficients[i] / (x + i + 1);
+            var z = x - 1;
+            var accumulator = 0.99999999999980993;
+            for (var i = 0; i < LogGammaCoefficients.Length; i++)
+            {
+                accumulator += LogGammaCoefficients[i] / (z + i + 1);
+            }
+
+            var temp = z + LogGammaCoefficients.Length - 0.5;
+            value = 0.5 * Math.Log(2 * Math.PI) + (z + 0.5) * Math.Log(temp) - temp + Math.Log(accumulator);
         }
 
-        var temp = x + coefficients.Length - 0.5;
-        return 0.5 * Math.Log(2 * Math.PI) + (x + 0.5) * Math.Log(temp) - temp + Math.Log(accumulator);
+        // Keep the cache bounded to avoid unbounded memory growth.
+        if (Volatile.Read(ref _logGammaCacheSize) < LogGammaCacheLimit &&
+            LogGammaCache.TryAdd(x, value))
+        {
+            Interlocked.Increment(ref _logGammaCacheSize);
+        }
+
+        return value;
     }
 }

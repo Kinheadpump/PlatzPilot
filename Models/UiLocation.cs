@@ -33,7 +33,6 @@ public partial class UiLocation : ObservableObject
     public IReadOnlyList<float> OccupancySeries { get; set; } = Array.Empty<float>();
     public bool IsMensaVirtual { get; set; }
     public double MensaOccupancyRate { get; set; }
-    public string MensaDailyProgressText { get; set; } = string.Empty;
     public TimeSpan? MensaOpeningStart { get; set; }
     public TimeSpan? MensaOpeningEnd { get; set; }
 
@@ -136,7 +135,7 @@ public partial class UiLocation : ObservableObject
             if (IsMensaVirtual && TotalSeats > 0)
             {
                 var rate = Math.Clamp(OccupiedSeats / (double)TotalSeats, 0, 1);
-                return string.Format(CultureInfo.CurrentCulture, "Geschätzte Fülle: {0:P0}", rate);
+                return string.Format(CultureInfo.CurrentCulture, "~ {0:P0} belegt", rate);
             }
 
             var freeSeats = TotalSeats > 0
