@@ -1,80 +1,11 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text.Json.Serialization;
-using System.Text.Json;
 using PlatzPilot.Configuration;
 
 namespace PlatzPilot.Models;
-
-internal static class SeatFinderJsonKeys
-{
-    public const string Date = "date";
-    public const string TimezoneType = "timezone_type";
-    public const string Timezone = "timezone";
-    public const string Start = "start";
-    public const string End = "end";
-    public const string OpeningHours = "opening_hours";
-    public const string BaseTimestamp = "base_timestamp";
-    public const string WeeklyOpeningHours = "weekly_opening_hours";
-    public const string ExceptionalOpeningHours = "exceptional_opening_hours";
-    public const string Timestamp = "timestamp";
-    public const string LocationName = "location_name";
-    public const string OccupiedSeats = "occupied_seats";
-    public const string FreeSeats = "free_seats";
-    public const string Name = "name";
-    public const string LongName = "long_name";
-    public const string Url = "url";
-    public const string Building = "building";
-    public const string Level = "level";
-    public const string Room = "room";
-    public const string GeoCoordinates = "geo_coordinates";
-    public const string AvailableSeats = "available_seats";
-    public const string SuperLocation = "super_location";
-    public const string SubLocations = "sub_locations";
-    public const string SeatEstimate = "seatestimate";
-    public const string ManualCount = "manualcount";
-    public const string Location = "location";
-}
-
-public class TimestampDto
-{
-    [JsonPropertyName(SeatFinderJsonKeys.Date)]
-    public string? Date { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.TimezoneType)]
-    public int TimezoneType { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.Timezone)]
-    public string? Timezone { get; set; } 
-
-    public DateTime? GetParsedDate()
-    {
-        if (string.IsNullOrWhiteSpace(Date)) return null;
-
-        var timestampFormat = AppConfigProvider.Current.SeatFinder.TimestampFormat;
-        if (!string.IsNullOrWhiteSpace(timestampFormat) &&
-            DateTime.TryParseExact(Date, timestampFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime exactDate))
-        {
-            return exactDate;
-        }
-
-        if (DateTime.TryParse(Date, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
-            return parsedDate;
-        
-        return null; 
-    }
-}
-
-public class ExceptionalOpeningHoursDto
-{
-    [JsonPropertyName(SeatFinderJsonKeys.Start)]
-    public TimestampDto? Start { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.End)]
-    public TimestampDto? End { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.OpeningHours)]
-    public List<List<TimestampDto>>? OpeningHours { get; set; } 
-}
 
 public class OpeningHoursDto
 {
@@ -133,7 +64,10 @@ public class OpeningHoursDto
         }
 
         // 2. NORMALE ZEITEN
-        if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0) return textConfig.UnknownText;
+        if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0)
+        {
+            return textConfig.UnknownText;
+        }
 
         if (WeeklyOpeningHours.Count == 1)
         {
@@ -146,7 +80,10 @@ public class OpeningHoursDto
                 {
                     var settings = AppConfigProvider.Current.OpeningHours;
                     if (start.Value.TimeOfDay == TimeSpan.Zero && end.Value.TimeOfDay.Hours >= settings.AlwaysOpenHourThreshold)
+                    {
                         return textConfig.AlwaysOpenText;
+                    }
+
                     var timeRange = string.Format(
                         CultureInfo.CurrentCulture,
                         textConfig.TimeRangeFormat,
@@ -155,6 +92,7 @@ public class OpeningHoursDto
                     return timeRange + textConfig.HoursSuffix;
                 }
             }
+
             return textConfig.UnknownText;
         }
 
@@ -163,7 +101,10 @@ public class OpeningHoursDto
 
         foreach (var block in WeeklyOpeningHours)
         {
-            if (block == null || block.Count < 2) continue;
+            if (block == null || block.Count < 2)
+            {
+                continue;
+            }
 
             var start = block[0].GetParsedDate();
             var end = block[1].GetParsedDate();
@@ -179,7 +120,10 @@ public class OpeningHoursDto
             }
         }
 
-        if (todaysBlocks.Count == 0) return textConfig.ClosedText;
+        if (todaysBlocks.Count == 0)
+        {
+            return textConfig.ClosedText;
+        }
 
         return string.Join(textConfig.TimeRangeSeparator, todaysBlocks) + textConfig.HoursSuffix;
     }
@@ -437,98 +381,4 @@ public class OpeningHoursDto
 
         return referenceTime >= blockStart && referenceTime <= blockEnd;
     }
-}
-
-public class SeatRecordDto
-{
-    [JsonPropertyName(SeatFinderJsonKeys.Timestamp)]
-    public TimestampDto? Timestamp { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.LocationName)]
-    public string LocationName { get; set; } = string.Empty;
-
-    [JsonPropertyName(SeatFinderJsonKeys.OccupiedSeats)]
-    public int OccupiedSeats { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.FreeSeats)]
-    public int FreeSeats { get; set; }
-}
-
-public class LocationMetadataDto
-{
-    [JsonPropertyName(SeatFinderJsonKeys.Timestamp)]
-    public TimestampDto? Timestamp { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.Name)]
-    public string Name { get; set; } = string.Empty;
-
-    [JsonPropertyName(SeatFinderJsonKeys.LongName)]
-    public string LongName { get; set; } = string.Empty;
-
-    [JsonPropertyName(SeatFinderJsonKeys.Url)]
-    public string? Url { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.Building)]
-    public string? Building { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.Level)]
-    public string? Level { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.Room)]
-    public string? Room { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.GeoCoordinates)]
-    public string? GeoCoordinates { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.AvailableSeats)]
-    public int AvailableSeats { get; set; }
-
-   // Der interne Speicher für die fertigen Daten
-    private OpeningHoursDto? _openingHours;
-
-    [JsonPropertyName(SeatFinderJsonKeys.OpeningHours)]
-    public JsonElement? OpeningHoursRaw 
-    { 
-        get => null; 
-        set
-        {
-            if (value.HasValue && value.Value.ValueKind == JsonValueKind.Object)
-            {
-                try
-                {
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    _openingHours = value.Value.Deserialize<OpeningHoursDto>(options);
-                }
-                catch 
-                {
-                    _openingHours = null; // Stilles Fehlschlagen, Fallback greift
-                }
-            }
-        }
-    }
-
-    [JsonIgnore]
-    public OpeningHoursDto? OpeningHours
-    {
-        get => _openingHours;
-        set => _openingHours = value; 
-    }
-
-    [JsonPropertyName(SeatFinderJsonKeys.SuperLocation)]
-    public string? SuperLocation { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.SubLocations)]
-    public List<string>? SubLocations { get; set; }
-}
-
-public class SeatFinderResponseDto
-{
-    [JsonPropertyName(SeatFinderJsonKeys.SeatEstimate)]
-    public Dictionary<string, List<SeatRecordDto>>? SeatEstimates { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.ManualCount)]
-    public Dictionary<string, List<SeatRecordDto>>? ManualCounts { get; set; }
-
-    [JsonPropertyName(SeatFinderJsonKeys.Location)]
-    public Dictionary<string, List<LocationMetadataDto>>? Locations { get; set; }
 }
