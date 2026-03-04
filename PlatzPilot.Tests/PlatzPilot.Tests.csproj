@@ -5,6 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <GenerateWin32Resources>false</GenerateWin32Resources>
+    <UseAppHost>false</UseAppHost>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
