@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlatzPilot.Configuration;
 using PlatzPilot.Services;
+using System.Globalization;
 
 namespace PlatzPilot.ViewModels;
 
@@ -22,6 +23,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _isHideClosedLocations;
 
+    [ObservableProperty]
+    private bool _isAboutOpen;
+
     public SettingsViewModel(AppConfig config, INavigationService navigationService)
     {
         _config = config;
@@ -35,8 +39,19 @@ public partial class SettingsViewModel : ObservableObject
         ApplySavedTheme();
     }
 
-    public string SettingsVersionText =>
-        string.Format(System.Globalization.CultureInfo.CurrentCulture, _config.UiText.SettingsVersionFormat, _config.AppInfo.Version);
+    public string AboutAppName =>
+        string.IsNullOrWhiteSpace(AppInfo.Name) ? _config.AppInfo.Name : AppInfo.Name;
+
+    public string AboutVersionText
+    {
+        get
+        {
+            var version = string.IsNullOrWhiteSpace(AppInfo.VersionString) ? _config.AppInfo.Version : AppInfo.VersionString;
+            var build = string.IsNullOrWhiteSpace(AppInfo.BuildString) ? "0" : AppInfo.BuildString;
+
+            return string.Format(CultureInfo.CurrentCulture, _config.UiText.SettingsVersionFormat, version, build);
+        }
+    }
 
     [RelayCommand]
     private void ToggleTheme()
@@ -78,26 +93,42 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void OpenAbout()
+    {
+        IsAboutOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseAbout()
+    {
+        IsAboutOpen = false;
+    }
+
+    [RelayCommand]
     private async Task OpenGithubAsync()
     {
+        CloseAboutIfOpen();
         await _navigationService.OpenUrlAsync(_config.Urls.Github);
     }
 
     [RelayCommand]
     private async Task ShowImpressumAsync()
     {
+        CloseAboutIfOpen();
         await _navigationService.OpenUrlAsync(_config.Urls.Impressum);
     }
 
     [RelayCommand]
     private async Task ShowPrivacyAsync()
     {
+        CloseAboutIfOpen();
         await _navigationService.OpenUrlAsync(_config.Urls.Privacy);
     }
 
     [RelayCommand]
     private async Task ShowLicensesAsync()
     {
+        CloseAboutIfOpen();
         await ShowDialogAsync(_config.UiText.LicensesTitle, _config.UiText.LicensesText);
     }
 
@@ -149,5 +180,13 @@ public partial class SettingsViewModel : ObservableObject
         {
             await page.DisplayAlertAsync(title, message, _config.UiText.OkButtonLabel);
         });
+    }
+
+    private void CloseAboutIfOpen()
+    {
+        if (IsAboutOpen)
+        {
+            IsAboutOpen = false;
+        }
     }
 }

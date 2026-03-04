@@ -6,6 +6,7 @@ public sealed class UiAssetsConfig
     public string SearchIconDark { get; set; } = string.Empty;
     public string FilterIconLight { get; set; } = string.Empty;
     public string FilterIconDark { get; set; } = string.Empty;
+    public string FilterIconActive { get; set; } = string.Empty;
     public string FavoriteIconOutline { get; set; } = string.Empty;
     public string FavoriteIconFilled { get; set; } = string.Empty;
     public string DarkModeIconLight { get; set; } = string.Empty;

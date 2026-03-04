@@ -80,17 +80,30 @@
                             WidthRequest="44"
                             Padding="0"
                             VerticalOptions="Center">
-                        <ImageButton Command="{Binding ToggleFilterCommand}"
-                                     Source="{AppThemeBinding Light={x:Static local:AppAssets.FilterIconLight}, Dark={x:Static local:AppAssets.FilterIconDark}}"
-                                     WidthRequest="44"
-                                     HeightRequest="44"
-                                     MinimumWidthRequest="44"
-                                     MinimumHeightRequest="44"
-                                     Padding="12"
-                                     Aspect="AspectFit"
-                                     BackgroundColor="Transparent"
-                                     HorizontalOptions="Center"
-                                     VerticalOptions="Center" />
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleFilterCommand}" />
+                        </Border.GestureRecognizers>
+                        <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.FilterIconLight}, Dark={x:Static local:AppAssets.FilterIconDark}}"
+                               WidthRequest="24"
+                               HeightRequest="24"
+                               Aspect="AspectFit"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center">
+                            <Image.Triggers>
+                                <DataTrigger TargetType="Image"
+                                             Binding="{Binding IsFilterActive}"
+                                             Value="True">
+                                    <Setter Property="Source"
+                                            Value="{x:Static local:AppAssets.FilterIconActive}" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Image"
+                                             Binding="{Binding IsFilterActive}"
+                                             Value="False">
+                                    <Setter Property="Source"
+                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.FilterIconLight}, Dark={x:Static local:AppAssets.FilterIconDark}}" />
+                                </DataTrigger>
+                            </Image.Triggers>
+                        </Image>
                     </Border>
                 </Grid>
             </Border>
@@ -275,7 +288,7 @@
                        FontSize="28"
                        Margin="0,10,0,10" />
 
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
                       RowSpacing="10">
                     <Label Grid.Row="0"
                            Text="{x:Static local:AppText.SettingsDisplayTitle}"
@@ -490,76 +503,89 @@
                             </Grid>
                         </VerticalStackLayout>
                     </Border>
-                </Grid>
 
-                <Border Padding="15"
-                        Margin="0,50,0,0"
-                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
-                        StrokeShape="RoundRectangle 20"
-                        StrokeThickness="0">
-                    <VerticalStackLayout Spacing="8"
-                                         HorizontalOptions="Center">
-                        <Image Source="{x:Static local:AppAssets.SettingsLogo}"
-                               HeightRequest="60"
-                               WidthRequest="60"
-                               Margin="0,0,0,10"
-                               HorizontalOptions="Center" />
-                        <Label Text="{Binding SettingsVersionText}"
-                               FontSize="12"
-                               TextColor="Gray"
-                               HorizontalOptions="Center" />
-                        <Label Text="{x:Static local:AppText.SettingsDisclaimer}"
-                               Margin="0,8,0,0"
-                               FontSize="11"
-                               TextColor="Gray"
-                               HorizontalTextAlignment="Center" />
-                        <Grid Margin="0,10,0,0"
-                              ColumnDefinitions="*,*,*,*"
-                              ColumnSpacing="6"
-                              HorizontalOptions="Fill">
-                            <Button Grid.Column="0"
-                                    Text="{x:Static local:AppText.GithubLabel}"
-                                    Command="{Binding OpenGithubCommand}"
-                                    BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                    <Label Grid.Row="4"
+                           Text="{x:Static local:AppText.SettingsInfoTitle}"
+                           FontSize="16"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#4a4a4a, Dark=#cfcfcf}" />
+
+                    <Border Grid.Row="5"
+                            Padding="14"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
+                            Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
+                            StrokeShape="RoundRectangle 20"
+                            StrokeThickness="1">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,*"
+                                  RowDefinitions="Auto,Auto"
+                                  ColumnSpacing="10"
+                                  RowSpacing="10">
+                                <Button Grid.Row="0"
+                                        Grid.Column="0"
+                                        Text="{x:Static local:AppText.ImpressumLabel}"
+                                        Command="{Binding ShowImpressumCommand}"
+                                        BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
+                                        TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                        FontAttributes="Bold"
+                                        FontSize="13"
+                                        CornerRadius="12"
+                                        HeightRequest="44"
+                                        MinimumHeightRequest="44"
+                                        Padding="10,8" />
+                                <Button Grid.Row="0"
+                                        Grid.Column="1"
+                                        Text="{x:Static local:AppText.PrivacyLabel}"
+                                        Command="{Binding ShowPrivacyCommand}"
+                                        BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
+                                        TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                        FontAttributes="Bold"
+                                        FontSize="13"
+                                        CornerRadius="12"
+                                        HeightRequest="44"
+                                        MinimumHeightRequest="44"
+                                        Padding="10,8" />
+                                <Button Grid.Row="1"
+                                        Grid.Column="0"
+                                        Text="{x:Static local:AppText.LicensesLabel}"
+                                        Command="{Binding ShowLicensesCommand}"
+                                        BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
+                                        TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                        FontAttributes="Bold"
+                                        FontSize="13"
+                                        CornerRadius="12"
+                                        HeightRequest="44"
+                                        MinimumHeightRequest="44"
+                                        Padding="10,8" />
+                                <Button Grid.Row="1"
+                                        Grid.Column="1"
+                                        Text="{x:Static local:AppText.GithubLabel}"
+                                        Command="{Binding OpenGithubCommand}"
+                                        BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
+                                        TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                        FontAttributes="Bold"
+                                        FontSize="13"
+                                        CornerRadius="12"
+                                        HeightRequest="44"
+                                        MinimumHeightRequest="44"
+                                        Padding="10,8" />
+                            </Grid>
+
+                            <Button Text="{x:Static local:AppText.AboutButtonLabel}"
+                                    Command="{Binding OpenAboutCommand}"
+                                    BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
                                     TextColor="{AppThemeBinding Light=Black, Dark=White}"
                                     FontAttributes="Bold"
-                                    FontSize="11"
-                                    CornerRadius="8"
-                                    HeightRequest="40"
-                                    Padding="6,8" />
-                            <Button Grid.Column="1"
-                                    Text="{x:Static local:AppText.ImpressumLabel}"
-                                    Command="{Binding ShowImpressumCommand}"
-                                    BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
-                                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                                    FontAttributes="Bold"
-                                    FontSize="11"
-                                    CornerRadius="8"
-                                    HeightRequest="40"
-                                    Padding="6,8" />
-                            <Button Grid.Column="2"
-                                    Text="{x:Static local:AppText.PrivacyLabel}"
-                                    Command="{Binding ShowPrivacyCommand}"
-                                    BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
-                                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                                    FontAttributes="Bold"
-                                    FontSize="11"
-                                    CornerRadius="8"
-                                    HeightRequest="40"
-                                    Padding="6,8" />
-                            <Button Grid.Column="3"
-                                    Text="{x:Static local:AppText.LicensesLabel}"
-                                    Command="{Binding ShowLicensesCommand}"
-                                    BackgroundColor="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
-                                    TextColor="{AppThemeBinding Light=Black, Dark=White}"
-                                    FontAttributes="Bold"
-                                    FontSize="11"
-                                    CornerRadius="8"
-                                    HeightRequest="40"
-                                    Padding="6,8" />
-                        </Grid>
-                    </VerticalStackLayout>
-                </Border>
+                                    FontSize="13"
+                                    CornerRadius="12"
+                                    HeightRequest="44"
+                                    MinimumHeightRequest="44"
+                                    Padding="10,8"
+                                    HorizontalOptions="Center"
+                                    WidthRequest="220" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
             </VerticalStackLayout>
         </ScrollView>
 
@@ -939,6 +965,71 @@
                                 BackgroundColor="#1f6feb"
                                 TextColor="White" />
                     </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="0"
+              Grid.RowSpan="2"
+              IsVisible="{Binding IsAboutOpen}"
+              ZIndex="30">
+            <Border StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=#1A000000, Dark=#33000000}">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding CloseAboutCommand}" />
+                </Border.GestureRecognizers>
+            </Border>
+
+            <Border VerticalOptions="End"
+                    StrokeThickness="0"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#151515}"
+                    StrokeShape="RoundRectangle 22,22,0,0"
+                    Padding="20,16,20,22">
+                <Grid RowDefinitions="Auto,*"
+                      RowSpacing="14">
+                    <Grid Grid.Row="0"
+                          ColumnDefinitions="*,Auto"
+                          ColumnSpacing="12">
+                        <Label Text="{x:Static local:AppText.AboutTitle}"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center" />
+                        <Button x:Name="AboutCloseButton"
+                                Grid.Column="1"
+                                Text="{x:Static local:AppText.AboutCloseLabel}"
+                                Command="{Binding CloseAboutCommand}"
+                                BackgroundColor="{AppThemeBinding Light=#e9f0ff, Dark=#24324d}"
+                                TextColor="{AppThemeBinding Light=#1f4db8, Dark=#9ec1ff}"
+                                FontAttributes="Bold"
+                                HeightRequest="44"
+                                MinimumHeightRequest="44"
+                                Padding="12,0"
+                                CornerRadius="12" />
+                    </Grid>
+
+                    <ScrollView Grid.Row="1">
+                        <VerticalStackLayout Spacing="10">
+                            <Image Source="{x:Static local:AppAssets.SettingsLogo}"
+                                   HeightRequest="72"
+                                   WidthRequest="72"
+                                   Margin="0,4,0,0"
+                                   HorizontalOptions="Center" />
+                            <Label Text="{Binding AboutAppName}"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center" />
+                            <Label Text="{Binding AboutVersionText}"
+                                   FontSize="12"
+                                   TextColor="Gray"
+                                   HorizontalOptions="Center" />
+                            <Label Text="{x:Static local:AppText.SettingsDisclaimer}"
+                                   FontSize="12"
+                                   TextColor="Gray"
+                                   HorizontalTextAlignment="Center"
+                                   LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                    </ScrollView>
+
                 </Grid>
             </Border>
         </Grid>

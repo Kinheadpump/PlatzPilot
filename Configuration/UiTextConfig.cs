@@ -70,10 +70,14 @@ public sealed class UiTextConfig
     public string SettingsDesignLabel { get; set; } = string.Empty;
     public string SettingsDisplayTitle { get; set; } = string.Empty;
     public string SettingsFeedbackTitle { get; set; } = string.Empty;
+    public string SettingsInfoTitle { get; set; } = string.Empty;
     public string SettingsHapticLabel { get; set; } = string.Empty;
     public string HideClosedLocationsLabel { get; set; } = string.Empty;
     public string SettingsVersionFormat { get; set; } = string.Empty;
     public string SettingsDisclaimer { get; set; } = string.Empty;
+    public string AboutButtonLabel { get; set; } = string.Empty;
+    public string AboutTitle { get; set; } = string.Empty;
+    public string AboutCloseLabel { get; set; } = string.Empty;
     public string GithubLabel { get; set; } = string.Empty;
     public string ImpressumLabel { get; set; } = string.Empty;
     public string PrivacyLabel { get; set; } = string.Empty;

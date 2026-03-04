@@ -36,6 +36,12 @@ public partial class MainPage : ContentPage
 
     protected override bool OnBackButtonPressed()
     {
+        if (_viewModel.IsAboutOpen)
+        {
+            _viewModel.IsAboutOpen = false;
+            return true;
+        }
+
         if (_viewModel.IsFilterExpanded)
         {
             _viewModel.IsFilterExpanded = false;
@@ -53,6 +59,16 @@ public partial class MainPage : ContentPage
 
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(MainPageViewModel.IsAboutOpen) &&
+            _viewModel.IsAboutOpen &&
+            AboutCloseButton != null)
+        {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                AboutCloseButton.Focus();
+            });
+        }
+
         if (e.PropertyName == nameof(MainPageViewModel.IsFilterExpanded) &&
             _viewModel.IsFilterExpanded &&
             FilterSheetScroll != null)

@@ -47,13 +47,8 @@
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\app_logo.svg"
 			ForegroundFile="Resources\AppIcon\app_logo.svg"
-			BackgroundColor="#FFFFFF"
-			Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'windows'" />
+			BackgroundColor="#FFFFFF" />
 
-		<MauiIcon Include="Resources\AppIcon\app_logo_win.ico" 
-				Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" />
-
-		<MauiImage Remove="Resources\AppIcon\app_logo_win.ico" />
 		<MauiImage Include="Resources\AppIcon\app_logo.svg" Link="app_logo_settings.svg" />
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\images\logo_ui.png" Color="#000000" BaseSize="128,128" />
