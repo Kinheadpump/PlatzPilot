@@ -151,6 +151,7 @@ public partial class SeatListViewModel : ObservableObject
         var hadActiveFilters = _filters.IsAnyFilterActive();
 
         _filters.ResetToDefaults();
+        _filters.MarkFiltersApplied();
         UpdateFilteredLocationPreviewCount();
 
         if (!hadActiveFilters)
@@ -172,6 +173,7 @@ public partial class SeatListViewModel : ObservableObject
     [RelayCommand]
     private async Task ApplySheetFiltersAsync()
     {
+        _filters.MarkFiltersApplied();
         var requestedBeforeParameter = _filters.GetApiBeforeParameter();
         var shouldRefreshData = ShouldRefreshSnapshot(requestedBeforeParameter);
 

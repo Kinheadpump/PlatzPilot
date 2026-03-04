@@ -96,6 +96,12 @@ public partial class MainPageViewModel : ObservableObject
         set => Settings.IsHideClosedLocations = value;
     }
 
+    public bool IsAboutOpen
+    {
+        get => Settings.IsAboutOpen;
+        set => Settings.IsAboutOpen = value;
+    }
+
     public bool IsOfflineBannerVisible
     {
         get => SeatList.IsOfflineBannerVisible;
@@ -206,12 +212,14 @@ public partial class MainPageViewModel : ObservableObject
     public bool IsEmptySubtitleVisible => SeatList.IsEmptySubtitleVisible;
     public bool IsBeforeMode => Filters.IsBeforeMode;
     public bool IsSearchInactive => Filters.IsSearchInactive;
+    public bool IsFilterActive => Filters.IsFilterActive;
     public DateTime MaxSelectableDate => Filters.MaxSelectableDate;
     public double MinimumOpenHoursMin => Filters.MinimumOpenHoursMin;
     public double MinimumOpenHoursMax => Filters.MinimumOpenHoursMax;
     public string MinimumOpenHoursText => Filters.MinimumOpenHoursText;
     public string ShowResultsButtonText => SeatList.ShowResultsButtonText;
-    public string SettingsVersionText => Settings.SettingsVersionText;
+    public string AboutAppName => Settings.AboutAppName;
+    public string AboutVersionText => Settings.AboutVersionText;
     public static string WelcomeMessage => SeatListViewModel.WelcomeMessage;
 
     public IRelayCommand ToggleSearchCommand => Filters.ToggleSearchCommand;
@@ -228,6 +236,8 @@ public partial class MainPageViewModel : ObservableObject
     public IRelayCommand ToggleCampusSouthOnlyCommand => Settings.ToggleCampusSouthOnlyCommand;
     public IRelayCommand ToggleHapticFeedbackCommand => Settings.ToggleHapticFeedbackCommand;
     public IRelayCommand ToggleHideClosedLocationsCommand => Settings.ToggleHideClosedLocationsCommand;
+    public IRelayCommand OpenAboutCommand => Settings.OpenAboutCommand;
+    public IRelayCommand CloseAboutCommand => Settings.CloseAboutCommand;
     public IAsyncRelayCommand OpenGithubCommand => Settings.OpenGithubCommand;
     public IAsyncRelayCommand ShowImpressumCommand => Settings.ShowImpressumCommand;
     public IAsyncRelayCommand ShowPrivacyCommand => Settings.ShowPrivacyCommand;

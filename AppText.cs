@@ -72,10 +72,14 @@ public static class AppText
     public static string SettingsDesignLabel => Text.SettingsDesignLabel;
     public static string SettingsDisplayTitle => Text.SettingsDisplayTitle;
     public static string SettingsFeedbackTitle => Text.SettingsFeedbackTitle;
+    public static string SettingsInfoTitle => Text.SettingsInfoTitle;
     public static string SettingsHapticLabel => Text.SettingsHapticLabel;
     public static string HideClosedLocationsLabel => Text.HideClosedLocationsLabel;
     public static string SettingsVersionFormat => Text.SettingsVersionFormat;
     public static string SettingsDisclaimer => Text.SettingsDisclaimer;
+    public static string AboutButtonLabel => Text.AboutButtonLabel;
+    public static string AboutTitle => Text.AboutTitle;
+    public static string AboutCloseLabel => Text.AboutCloseLabel;
     public static string GithubLabel => Text.GithubLabel;
     public static string ImpressumLabel => Text.ImpressumLabel;
     public static string PrivacyLabel => Text.PrivacyLabel;

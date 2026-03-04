@@ -71,6 +71,9 @@ public partial class FilterViewModel : ObservableObject
     [ObservableProperty]
     private string _selectedSortOption;
 
+    [ObservableProperty]
+    private bool _isFilterActive;
+
     public FilterViewModel(AppConfig config)
     {
         _config = config;
@@ -102,6 +105,11 @@ public partial class FilterViewModel : ObservableObject
     public double MinimumOpenHoursMax => _config.UiNumbers.MaxOpeningHours;
     public string MinimumOpenHoursText =>
         string.Format(CultureInfo.CurrentCulture, _config.UiText.MinimumOpenHoursFormat, MinimumOpenHours);
+
+    public void MarkFiltersApplied()
+    {
+        IsFilterActive = IsAnyFilterActive();
+    }
 
     [RelayCommand]
     private void ToggleSearch()

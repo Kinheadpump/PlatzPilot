@@ -10,6 +10,7 @@ public static class AppAssets
     public static string SearchIconDark => Assets.SearchIconDark;
     public static string FilterIconLight => Assets.FilterIconLight;
     public static string FilterIconDark => Assets.FilterIconDark;
+    public static string FilterIconActive => Assets.FilterIconActive;
     public static string FavoriteIconOutline => Assets.FavoriteIconOutline;
     public static string FavoriteIconFilled => Assets.FavoriteIconFilled;
     public static string DarkModeIconLight => Assets.DarkModeIconLight;
