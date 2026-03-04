@@ -103,7 +103,8 @@
                      BackgroundColor="Transparent">
             <Grid>
                 <CollectionView ItemsSource="{Binding UiLocations}"
-                                SelectionMode="None"
+                                SelectionMode="Single"
+                                SelectedItem="{Binding SelectedLocation, Mode=TwoWay}"
                                 BackgroundColor="Transparent"
                                 Margin="10,0,10,10">
                     <CollectionView.ItemTemplate>
@@ -114,11 +115,6 @@
                                     Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
                                     StrokeShape="RoundRectangle 20"
                                     StrokeThickness="1">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainPageViewModel}}, Path=GoToDetailCommand}"
-                                                          CommandParameter="{Binding .}" />
-                                </Border.GestureRecognizers>
-
                                 <Grid ColumnDefinitions="*,Auto"
                                       ColumnSpacing="10">
                                     <Grid Grid.Column="0"

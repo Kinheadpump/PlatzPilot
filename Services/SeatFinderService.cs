@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Text.Json;
 using System.Globalization;
 using System.Threading;
@@ -9,18 +10,23 @@ namespace PlatzPilot.Services;
 public class SeatFinderService
 {
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
-    private readonly HttpClient _httpClient;
+    public const string HttpClientName = "SeatFinder";
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly SeatFinderConfig _settings;
     private readonly InternalConfig _internal;
 
-    public SeatFinderService(AppConfig config)
+    public SeatFinderService(IHttpClientFactory httpClientFactory, AppConfig config)
     {
-        _httpClient = new HttpClient();
+        _httpClientFactory = httpClientFactory;
         _settings = config.SeatFinder;
         _internal = config.Internal;
     }
 
-    public async Task<List<StudySpace>> FetchSeatDataAsync(int limit, string? after = null, string? before = null)
+    public async Task<List<StudySpace>> FetchSeatDataAsync(
+        int limit,
+        string? after = null,
+        string? before = null,
+        CancellationToken cancellationToken = default)
     {
         var resultList = new List<StudySpace>();
         string locationString = string.Join(_settings.LocationSeparator, _settings.Locations);
@@ -53,8 +59,13 @@ public class SeatFinderService
 
         try
         {
-            using var cts = new CancellationTokenSource(RequestTimeout);
-            var responseText = await _httpClient.GetStringAsync(requestUrl, cts.Token);
+            var client = _httpClientFactory.CreateClient(HttpClientName);
+
+            // Combine request timeout with caller cancellation to avoid hanging requests.
+            using var timeoutCts = new CancellationTokenSource(RequestTimeout);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken);
+
+            var responseText = await client.GetStringAsync(requestUrl, linkedCts.Token);
 
             int startIdx = responseText.IndexOf('(');
             int endIdx = responseText.LastIndexOf(')');

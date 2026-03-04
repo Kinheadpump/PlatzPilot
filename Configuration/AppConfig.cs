@@ -226,7 +226,6 @@ public sealed class SafeArrivalConfig
 
 public sealed class MensaForecastConfig
 {
-    public int DailyMensaMeals { get; set; } = 9000;
     public double Latitude { get; set; } = 49.0118;
     public double Longitude { get; set; } = 8.4169;
     public int MinSpaceCapacity { get; set; } = 50;
