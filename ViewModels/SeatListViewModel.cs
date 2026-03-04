@@ -25,39 +25,93 @@ public partial class SeatListViewModel : ObservableObject
     private readonly NavigationViewModel _navigation;
     private readonly SettingsViewModel _settings;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsDataVisible))]
-    [NotifyPropertyChangedFor(nameof(IsListEmpty))]
-    [NotifyPropertyChangedFor(nameof(IsHomeEmpty))]
-    [NotifyPropertyChangedFor(nameof(IsFavoritesEmpty))]
-    [NotifyPropertyChangedFor(nameof(IsNoResultsEmpty))]
-    [NotifyPropertyChangedFor(nameof(EmptyStateTitle))]
-    [NotifyPropertyChangedFor(nameof(EmptyStateSubtitle))]
-    [NotifyPropertyChangedFor(nameof(IsEmptySubtitleVisible))]
     private ObservableCollection<UiLocation> _uiLocations = [];
-
-    [ObservableProperty]
     private UiLocation? _selectedLocation;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsFavoritesEmpty))]
     private bool _isBusy;
-
-    [ObservableProperty]
     private bool _isRefreshing;
-
-    [ObservableProperty]
     private bool _isOfflineBannerVisible;
-
-    [ObservableProperty]
     private SafeArrivalRecommendation? _mensaSafeArrivalRecommendation;
-
-    [ObservableProperty]
     private string _mensaFluxLabel = string.Empty;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowResultsButtonText))]
     private int _filteredLocationCount;
+
+    public ObservableCollection<UiLocation> UiLocations
+    {
+        get => _uiLocations;
+        set
+        {
+            if (SetProperty(ref _uiLocations, value))
+            {
+                OnPropertyChanged(nameof(IsDataVisible));
+                OnPropertyChanged(nameof(IsListEmpty));
+                OnPropertyChanged(nameof(IsHomeEmpty));
+                OnPropertyChanged(nameof(IsFavoritesEmpty));
+                OnPropertyChanged(nameof(IsNoResultsEmpty));
+                OnPropertyChanged(nameof(EmptyStateTitle));
+                OnPropertyChanged(nameof(EmptyStateSubtitle));
+                OnPropertyChanged(nameof(IsEmptySubtitleVisible));
+            }
+        }
+    }
+
+    public UiLocation? SelectedLocation
+    {
+        get => _selectedLocation;
+        set
+        {
+            if (SetProperty(ref _selectedLocation, value))
+            {
+                OnSelectedLocationChanged(value);
+            }
+        }
+    }
+
+    public bool IsBusy
+    {
+        get => _isBusy;
+        set
+        {
+            if (SetProperty(ref _isBusy, value))
+            {
+                OnPropertyChanged(nameof(IsFavoritesEmpty));
+            }
+        }
+    }
+
+    public bool IsRefreshing
+    {
+        get => _isRefreshing;
+        set => SetProperty(ref _isRefreshing, value);
+    }
+
+    public bool IsOfflineBannerVisible
+    {
+        get => _isOfflineBannerVisible;
+        set => SetProperty(ref _isOfflineBannerVisible, value);
+    }
+
+    public SafeArrivalRecommendation? MensaSafeArrivalRecommendation
+    {
+        get => _mensaSafeArrivalRecommendation;
+        set => SetProperty(ref _mensaSafeArrivalRecommendation, value);
+    }
+
+    public string MensaFluxLabel
+    {
+        get => _mensaFluxLabel;
+        set => SetProperty(ref _mensaFluxLabel, value);
+    }
+
+    public int FilteredLocationCount
+    {
+        get => _filteredLocationCount;
+        set
+        {
+            if (SetProperty(ref _filteredLocationCount, value))
+            {
+                OnPropertyChanged(nameof(ShowResultsButtonText));
+            }
+        }
+    }
 
     private IReadOnlyDictionary<string, StudySpaceFeatureEntry> _spaceFeaturesById =
         new Dictionary<string, StudySpaceFeatureEntry>(StringComparer.OrdinalIgnoreCase);
@@ -444,7 +498,7 @@ public partial class SeatListViewModel : ObservableObject
                TimeSpan.FromMinutes(_config.SeatFinder.LiveRefreshIntervalMinutes);
     }
 
-    partial void OnSelectedLocationChanged(UiLocation? value)
+    private void OnSelectedLocationChanged(UiLocation? value)
     {
         if (value == null)
         {
@@ -1109,7 +1163,7 @@ public partial class SeatListViewModel : ObservableObject
         {
             var value when string.Equals(value, _config.Sort.MostFree, StringComparison.Ordinal) =>
                 locations
-                    .OrderBy(location => GetRelevanceRank(location))
+                    .OrderBy(location => GetMostFreeRank(location))
                     .ThenByDescending(location => location.FreeSeats)
                     .ThenBy(location => location.Name)
                     .ToList(),
@@ -1129,6 +1183,7 @@ public partial class SeatListViewModel : ObservableObject
     private const int RelevanceRankOpen = 0;
     private const int RelevanceRankStudentOnlyClosed = 1;
     private const int RelevanceRankClosed = 2;
+    private const int RelevanceRankMensaOpen = 1;
 
     private static int GetRelevanceRank(UiLocation location)
     {
@@ -1143,6 +1198,21 @@ public partial class SeatListViewModel : ObservableObject
         }
 
         return RelevanceRankClosed;
+    }
+
+    private static int GetMostFreeRank(UiLocation location)
+    {
+        if (location.IsOpen)
+        {
+            return location.IsMensaVirtual ? RelevanceRankMensaOpen : RelevanceRankOpen;
+        }
+
+        if (location.IsStudentOnlyClosed)
+        {
+            return RelevanceRankStudentOnlyClosed + 1;
+        }
+
+        return RelevanceRankClosed + 1;
     }
 
     private void ReplaceUiLocations(IEnumerable<UiLocation> locations)

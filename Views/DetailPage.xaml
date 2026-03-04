@@ -64,8 +64,30 @@
                             <Label Grid.Row="1" Grid.Column="0" Text="{x:Static local:AppText.OpeningHoursLabel}" FontAttributes="Bold" Margin="0,0,10,10"/>
                             <Label Grid.Row="1" Grid.Column="1" Text="{Binding LocationData.TodayOpeningHours}" TextColor="{AppThemeBinding Light=#2c3e50, Dark=#bdc3c7}" Margin="0,0,0,10" />
 
-                            <Label Grid.Row="2" Grid.Column="0" Text="{x:Static local:AppText.LastCountLabel}" FontAttributes="Bold" />
-                            <Label Grid.Row="2" Grid.Column="1" Text="{Binding LocationData.LastUpdatedText}" TextColor="{AppThemeBinding Light=#2c3e50, Dark=#bdc3c7}" />
+                            <Label Grid.Row="2"
+                                   Grid.Column="0"
+                                   Text="{x:Static local:AppText.LastCountLabel}"
+                                   FontAttributes="Bold">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding LocationData.IsMensaVirtual}"
+                                                 Value="True">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                            <Label Grid.Row="2"
+                                   Grid.Column="1"
+                                   Text="{Binding LocationData.LastUpdatedText}"
+                                   TextColor="{AppThemeBinding Light=#2c3e50, Dark=#bdc3c7}">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding LocationData.IsMensaVirtual}"
+                                                 Value="True">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
                         </Grid>
                     </Border>
 
