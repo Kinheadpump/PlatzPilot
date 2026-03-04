@@ -212,10 +212,20 @@ public partial class UiLocation : ObservableObject
     }
 
     // --- NEU: Favoriten-Logik ---
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(FavoriteIcon))]
-    [NotifyPropertyChangedFor(nameof(FavoriteColor))]
     private bool _isFavorite;
+
+    public bool IsFavorite
+    {
+        get => _isFavorite;
+        set
+        {
+            if (SetProperty(ref _isFavorite, value))
+            {
+                OnPropertyChanged(nameof(FavoriteIcon));
+                OnPropertyChanged(nameof(FavoriteColor));
+            }
+        }
+    }
 
     // Diese Properties steuern das Aussehen des Sterns in der UI automatisch!
     public string FavoriteIcon => IsFavorite ? AppText.FavoriteIconFilled : AppText.FavoriteIconOutline;

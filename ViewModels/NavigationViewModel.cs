@@ -8,15 +8,25 @@ public partial class NavigationViewModel : ObservableObject
 {
     private readonly AppConfig _config;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsMainContentVisible))]
-    [NotifyPropertyChangedFor(nameof(IsSettingsContentVisible))]
     private string _currentTab = string.Empty;
+
+    public string CurrentTab
+    {
+        get => _currentTab;
+        set
+        {
+            if (SetProperty(ref _currentTab, value))
+            {
+                OnPropertyChanged(nameof(IsMainContentVisible));
+                OnPropertyChanged(nameof(IsSettingsContentVisible));
+            }
+        }
+    }
 
     public NavigationViewModel(AppConfig config)
     {
         _config = config;
-        _currentTab = ResolveInitialTab(Preferences.Default.Get(_config.Preferences.TabModeKey, _config.Tabs.Home));
+        CurrentTab = ResolveInitialTab(Preferences.Default.Get(_config.Preferences.TabModeKey, _config.Tabs.Home));
     }
 
     public bool IsMainContentVisible => CurrentTab != _config.Tabs.Settings;

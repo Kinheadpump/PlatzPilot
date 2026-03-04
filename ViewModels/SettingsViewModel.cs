@@ -11,20 +11,65 @@ public partial class SettingsViewModel : ObservableObject
     private readonly AppConfig _config;
     private readonly INavigationService _navigationService;
 
-    [ObservableProperty]
     private bool _isColorBlindMode;
-
-    [ObservableProperty]
     private bool _isCampusSouthOnly;
-
-    [ObservableProperty]
     private bool _isHapticFeedbackEnabled;
-
-    [ObservableProperty]
     private bool _isHideClosedLocations;
-
-    [ObservableProperty]
     private bool _isAboutOpen;
+
+    public bool IsColorBlindMode
+    {
+        get => _isColorBlindMode;
+        set
+        {
+            if (SetProperty(ref _isColorBlindMode, value))
+            {
+                OnIsColorBlindModeChanged(value);
+            }
+        }
+    }
+
+    public bool IsCampusSouthOnly
+    {
+        get => _isCampusSouthOnly;
+        set
+        {
+            if (SetProperty(ref _isCampusSouthOnly, value))
+            {
+                OnIsCampusSouthOnlyChanged(value);
+            }
+        }
+    }
+
+    public bool IsHapticFeedbackEnabled
+    {
+        get => _isHapticFeedbackEnabled;
+        set
+        {
+            if (SetProperty(ref _isHapticFeedbackEnabled, value))
+            {
+                OnIsHapticFeedbackEnabledChanged(value);
+            }
+        }
+    }
+
+    public bool IsHideClosedLocations
+    {
+        get => _isHideClosedLocations;
+        set
+        {
+            if (SetProperty(ref _isHideClosedLocations, value))
+            {
+                OnIsHideClosedLocationsChanged(value);
+            }
+        }
+    }
+
+    public bool IsAboutOpen
+    {
+        get => _isAboutOpen;
+        set => SetProperty(ref _isAboutOpen, value);
+    }
 
     public SettingsViewModel(AppConfig config, INavigationService navigationService)
     {
@@ -132,22 +177,22 @@ public partial class SettingsViewModel : ObservableObject
         await ShowDialogAsync(_config.UiText.LicensesTitle, _config.UiText.LicensesText);
     }
 
-    partial void OnIsColorBlindModeChanged(bool value)
+    private void OnIsColorBlindModeChanged(bool value)
     {
         Preferences.Default.Set(_config.Preferences.ColorBlindModeKey, value);
     }
 
-    partial void OnIsCampusSouthOnlyChanged(bool value)
+    private void OnIsCampusSouthOnlyChanged(bool value)
     {
         Preferences.Default.Set(_config.Preferences.CampusSouthOnlyKey, value);
     }
 
-    partial void OnIsHapticFeedbackEnabledChanged(bool value)
+    private void OnIsHapticFeedbackEnabledChanged(bool value)
     {
         Preferences.Default.Set(_config.Preferences.HapticFeedbackKey, value);
     }
 
-    partial void OnIsHideClosedLocationsChanged(bool value)
+    private void OnIsHideClosedLocationsChanged(bool value)
     {
         Preferences.Default.Set(_config.Preferences.HideClosedLocationsKey, value);
     }

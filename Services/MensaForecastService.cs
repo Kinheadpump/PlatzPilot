@@ -319,7 +319,8 @@ public sealed class MensaForecastService
 
             if (!dayMap.ContainsKey(minute))
             {
-                dayMap[minute] = Math.Max(0, point.OccupiedSeats);
+                // Mensa deficit uses missing free seats vs. baseline, so store free seats here.
+                dayMap[minute] = Math.Max(0, point.FreeSeats);
             }
         }
 
@@ -350,7 +351,8 @@ public sealed class MensaForecastService
 
             if (!occupiedByMinute.ContainsKey(minute))
             {
-                occupiedByMinute[minute] = Math.Max(0, point.OccupiedSeats);
+                // Mensa deficit uses missing free seats vs. baseline, so store free seats here.
+                occupiedByMinute[minute] = Math.Max(0, point.FreeSeats);
             }
         }
 
@@ -660,7 +662,6 @@ public sealed class MensaForecastService
             return false;
         }
 
-        var frac = (minute - windowStartMinute) / (double)(windowEndMinute - windowStartMinute);
         var hasData = false;
 
         foreach (var snapshot in snapshots)
@@ -670,16 +671,37 @@ public sealed class MensaForecastService
                 continue;
             }
 
-            if (!TryGetNearestOccupied(dayMap, windowStartMinute, out var occStart) ||
-                !TryGetNearestOccupied(dayMap, windowEndMinute, out var occEnd) ||
-                !TryGetNearestOccupied(dayMap, minute, out var occNow))
+            if (!TryGetBaselineAnchors(
+                    dayMap,
+                    windowStartMinute,
+                    windowEndMinute,
+                    out var anchorStartMinute,
+                    out var anchorEndMinute,
+                    out var freeStart,
+                    out var freeEnd))
+            {
+                continue;
+            }
+
+            if (minute < anchorStartMinute || minute > anchorEndMinute)
+            {
+                continue;
+            }
+
+            if (!TryGetNearestOccupied(dayMap, minute, out var freeNow))
             {
                 continue;
             }
 
             hasData = true;
-            var baseline = occStart + (occEnd - occStart) * frac;
-            var deficit = Math.Max(0, baseline - occNow);
+            var baseline = (double)freeStart;
+            if (anchorEndMinute > anchorStartMinute)
+            {
+                var frac = (minute - anchorStartMinute) / (double)(anchorEndMinute - anchorStartMinute);
+                baseline = freeStart + (freeEnd - freeStart) * frac;
+            }
+
+            var deficit = Math.Max(0, baseline - freeNow);
             totalDeficit += deficit;
         }
 
@@ -746,6 +768,52 @@ public sealed class MensaForecastService
         return true;
     }
 
+    private static bool TryGetBaselineAnchors(
+        SortedList<int, int> dayMap,
+        int windowStartMinute,
+        int windowEndMinute,
+        out int anchorStartMinute,
+        out int anchorEndMinute,
+        out int occStart,
+        out int occEnd)
+    {
+        anchorStartMinute = 0;
+        anchorEndMinute = 0;
+        occStart = 0;
+        occEnd = 0;
+
+        if (dayMap.Count == 0)
+        {
+            return false;
+        }
+
+        var keys = dayMap.Keys;
+        var values = dayMap.Values;
+
+        var startIndex = 0;
+        while (startIndex < keys.Count && keys[startIndex] < windowStartMinute)
+        {
+            startIndex++;
+        }
+
+        var endIndex = keys.Count - 1;
+        while (endIndex >= 0 && keys[endIndex] > windowEndMinute)
+        {
+            endIndex--;
+        }
+
+        if (startIndex >= keys.Count || endIndex < 0 || startIndex > endIndex)
+        {
+            return false;
+        }
+
+        anchorStartMinute = keys[startIndex];
+        anchorEndMinute = keys[endIndex];
+        occStart = values[startIndex];
+        occEnd = values[endIndex];
+        return true;
+    }
+
     private static bool TryCalculateLiveTotalDeficit(
         DateTime today,
         int minute,
@@ -783,7 +851,6 @@ public sealed class MensaForecastService
         out double totalDeficit)
     {
         totalDeficit = 0;
-        var progressRatio = (minute - windowStartMinute) / (double)(windowEndMinute - windowStartMinute);
         var hasData = false;
 
         foreach (var snapshot in snapshots)
@@ -793,21 +860,35 @@ public sealed class MensaForecastService
                 continue;
             }
 
-            if (!TryGetNearestOccupied(referenceDayMap, windowStartMinute, out var occStartReference) ||
-                !TryGetNearestOccupied(referenceDayMap, windowEndMinute, out var occEndReference))
+            if (!TryGetBaselineAnchors(
+                    referenceDayMap,
+                    windowStartMinute,
+                    windowEndMinute,
+                    out var anchorStartMinute,
+                    out var anchorEndMinute,
+                    out var freeStartReference,
+                    out var freeEndReference))
             {
                 continue;
             }
 
-            if (!TryGetNearestOccupied(snapshot.OccupiedToday, windowStartMinute, out var occStartToday) ||
-                !TryGetNearestOccupied(snapshot.OccupiedToday, minute, out var occNow))
+            if (minute < anchorStartMinute || minute > anchorEndMinute)
             {
                 continue;
             }
 
-            var deltaHist = occEndReference - occStartReference;
-            var baseline = occStartToday + (progressRatio * deltaHist);
-            var deficit = Math.Max(0, baseline - occNow);
+            if (!TryGetNearestOccupied(snapshot.OccupiedToday, anchorStartMinute, out var freeStartToday) ||
+                !TryGetNearestOccupied(snapshot.OccupiedToday, minute, out var freeNow))
+            {
+                continue;
+            }
+
+            var deltaHist = freeEndReference - freeStartReference;
+            var progressRatio = anchorEndMinute > anchorStartMinute
+                ? (minute - anchorStartMinute) / (double)(anchorEndMinute - anchorStartMinute)
+                : 0;
+            var baseline = freeStartToday + (progressRatio * deltaHist);
+            var deficit = Math.Max(0, baseline - freeNow);
             totalDeficit += deficit;
             hasData = true;
         }

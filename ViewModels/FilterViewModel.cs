@@ -26,53 +26,191 @@ public partial class FilterViewModel : ObservableObject
     private readonly AppConfig _config;
     private bool _isUpdatingDateTimeSelection;
 
-    [ObservableProperty]
     private bool _isFilterExpanded;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsSearchInactive))]
     private bool _isSearchActive;
-
-    [ObservableProperty]
     private string _searchText = string.Empty;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsBeforeMode))]
     private bool _useNow = true;
-
-    [ObservableProperty]
     private DateTime _selectedDate = DateTime.Now.Date;
-
-    [ObservableProperty]
     private TimeSpan _selectedTime = DateTime.Now.TimeOfDay;
-
-    [ObservableProperty]
     private bool _isGroupRoomSelected;
-
-    [ObservableProperty]
     private bool _isSilentStudySelected;
-
-    [ObservableProperty]
     private bool _isNoReservationSelected;
-
-    [ObservableProperty]
     private bool _requireFreeWifi;
-
-    [ObservableProperty]
     private bool _requirePowerOutlets;
-
-    [ObservableProperty]
     private bool _requireWhiteboard;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(MinimumOpenHoursText))]
     private double _minimumOpenHours;
-
-    [ObservableProperty]
-    private string _selectedSortOption;
-
-    [ObservableProperty]
+    private string _selectedSortOption = string.Empty;
     private bool _isFilterActive;
+
+    public bool IsFilterExpanded
+    {
+        get => _isFilterExpanded;
+        set => SetProperty(ref _isFilterExpanded, value);
+    }
+
+    public bool IsSearchActive
+    {
+        get => _isSearchActive;
+        set
+        {
+            if (SetProperty(ref _isSearchActive, value))
+            {
+                OnPropertyChanged(nameof(IsSearchInactive));
+            }
+        }
+    }
+
+    public string SearchText
+    {
+        get => _searchText;
+        set
+        {
+            if (SetProperty(ref _searchText, value))
+            {
+                OnSearchTextChanged(value);
+            }
+        }
+    }
+
+    public bool UseNow
+    {
+        get => _useNow;
+        set
+        {
+            if (SetProperty(ref _useNow, value))
+            {
+                OnPropertyChanged(nameof(IsBeforeMode));
+                OnUseNowChanged(value);
+            }
+        }
+    }
+
+    public DateTime SelectedDate
+    {
+        get => _selectedDate;
+        set
+        {
+            if (SetProperty(ref _selectedDate, value))
+            {
+                OnSelectedDateChanged(value);
+            }
+        }
+    }
+
+    public TimeSpan SelectedTime
+    {
+        get => _selectedTime;
+        set
+        {
+            if (SetProperty(ref _selectedTime, value))
+            {
+                OnSelectedTimeChanged(value);
+            }
+        }
+    }
+
+    public bool IsGroupRoomSelected
+    {
+        get => _isGroupRoomSelected;
+        set
+        {
+            if (SetProperty(ref _isGroupRoomSelected, value))
+            {
+                OnIsGroupRoomSelectedChanged(value);
+            }
+        }
+    }
+
+    public bool IsSilentStudySelected
+    {
+        get => _isSilentStudySelected;
+        set
+        {
+            if (SetProperty(ref _isSilentStudySelected, value))
+            {
+                OnIsSilentStudySelectedChanged(value);
+            }
+        }
+    }
+
+    public bool IsNoReservationSelected
+    {
+        get => _isNoReservationSelected;
+        set
+        {
+            if (SetProperty(ref _isNoReservationSelected, value))
+            {
+                OnIsNoReservationSelectedChanged(value);
+            }
+        }
+    }
+
+    public bool RequireFreeWifi
+    {
+        get => _requireFreeWifi;
+        set
+        {
+            if (SetProperty(ref _requireFreeWifi, value))
+            {
+                OnRequireFreeWifiChanged(value);
+            }
+        }
+    }
+
+    public bool RequirePowerOutlets
+    {
+        get => _requirePowerOutlets;
+        set
+        {
+            if (SetProperty(ref _requirePowerOutlets, value))
+            {
+                OnRequirePowerOutletsChanged(value);
+            }
+        }
+    }
+
+    public bool RequireWhiteboard
+    {
+        get => _requireWhiteboard;
+        set
+        {
+            if (SetProperty(ref _requireWhiteboard, value))
+            {
+                OnRequireWhiteboardChanged(value);
+            }
+        }
+    }
+
+    public double MinimumOpenHours
+    {
+        get => _minimumOpenHours;
+        set
+        {
+            if (SetProperty(ref _minimumOpenHours, value))
+            {
+                OnPropertyChanged(nameof(MinimumOpenHoursText));
+                OnMinimumOpenHoursChanged(value);
+            }
+        }
+    }
+
+    public string SelectedSortOption
+    {
+        get => _selectedSortOption;
+        set
+        {
+            if (SetProperty(ref _selectedSortOption, value))
+            {
+                OnSelectedSortOptionChanged(value);
+            }
+        }
+    }
+
+    public bool IsFilterActive
+    {
+        get => _isFilterActive;
+        set => SetProperty(ref _isFilterActive, value);
+    }
 
     public FilterViewModel(AppConfig config)
     {
@@ -234,9 +372,9 @@ public partial class FilterViewModel : ObservableObject
         return new TimeSpan(now.Hour, now.Minute, 0);
     }
 
-    partial void OnSearchTextChanged(string value) => RaiseFiltersChanged(FilterChangeKind.ImmediateApply);
+    private void OnSearchTextChanged(string value) => RaiseFiltersChanged(FilterChangeKind.ImmediateApply);
 
-    partial void OnUseNowChanged(bool value)
+    private void OnUseNowChanged(bool value)
     {
         if (_isUpdatingDateTimeSelection)
         {
@@ -246,7 +384,7 @@ public partial class FilterViewModel : ObservableObject
         RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
     }
 
-    partial void OnSelectedDateChanged(DateTime value)
+    private void OnSelectedDateChanged(DateTime value)
     {
         if (_isUpdatingDateTimeSelection)
         {
@@ -263,7 +401,7 @@ public partial class FilterViewModel : ObservableObject
         RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
     }
 
-    partial void OnSelectedTimeChanged(TimeSpan value)
+    private void OnSelectedTimeChanged(TimeSpan value)
     {
         if (_isUpdatingDateTimeSelection)
         {
@@ -273,14 +411,14 @@ public partial class FilterViewModel : ObservableObject
         RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
     }
 
-    partial void OnIsGroupRoomSelectedChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
-    partial void OnIsSilentStudySelectedChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
-    partial void OnIsNoReservationSelectedChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
-    partial void OnRequireFreeWifiChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
-    partial void OnRequirePowerOutletsChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
-    partial void OnRequireWhiteboardChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    private void OnIsGroupRoomSelectedChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    private void OnIsSilentStudySelectedChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    private void OnIsNoReservationSelectedChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    private void OnRequireFreeWifiChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    private void OnRequirePowerOutletsChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
+    private void OnRequireWhiteboardChanged(bool value) => RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
 
-    partial void OnMinimumOpenHoursChanged(double value)
+    private void OnMinimumOpenHoursChanged(double value)
     {
         var epsilon = _config.UiNumbers.OpeningHoursSliderSnapEpsilon;
         var rounded = Math.Clamp(
@@ -296,7 +434,7 @@ public partial class FilterViewModel : ObservableObject
         RaiseFiltersChanged(FilterChangeKind.PreviewOnly);
     }
 
-    partial void OnSelectedSortOptionChanged(string value)
+    private void OnSelectedSortOptionChanged(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
