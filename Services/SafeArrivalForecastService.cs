@@ -9,6 +9,7 @@ public sealed class SafeArrivalForecastService
 {
     private const int LogGammaCacheLimit = 2048;
     private const int LogBetaBinomialCacheLimit = 4096;
+    private const int MaxEffectiveSampleDays = 14;
     private static readonly ConcurrentDictionary<double, double> LogGammaCache = new();
     private static readonly ConcurrentDictionary<LogBetaBinomialKey, double> LogBetaBinomialCache = new();
     private static int _logGammaCacheSize;
@@ -63,31 +64,74 @@ public sealed class SafeArrivalForecastService
 
         var modelReferenceDate = filteredHistory.Max(point => point.Timestamp.Date);
         var capacity = space.TotalSeats;
-        var alphaRaw = Enumerable.Repeat(_settings.AlphaPrior, _binsPerDay).ToArray();
-        var betaRaw = Enumerable.Repeat(_settings.BetaPrior, _binsPerDay).ToArray();
+        var alphaRaw = new double[_binsPerDay];
+        var betaRaw = new double[_binsPerDay];
         var supportRaw = new double[_binsPerDay];
         var dayCoverageMask = new int[_binsPerDay];
 
-        foreach (var point in filteredHistory)
+        var samplesByBin = new List<BinDaySample>[_binsPerDay];
+        for (var bin = 0; bin < _binsPerDay; bin++)
+        {
+            samplesByBin[bin] = new List<BinDaySample>();
+        }
+
+        foreach (var dayGroup in filteredHistory.GroupBy(point => new
+                 {
+                     Bin = GetBinIndex(point.Timestamp),
+                     Day = point.Timestamp.Date
+                 }))
         {
             // Use newest history day as reference so "before" filters do not discard most of the week.
-            var daysAgo = (modelReferenceDate - point.Timestamp.Date).TotalDays;
+            var daysAgo = (modelReferenceDate - dayGroup.Key.Day).TotalDays;
             if (daysAgo < 0 || daysAgo > _settings.HistoryWindowDays)
             {
                 continue;
             }
 
-            var weight = Math.Exp(-daysAgo / _settings.TauDays);
-            var clampedFreeSeats = Math.Clamp(point.FreeSeats, 0, capacity);
-            var occupiedSeats = Math.Max(0, capacity - clampedFreeSeats);
-            var binIndex = GetBinIndex(point.Timestamp);
-
-            alphaRaw[binIndex] += weight * clampedFreeSeats;
-            betaRaw[binIndex] += weight * occupiedSeats;
-            supportRaw[binIndex] += weight;
-
+            var binIndex = dayGroup.Key.Bin;
             var dayOffset = Math.Clamp((int)daysAgo, 0, _settings.DayCoverageMaxOffsetDays);
+            var weightRaw = Math.Exp(-daysAgo / _settings.TauDays);
+            var averageFreeSeats = dayGroup
+                .Select(point => Math.Clamp(point.FreeSeats, 0, capacity))
+                .DefaultIfEmpty(0)
+                .Average();
+            var freeFraction = capacity > 0
+                ? Math.Clamp(averageFreeSeats / capacity, 0, 1)
+                : 0;
+
+            samplesByBin[binIndex].Add(new BinDaySample(freeFraction, weightRaw));
             dayCoverageMask[binIndex] |= (1 << dayOffset);
+        }
+
+        // N_eff normalization per bin: normalize day weights, then scale to effective sample size.
+        for (var bin = 0; bin < _binsPerDay; bin++)
+        {
+            var samples = samplesByBin[bin];
+            if (samples.Count == 0)
+            {
+                alphaRaw[bin] = _settings.AlphaPrior;
+                betaRaw[bin] = _settings.BetaPrior;
+                continue;
+            }
+
+            var weightSum = samples.Sum(sample => sample.WeightRaw);
+            if (weightSum <= 0)
+            {
+                alphaRaw[bin] = _settings.AlphaPrior;
+                betaRaw[bin] = _settings.BetaPrior;
+                continue;
+            }
+
+            var weightedFraction = samples.Sum(sample => (sample.WeightRaw / weightSum) * sample.FreeFraction);
+            weightedFraction = Math.Clamp(weightedFraction, 0, 1);
+
+            var daysWithDataCount = samples.Count;
+            var nEff = Math.Min(daysWithDataCount, MaxEffectiveSampleDays);
+            var successes = nEff * weightedFraction;
+
+            alphaRaw[bin] = _settings.AlphaPrior + successes;
+            betaRaw[bin] = _settings.BetaPrior + Math.Max(0, nEff - successes);
+            supportRaw[bin] = weightSum;
         }
 
         var alpha = MovingAverage(alphaRaw);
@@ -531,16 +575,17 @@ public sealed class SafeArrivalForecastService
         return Math.Exp(logTail);
     }
 
-    private static double LogBetaBinomialPmf(int n, int k, double alpha, double beta)
+    private static double LogBetaBinomialPmf(int n, int k, double alphaPost, double betaPost)
     {
-        var cacheKey = new LogBetaBinomialKey(n, k, alpha, beta);
+        var cacheKey = new LogBetaBinomialKey(n, k, alphaPost, betaPost);
         if (LogBetaBinomialCache.TryGetValue(cacheKey, out var cached))
         {
             return cached;
         }
 
+        // Fully in log-space to avoid overflow for large capacities.
         var logCombination = LogGamma(n + 1) - LogGamma(k + 1) - LogGamma(n - k + 1);
-        var logBetaPart = LogBeta(k + alpha, n - k + beta) - LogBeta(alpha, beta);
+        var logBetaPart = BetaLn(k + alphaPost, n - k + betaPost) - BetaLn(alphaPost, betaPost);
         var value = logCombination + logBetaPart;
 
         // Memoize to reduce CPU churn on repeated probability evaluations.
@@ -553,7 +598,7 @@ public sealed class SafeArrivalForecastService
         return value;
     }
 
-    private static double LogBeta(double a, double b)
+    private static double BetaLn(double a, double b)
     {
         return LogGamma(a) + LogGamma(b) - LogGamma(a + b);
     }
@@ -600,6 +645,7 @@ public sealed class SafeArrivalForecastService
         return count;
     }
 
+    private readonly record struct BinDaySample(double FreeFraction, double WeightRaw);
     private readonly record struct LogBetaBinomialKey(int N, int K, double Alpha, double Beta);
 
     // Lanczos approximation for numerically stable log-gamma.
