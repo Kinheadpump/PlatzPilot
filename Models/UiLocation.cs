@@ -35,8 +35,9 @@ public partial class UiLocation : ObservableObject
     public double MensaOccupancyRate { get; set; }
     public TimeSpan? MensaOpeningStart { get; set; }
     public TimeSpan? MensaOpeningEnd { get; set; }
+    public bool IsSkeleton { get; set; }
 
-    public DateTime? LastUpdated => SubSpaces.Max(s => s.LastUpdated);
+    public DateTime? LastUpdated => SubSpaces.Count == 0 ? null : SubSpaces.Max(s => s.LastUpdated);
     
     public string LastUpdatedText => LastUpdated.HasValue &&
                                      LastUpdated.Value.Year > AppConfigProvider.Current.UiNumbers.UnknownYearThreshold

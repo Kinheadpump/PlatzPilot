@@ -8,6 +8,7 @@
              xmlns:microcharts="clr-namespace:Microcharts.Maui;assembly=Microcharts.Maui"
              x:Class="PlatzPilot.Views.DetailPage"
              x:DataType="views:DetailPage"
+             x:CompileBindings="True"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{AppThemeBinding Light=White, Dark=#1f1f1f}">
 
@@ -149,7 +150,8 @@
             </CollectionView.Header>
 
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:StudySpace">
+                <DataTemplate x:DataType="models:StudySpace"
+                              x:CompileBindings="True">
                     <Border Margin="0,0,0,15" Padding="15" BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}" StrokeShape="RoundRectangle 10" StrokeThickness="1" Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#333333}">
                         <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" ColumnSpacing="10">
                             <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">

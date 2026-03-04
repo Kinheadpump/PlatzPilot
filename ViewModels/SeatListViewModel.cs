@@ -24,6 +24,7 @@ public partial class SeatListViewModel : ObservableObject
     private readonly FilterViewModel _filters;
     private readonly NavigationViewModel _navigation;
     private readonly SettingsViewModel _settings;
+    private const int SkeletonItemCount = 6;
 
     private ObservableCollection<UiLocation> _uiLocations = [];
     private UiLocation? _selectedLocation;
@@ -358,6 +359,7 @@ public partial class SeatListViewModel : ObservableObject
         try
         {
             IsBusy = true;
+            ShowSkeletonLocationsIfNeeded();
             await EnsureSpaceFeaturesLoadedAsync();
 
             var forceWeeklyReload = IsRefreshing;
@@ -500,8 +502,9 @@ public partial class SeatListViewModel : ObservableObject
 
     private void OnSelectedLocationChanged(UiLocation? value)
     {
-        if (value == null)
+        if (value == null || value.IsSkeleton)
         {
+            SelectedLocation = null;
             return;
         }
 
@@ -971,6 +974,32 @@ public partial class SeatListViewModel : ObservableObject
         FilteredLocationCount = SortLocations(results).Count;
     }
 
+    private void ShowSkeletonLocationsIfNeeded()
+    {
+        if (UiLocations.Count > 0)
+        {
+            return;
+        }
+
+        var skeletons = CreateSkeletonLocations(SkeletonItemCount);
+        ReplaceUiLocations(skeletons);
+        FilteredLocationCount = 0;
+    }
+
+    private static List<UiLocation> CreateSkeletonLocations(int count)
+    {
+        var list = new List<UiLocation>(count);
+        for (var i = 0; i < count; i++)
+        {
+            list.Add(new UiLocation
+            {
+                IsSkeleton = true
+            });
+        }
+
+        return list;
+    }
+
     private IEnumerable<StudySpace> ApplySpaceFilters(IEnumerable<StudySpace> spaces)
     {
         var searchFiltered = FilterSpacesBySearch(spaces);
@@ -1218,7 +1247,12 @@ public partial class SeatListViewModel : ObservableObject
     private void ReplaceUiLocations(IEnumerable<UiLocation> locations)
     {
         var updatedLocations = locations as IList<UiLocation> ?? locations.ToList();
-        UiLocations = new ObservableCollection<UiLocation>(updatedLocations);
+        UiLocations.Clear();
+        foreach (var location in updatedLocations)
+        {
+            UiLocations.Add(location);
+        }
+
         FilteredLocationCount = updatedLocations.Count;
         NotifyCollectionVisibilityChanged();
     }
