@@ -8,6 +8,7 @@
 - refactor(services): extract study space feature loader
 - refactor(navigation): centralize external links
 - refactor(config): split app config models
+- refactor(models): split seatfinder dtos
 
 ## Config Keys Extracted
 | Key | Default | Used In | Notes |
@@ -16,6 +17,7 @@
 
 ## Files Split / Extracted
 - Configuration/AppConfig.cs -> split into dedicated config classes under Configuration/
+- Models/SeatFinderDtos.cs -> split into SeatFinderJsonKeys/TimestampDto/OpeningHoursDto/etc.
 - Services/StudySpaceFeatureService.cs extracted from ViewModels/MainPageViewModel.cs
 - Services/NavigationService.cs extracted from ViewModels/MainPageViewModel.cs
 
