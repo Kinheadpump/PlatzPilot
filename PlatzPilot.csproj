@@ -83,4 +83,9 @@
 		                  Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Compile Remove="PlatzPilot.Tests\**\*.cs" />
+		<None Remove="PlatzPilot.Tests\**\*" />
+	</ItemGroup>
+
 </Project>
