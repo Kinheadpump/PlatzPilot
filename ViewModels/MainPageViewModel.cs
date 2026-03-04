@@ -20,6 +20,7 @@ public partial class MainPageViewModel : ObservableObject
     private readonly SeatFinderService _seatFinderService;
     private readonly SafeArrivalForecastService _safeArrivalForecastService;
     private readonly IStudySpaceFeatureService _studySpaceFeatureService;
+    private readonly INavigationService _navigationService;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDataVisible))]
@@ -208,12 +209,14 @@ public partial class MainPageViewModel : ObservableObject
         SeatFinderService seatFinderService,
         SafeArrivalForecastService safeArrivalForecastService,
         IStudySpaceFeatureService studySpaceFeatureService,
+        INavigationService navigationService,
         AppConfig config)
     {
         _config = config;
         _seatFinderService = seatFinderService;
         _safeArrivalForecastService = safeArrivalForecastService;
         _studySpaceFeatureService = studySpaceFeatureService;
+        _navigationService = navigationService;
         SortOptions =
         [
             _config.Sort.Relevance,
@@ -509,19 +512,19 @@ public partial class MainPageViewModel : ObservableObject
     [RelayCommand]
     private async Task OpenGithubAsync()
     {
-        await Browser.Default.OpenAsync(_config.Urls.Github, BrowserLaunchMode.SystemPreferred);
+        await _navigationService.OpenUrlAsync(_config.Urls.Github);
     }
 
     [RelayCommand]
     private async Task ShowImpressumAsync()
     {
-        await Browser.Default.OpenAsync(_config.Urls.Impressum, BrowserLaunchMode.SystemPreferred);
+        await _navigationService.OpenUrlAsync(_config.Urls.Impressum);
     }
 
     [RelayCommand]
     private async Task ShowPrivacyAsync()
     {
-        await Browser.Default.OpenAsync(_config.Urls.Privacy, BrowserLaunchMode.SystemPreferred);
+        await _navigationService.OpenUrlAsync(_config.Urls.Privacy);
     }
 
     [RelayCommand]
@@ -2720,9 +2723,7 @@ public partial class MainPageViewModel : ObservableObject
             return;
         }
 
-        await Shell.Current.GoToAsync(
-            _config.Internal.DetailPageRoute,
-            new Dictionary<string, object> { { _config.Internal.LocationDataKey, selectedLocation } });
+        await _navigationService.NavigateToDetailAsync(selectedLocation);
     }
 
     private string NormalizeTab(string tabName)

@@ -53,6 +53,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<SeatFinderService>();
         builder.Services.AddSingleton<IStudySpaceFeatureService, StudySpaceFeatureService>();
         builder.Services.AddSingleton<SafeArrivalForecastService>();
+        builder.Services.AddSingleton<INavigationService, NavigationService>();
 
 
         // ==========================================
