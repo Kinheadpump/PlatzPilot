@@ -312,27 +312,39 @@
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
 
-                                <ImageButton Grid.Column="1"
-                                             Command="{Binding ToggleColorBlindModeCommand}"
-                                             BackgroundColor="Transparent"
-                                             HeightRequest="40"
-                                             WidthRequest="40"
-                                             Padding="8">
-                                    <ImageButton.Triggers>
-                                        <DataTrigger TargetType="ImageButton"
-                                                     Binding="{Binding IsColorBlindMode}"
-                                                     Value="True">
-                                            <Setter Property="Source"
-                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOnIconLight}, Dark={x:Static local:AppAssets.ColorBlindOnIconDark}}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="ImageButton"
-                                                     Binding="{Binding IsColorBlindMode}"
-                                                     Value="False">
-                                            <Setter Property="Source"
-                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOffIconLight}, Dark={x:Static local:AppAssets.ColorBlindOffIconDark}}" />
-                                        </DataTrigger>
-                                    </ImageButton.Triggers>
-                                </ImageButton>
+                                <Border Grid.Column="1"
+                                        StrokeThickness="0"
+                                        BackgroundColor="Transparent"
+                                        HeightRequest="40"
+                                        WidthRequest="40"
+                                        Padding="8">
+                                    <Grid>
+                                        <Image HeightRequest="24"
+                                               WidthRequest="24"
+                                               Aspect="AspectFit"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True">
+                                            <Image.Triggers>
+                                                <DataTrigger TargetType="Image"
+                                                             Binding="{Binding IsColorBlindMode}"
+                                                             Value="True">
+                                                    <Setter Property="Source"
+                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOnIconLight}, Dark={x:Static local:AppAssets.ColorBlindOnIconDark}}" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Image"
+                                                             Binding="{Binding IsColorBlindMode}"
+                                                             Value="False">
+                                                    <Setter Property="Source"
+                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOffIconLight}, Dark={x:Static local:AppAssets.ColorBlindOffIconDark}}" />
+                                                </DataTrigger>
+                                            </Image.Triggers>
+                                        </Image>
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding ToggleColorBlindModeCommand}" />
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+                                </Border>
                             </Grid>
 
                         </VerticalStackLayout>
@@ -356,27 +368,39 @@
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
 
-                                <ImageButton Grid.Column="1"
-                                             Command="{Binding ToggleCampusSouthOnlyCommand}"
-                                             BackgroundColor="Transparent"
-                                             HeightRequest="40"
-                                             WidthRequest="40"
-                                             Padding="8">
-                                    <ImageButton.Triggers>
-                                        <DataTrigger TargetType="ImageButton"
-                                                     Binding="{Binding IsCampusSouthOnly}"
-                                                     Value="True">
-                                            <Setter Property="Source"
-                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="ImageButton"
-                                                     Binding="{Binding IsCampusSouthOnly}"
-                                                     Value="False">
-                                            <Setter Property="Source"
-                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
-                                        </DataTrigger>
-                                    </ImageButton.Triggers>
-                                </ImageButton>
+                                <Border Grid.Column="1"
+                                        StrokeThickness="0"
+                                        BackgroundColor="Transparent"
+                                        HeightRequest="40"
+                                        WidthRequest="40"
+                                        Padding="8">
+                                    <Grid>
+                                        <Image HeightRequest="24"
+                                               WidthRequest="24"
+                                               Aspect="AspectFit"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True">
+                                            <Image.Triggers>
+                                                <DataTrigger TargetType="Image"
+                                                             Binding="{Binding IsCampusSouthOnly}"
+                                                             Value="True">
+                                                    <Setter Property="Source"
+                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Image"
+                                                             Binding="{Binding IsCampusSouthOnly}"
+                                                             Value="False">
+                                                    <Setter Property="Source"
+                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
+                                                </DataTrigger>
+                                            </Image.Triggers>
+                                        </Image>
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding ToggleCampusSouthOnlyCommand}" />
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+                                </Border>
                             </Grid>
 
                             <BoxView HeightRequest="1"
@@ -387,27 +411,39 @@
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
 
-                                <ImageButton Grid.Column="1"
-                                             Command="{Binding ToggleHapticFeedbackCommand}"
-                                             BackgroundColor="Transparent"
-                                             HeightRequest="40"
-                                             WidthRequest="40"
-                                             Padding="8">
-                                    <ImageButton.Triggers>
-                                        <DataTrigger TargetType="ImageButton"
-                                                     Binding="{Binding IsHapticFeedbackEnabled}"
-                                                     Value="True">
-                                            <Setter Property="Source"
-                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="ImageButton"
-                                                     Binding="{Binding IsHapticFeedbackEnabled}"
-                                                     Value="False">
-                                            <Setter Property="Source"
-                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
-                                        </DataTrigger>
-                                    </ImageButton.Triggers>
-                                </ImageButton>
+                                <Border Grid.Column="1"
+                                        StrokeThickness="0"
+                                        BackgroundColor="Transparent"
+                                        HeightRequest="40"
+                                        WidthRequest="40"
+                                        Padding="8">
+                                    <Grid>
+                                        <Image HeightRequest="24"
+                                               WidthRequest="24"
+                                               Aspect="AspectFit"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True">
+                                            <Image.Triggers>
+                                                <DataTrigger TargetType="Image"
+                                                             Binding="{Binding IsHapticFeedbackEnabled}"
+                                                             Value="True">
+                                                    <Setter Property="Source"
+                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Image"
+                                                             Binding="{Binding IsHapticFeedbackEnabled}"
+                                                             Value="False">
+                                                    <Setter Property="Source"
+                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
+                                                </DataTrigger>
+                                            </Image.Triggers>
+                                        </Image>
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding ToggleHapticFeedbackCommand}" />
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+                                </Border>
                             </Grid>
 
                             <BoxView HeightRequest="1"
@@ -418,27 +454,39 @@
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
 
-                                <ImageButton Grid.Column="1"
-                                             Command="{Binding ToggleHideClosedLocationsCommand}"
-                                             BackgroundColor="Transparent"
-                                             HeightRequest="40"
-                                             WidthRequest="40"
-                                             Padding="8">
-                                    <ImageButton.Triggers>
-                                        <DataTrigger TargetType="ImageButton"
-                                                     Binding="{Binding IsHideClosedLocations}"
-                                                     Value="True">
-                                            <Setter Property="Source"
-                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="ImageButton"
-                                                     Binding="{Binding IsHideClosedLocations}"
-                                                     Value="False">
-                                            <Setter Property="Source"
-                                                    Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
-                                        </DataTrigger>
-                                    </ImageButton.Triggers>
-                                </ImageButton>
+                                <Border Grid.Column="1"
+                                        StrokeThickness="0"
+                                        BackgroundColor="Transparent"
+                                        HeightRequest="40"
+                                        WidthRequest="40"
+                                        Padding="8">
+                                    <Grid>
+                                        <Image HeightRequest="24"
+                                               WidthRequest="24"
+                                               Aspect="AspectFit"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True">
+                                            <Image.Triggers>
+                                                <DataTrigger TargetType="Image"
+                                                             Binding="{Binding IsHideClosedLocations}"
+                                                             Value="True">
+                                                    <Setter Property="Source"
+                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="Image"
+                                                             Binding="{Binding IsHideClosedLocations}"
+                                                             Value="False">
+                                                    <Setter Property="Source"
+                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
+                                                </DataTrigger>
+                                            </Image.Triggers>
+                                        </Image>
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding ToggleHideClosedLocationsCommand}" />
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+                                </Border>
                             </Grid>
                         </VerticalStackLayout>
                     </Border>

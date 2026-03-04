@@ -1,6 +1,6 @@
 {
   "uiText": {
-    "homeTitle": "Lernorte",
+    "homeTitle": "Karlsruhe",
     "homeTabLabel": "Home",
     "searchPlaceholder": "Nach Bib oder Kürzel suchen...",
     "emptyListText": "Herzlich Willkommen",
@@ -13,7 +13,7 @@
     "manualCountLabel": "Manuell gezählt",
     "availabilityFormat": "{0} von {1} frei",
     "noCurrentInfoText": "Keine Information",
-    "dataStaleText": "⚠️ Daten veraltet",
+    "dataStaleText": "⚠️ Daten älter als 1h",
     "recommendationNoneText": "Empfohlene Ankunft: keine sichere Zeit",
     "recommendationFormat": "Empfohlene Ankunft bis {0:hh\\:mm}",
     "peakNoneText": "Auslastungs Peak ⌀: keine Daten",
