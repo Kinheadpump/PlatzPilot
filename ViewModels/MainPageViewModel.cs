@@ -19,6 +19,7 @@ public partial class MainPageViewModel : ObservableObject
     private readonly AppConfig _config;
     private readonly SeatFinderService _seatFinderService;
     private readonly SafeArrivalForecastService _safeArrivalForecastService;
+    private readonly IStudySpaceFeatureService _studySpaceFeatureService;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDataVisible))]
@@ -122,7 +123,8 @@ public partial class MainPageViewModel : ObservableObject
     [ObservableProperty]
     private string _selectedSortOption;
 
-    private readonly Dictionary<string, StudySpaceFeatureEntry> _spaceFeaturesById = new(StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyDictionary<string, StudySpaceFeatureEntry> _spaceFeaturesById =
+        new Dictionary<string, StudySpaceFeatureEntry>(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, List<SeatHistoryPoint>> _historicalSeatDataByLocation = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, SafeArrivalRecommendation?> _spaceSafeArrivalCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, SafeArrivalRecommendation?> _buildingSafeArrivalCache = new(StringComparer.OrdinalIgnoreCase);
@@ -205,11 +207,13 @@ public partial class MainPageViewModel : ObservableObject
     public MainPageViewModel(
         SeatFinderService seatFinderService,
         SafeArrivalForecastService safeArrivalForecastService,
+        IStudySpaceFeatureService studySpaceFeatureService,
         AppConfig config)
     {
         _config = config;
         _seatFinderService = seatFinderService;
         _safeArrivalForecastService = safeArrivalForecastService;
+        _studySpaceFeatureService = studySpaceFeatureService;
         SortOptions =
         [
             _config.Sort.Relevance,
@@ -737,39 +741,7 @@ public partial class MainPageViewModel : ObservableObject
         }
 
         _spaceFeaturesLoaded = true;
-
-        try
-        {
-            await using var stream = await FileSystem.OpenAppPackageFileAsync(_config.SeatFinder.SpaceFeaturesFileName);
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
-            var catalog = await JsonSerializer.DeserializeAsync<StudySpaceFeatureCatalog>(stream, options);
-            if (catalog?.Spaces == null)
-            {
-                return;
-            }
-
-            foreach (var entry in catalog.Spaces)
-            {
-                if (string.IsNullOrWhiteSpace(entry.Id))
-                {
-                    continue;
-                }
-
-                _spaceFeaturesById[entry.Id.Trim()] = entry;
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine(string.Format(
-                CultureInfo.CurrentCulture,
-                _config.Internal.SpaceFeaturesLoadFailedFormat,
-                _config.SeatFinder.SpaceFeaturesFileName,
-                ex.Message));
-        }
+        _spaceFeaturesById = await _studySpaceFeatureService.LoadAsync();
     }
 
     private void ApplySpaceFeatureOverrides(IEnumerable<StudySpace> spaces)
