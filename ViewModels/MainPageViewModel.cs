@@ -21,10 +21,6 @@ public sealed partial class MainPageViewModel : ObservableObject
 
         var hasCompletedOnboarding = Preferences.Default.Get(OnboardingCompletedKey, false);
         IsOnboardingVisible = !hasCompletedOnboarding;
-
-    #if DEBUG
-        IsOnboardingVisible = true;
-    #endif
     }
 
     public SeatListViewModel SeatList { get; }
