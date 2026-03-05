@@ -118,6 +118,7 @@
     "campusSouthOnlyKey": "PlatzPilot_CampusSouthOnly",
     "hapticFeedbackKey": "PlatzPilot_HapticFeedback",
     "hideClosedLocationsKey": "PlatzPilot_HideClosedLocations",
+    "onboardingCompletedKey": "HasCompletedOnboarding",
     "emptyListJson": "[]"
   },
   "urls": {

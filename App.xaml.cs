@@ -1,40 +1,20 @@
-using Microsoft.Maui.ApplicationModel;
-using PlatzPilot.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using PlatzPilot.Views;
 
 namespace PlatzPilot;
 
 public partial class App : Application
 {
-    private readonly Task<AppConfig> _configLoadTask;
+    private readonly IServiceProvider _serviceProvider;
 
-    public App()
+    public App(IServiceProvider serviceProvider)
     {
         InitializeComponent();
-        _configLoadTask = AppConfigProvider.LoadFromPackageAsync();
+        _serviceProvider = serviceProvider;
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        var window = new Window(new StartupPage());
-        _ = ShowShellWhenReadyAsync(window);
-        return window;
-    }
-
-    private async Task ShowShellWhenReadyAsync(Window window)
-    {
-        try
-        {
-            await _configLoadTask.ConfigureAwait(false);
-        }
-        catch (Exception)
-        {
-            // Load errors are already logged in AppConfigProvider.
-        }
-
-        await MainThread.InvokeOnMainThreadAsync(() =>
-        {
-            window.Page = new AppShell();
-        });
+        return new Window(_serviceProvider.GetRequiredService<AppShell>());
     }
 }
