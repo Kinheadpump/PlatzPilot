@@ -144,33 +144,11 @@ public partial class SeatListViewModel : ObservableObject
     public bool IsHomeEmpty => UiLocations.Count == 0 && _navigation.CurrentTab == _config.Tabs.Home;
     public bool IsFavoritesEmpty => !IsBusy && UiLocations.Count == 0 && _navigation.CurrentTab == _config.Tabs.Favorites;
     public bool IsNoResultsEmpty => UiLocations.Count == 0 && _allSpaces.Count > 0 && _navigation.CurrentTab == _config.Tabs.Home && _navigation.IsMainContentVisible;
-    public string EmptyStateTitle => IsNoResultsEmpty ? _config.UiText.NoResultsTitle : SeatListViewModel.WelcomeMessage;
+    public string EmptyStateTitle => IsNoResultsEmpty ? _config.UiText.NoResultsTitle : string.Empty;
     public string EmptyStateSubtitle => IsNoResultsEmpty ? _config.UiText.NoResultsSubtitle : string.Empty;
     public bool IsEmptySubtitleVisible => IsNoResultsEmpty;
     public string ShowResultsButtonText =>
         string.Format(CultureInfo.CurrentCulture, _config.UiText.ShowResultsFormat, FilteredLocationCount);
-    public static string WelcomeMessage => GetWelcomeMessage();
-
-    private static string GetWelcomeMessage()
-    {
-        var time = DateTime.Now.TimeOfDay;
-        if (time >= new TimeSpan(6, 0, 0) && time < new TimeSpan(9, 0, 0))
-        {
-            return "Guten Morgen! ☕";
-        }
-
-        if (time >= new TimeSpan(9, 0, 0) && time < new TimeSpan(18, 0, 0))
-        {
-            return "Zeit zum produktiv sein! 📚";
-        }
-
-        if (time >= new TimeSpan(18, 0, 0) && time < new TimeSpan(22, 0, 0))
-        {
-            return "Spätschicht heute? 🌙";
-        }
-
-        return "Willkommen Nachteule! 🦉";
-    }
 
     public SeatListViewModel(
         SeatFinderService seatFinderService,

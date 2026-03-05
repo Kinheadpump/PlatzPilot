@@ -16,6 +16,7 @@ public partial class MainPage : ContentPage
         BindingContext = _viewModel;
         _viewModel.Filters.PropertyChanged += OnFiltersPropertyChanged;
         _viewModel.Settings.PropertyChanged += OnSettingsPropertyChanged;
+        _viewModel.Navigation.PropertyChanged += OnNavigationPropertyChanged;
     }
 
     protected override async void OnAppearing()
@@ -68,6 +69,19 @@ public partial class MainPage : ContentPage
             {
                 AboutCloseButton.Focus();
             });
+        }
+    }
+
+    private void OnNavigationPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(NavigationViewModel.CurrentTab))
+        {
+            return;
+        }
+
+        if (_viewModel.Settings.IsAboutOpen && _viewModel.Navigation.IsMainContentVisible)
+        {
+            _viewModel.Settings.IsAboutOpen = false;
         }
     }
 

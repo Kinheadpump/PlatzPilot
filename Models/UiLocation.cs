@@ -139,10 +139,10 @@ public partial class UiLocation : ObservableObject
                 return string.Format(CultureInfo.CurrentCulture, "~ {0:P0} belegt", rate);
             }
 
-            var freeSeats = TotalSeats > 0
-                ? Math.Max(0, TotalSeats - OccupiedSeats)
-                : FreeSeats;
-            return string.Format(AppText.AvailabilityFormat, freeSeats, TotalSeats);
+            var occupiedSeats = TotalSeats > 0
+                ? Math.Clamp(OccupiedSeats, 0, TotalSeats)
+                : Math.Max(0, OccupiedSeats);
+            return string.Format(AppText.AvailabilityFormat, occupiedSeats, TotalSeats);
         }
     }
 
