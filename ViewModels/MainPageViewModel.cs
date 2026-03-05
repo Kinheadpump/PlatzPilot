@@ -23,7 +23,6 @@ public sealed partial class MainPageViewModel : ObservableObject
         IsOnboardingVisible = !hasCompletedOnboarding;
 
     #if DEBUG
-        // In Debug builds always show onboarding to help QA/devs test it quickly
         IsOnboardingVisible = true;
     #endif
     }
