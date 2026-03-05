@@ -44,6 +44,7 @@
                            Text="{x:Static local:AppText.HomeTitle}"
                            FontSize="22"
                            FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#6b7280, Dark=#cbd5e1}"
                            VerticalOptions="Center"
                            IsVisible="{Binding Filters.IsSearchInactive}" />
 
@@ -174,7 +175,7 @@
                                             <Label Grid.Row="1"
                                                    Text="{Binding BestArrivalText}"
                                                    FontSize="12"
-                                                   TextColor="{AppThemeBinding Light=#53627c, Dark=#9ca9bc}"
+                                                   TextColor="{AppThemeBinding Light=#7b8aa6, Dark=#c4d0e1}"
                                                    MaxLines="2"
                                                    LineBreakMode="TailTruncation" />
 
@@ -283,18 +284,22 @@
                                                   RowSpacing="8"
                                                   HorizontalOptions="Fill">
                                                 <Border HeightRequest="18"
+                                                        Grid.Row="0"
                                                         Margin="0,0,80,0"
                                                         BackgroundColor="{AppThemeBinding Light=#e3e6ea, Dark=#2a2f35}"
                                                         StrokeShape="RoundRectangle 10" />
                                                 <Border HeightRequest="12"
+                                                        Grid.Row="1"
                                                         Margin="0,0,140,0"
                                                         BackgroundColor="{AppThemeBinding Light=#e9ecf0, Dark=#313740}"
                                                         StrokeShape="RoundRectangle 8" />
                                                 <Border HeightRequest="12"
+                                                        Grid.Row="2"
                                                         Margin="0,0,60,0"
                                                         BackgroundColor="{AppThemeBinding Light=#e9ecf0, Dark=#313740}"
                                                         StrokeShape="RoundRectangle 8" />
-                                                <VerticalStackLayout Spacing="4">
+                                                <VerticalStackLayout Grid.Row="3"
+                                                                     Spacing="4">
                                                     <Border HeightRequest="10"
                                                             Margin="0,0,140,0"
                                                             BackgroundColor="{AppThemeBinding Light=#e9ecf0, Dark=#313740}"
@@ -305,6 +310,7 @@
                                                             StrokeShape="RoundRectangle 8" />
                                                 </VerticalStackLayout>
                                                 <Border HeightRequest="6"
+                                                        Grid.Row="4"
                                                         Margin="0,6,0,0"
                                                         BackgroundColor="{AppThemeBinding Light=#e3e6ea, Dark=#2a2f35}"
                                                         StrokeShape="RoundRectangle 6" />
@@ -343,7 +349,7 @@
                 <VerticalStackLayout VerticalOptions="Center"
                                      HorizontalOptions="Center"
                                      Spacing="12"
-                                     IsVisible="{Binding SeatList.IsHomeEmpty}">
+                                     IsVisible="{Binding SeatList.IsNoResultsEmpty}">
                     <Label Text="{Binding SeatList.EmptyStateTitle}"
                            FontSize="20"
                            FontAttributes="Bold"
