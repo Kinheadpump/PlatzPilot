@@ -18,6 +18,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
+		<SuppressFileCopyRetryMessages>true</SuppressFileCopyRetryMessages>
 
 		<!-- Display name -->
 		<ApplicationTitle>PlatzPilot</ApplicationTitle>

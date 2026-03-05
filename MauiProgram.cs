@@ -74,6 +74,7 @@ public static class MauiProgram
         // Damit MAUI weiß, dass es beim Erstellen der MainPage das ViewModel automatisch übergeben soll.
         builder.Services.AddSingleton<MainPage>();
         builder.Services.AddTransient<DetailPage>();
+        builder.Services.AddSingleton<AppShell>();
 
 
         return builder.Build();

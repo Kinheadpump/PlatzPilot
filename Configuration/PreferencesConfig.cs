@@ -10,5 +10,6 @@ public sealed class PreferencesConfig
     public string CampusSouthOnlyKey { get; set; } = string.Empty;
     public string HapticFeedbackKey { get; set; } = string.Empty;
     public string HideClosedLocationsKey { get; set; } = string.Empty;
+    public string OnboardingCompletedKey { get; set; } = string.Empty;
     public string EmptyListJson { get; set; } = "[]";
 }
