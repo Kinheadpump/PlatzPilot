@@ -56,6 +56,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<SafeArrivalForecastService>();
         builder.Services.AddSingleton<MensaForecastService>();
         builder.Services.AddSingleton<INavigationService, NavigationService>();
+        builder.Services.AddSingleton<IPreferencesService, PreferencesService>();
 
 
         // ==========================================

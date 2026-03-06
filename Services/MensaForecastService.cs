@@ -25,6 +25,21 @@ public sealed class MensaForecastService
         _safeArrivalForecastService = safeArrivalForecastService;
     }
 
+    /// <summary>
+    /// Builds the Mensa forecast by approximating Mensa occupancy from the campus-wide
+    /// occupancy deficit during the lunch window when direct Mensa sensors are missing.
+    /// Steps:
+    /// 1) Determine the lunch window (window start + eating buffer) and the time step.
+    /// 2) Build per-space snapshots for recent open days (ignoring small-capacity spaces).
+    /// 3) For each day and time bin, compute a baseline occupancy by linear interpolation
+    ///    between window-start and window-end anchors; deficit = max(0, baseline - observed).
+    ///    Sum deficits across all spaces to form D_campus(t).
+    /// 4) Build a virtual history from D_campus(t), compute the peak daily deficit across
+    ///    recent days, and clamp capacity to a minimum to stabilize low-traffic periods.
+    /// 5) Create a virtual StudySpace and run SafeArrival; apply a fixed queue buffer and
+    ///    a coverage-based confidence guard (low live-coverage lowers confidence).
+    /// 6) For today, blend live data via hybrid deficits and compute the flux label.
+    /// </summary>
     public MensaForecastResult? BuildForecast(
         IReadOnlyList<StudySpace> spaces,
         IReadOnlyDictionary<string, List<SeatHistoryPoint>> historyByLocation,
@@ -358,6 +373,10 @@ public sealed class MensaForecastService
         return occupiedByMinute;
     }
 
+    /// <summary>
+    /// Builds a virtual Mensa history by converting the campus deficit D_campus(t)
+    /// into occupied-seat samples for each open day and time bin in the lunch window.
+    /// </summary>
     private static List<SeatHistoryPoint> BuildMensaVirtualHistory(
         DateTime startDate,
         DateTime endDate,
@@ -395,6 +414,11 @@ public sealed class MensaForecastService
         return history;
     }
 
+    /// <summary>
+    /// Computes the peak campus deficit across recent open days by taking the maximum
+    /// D_campus(t) within the lunch window for each day, then the maximum of those peaks.
+    /// Used as the dynamic capacity normalization baseline.
+    /// </summary>
     private static int CalculateMensaPeakDeficitHistory(
         DateTime referenceDate,
         int maxDays,
@@ -668,6 +692,12 @@ public sealed class MensaForecastService
         return string.Empty;
     }
 
+    /// <summary>
+    /// Calculates D_campus(t) for a specific day and minute by summing per-space deficits.
+    /// For each space, a baseline is linearly interpolated between window-start and window-end
+    /// anchors; deficit = max(0, baseline - observed occupancy at the requested minute).
+    /// Returns false if no usable data exists for the timestamp.
+    /// </summary>
     private static bool TryCalculateTotalDeficit(
         DateTime day,
         int minute,
@@ -834,6 +864,10 @@ public sealed class MensaForecastService
         return true;
     }
 
+    /// <summary>
+    /// Calculates a live D_campus(t) for today by anchoring to the most recent historical
+    /// reference day and applying the hybrid deficit model (historical slope with live data).
+    /// </summary>
     private static bool TryCalculateLiveTotalDeficit(
         DateTime today,
         int minute,
@@ -862,6 +896,11 @@ public sealed class MensaForecastService
             out totalDeficit);
     }
 
+    /// <summary>
+    /// Hybrid deficit model for the current day: uses the historical reference day's
+    /// window slope as baseline shape, but anchors it to today's live occupancy at the
+    /// window start and compares against today's live occupancy at the target minute.
+    /// </summary>
     private static bool TryCalculateHybridTotalDeficit(
         DateTime referenceDay,
         int minute,

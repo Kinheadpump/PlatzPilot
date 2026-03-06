@@ -1,0 +1,13 @@
+root = true
+
+[*.cs]
+# Enforce underscore-prefixed camelCase for private fields (CommunityToolkit.Mvvm).
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.underscore_camel_case.required_prefix = _
+dotnet_naming_style.underscore_camel_case.capitalization = camel_case
+
+dotnet_naming_rule.private_fields_must_be_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_must_be_underscore.style = underscore_camel_case
+dotnet_naming_rule.private_fields_must_be_underscore.severity = warning

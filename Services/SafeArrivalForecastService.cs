@@ -24,6 +24,19 @@ public sealed class SafeArrivalForecastService
         _smoothingRadius = Math.Max(0, window / 2);
     }
 
+    /// <summary>
+    /// Computes a conservative "latest safe arrival" recommendation from historical occupancy.
+    /// The algorithm:
+    /// - Filters history to open times (and optionally excludes today).
+    /// - Groups by (day, time-bin) and applies exponential recency weighting.
+    /// - Fits a Beta-Binomial predictive model per bin (alpha/beta priors) and smooths via
+    ///   moving-average across bins.
+    /// - Detects an early-weighted daily peak and peak trend, then searches only from opening
+    ///   to before the expected peak for the latest bin meeting the probability goal
+    ///   (with a fallback relaxed goal).
+    /// Outputs the recommended time, probability, expected free seats, confidence flags,
+    /// and peak diagnostics for UI.
+    /// </summary>
     public SafeArrivalRecommendation Calculate(StudySpace space, IReadOnlyList<SeatHistoryPoint>? history, DateTime referenceTime)
     {
         if (space.TotalSeats <= 0 || history == null || history.Count == 0)
@@ -50,11 +63,9 @@ public sealed class SafeArrivalForecastService
         var supportRaw = new double[_binsPerDay];
         var dayCoverageMask = new int[_binsPerDay];
 
-        var samplesByBin = new List<BinDaySample>[_binsPerDay];
-        for (var bin = 0; bin < _binsPerDay; bin++)
-        {
-            samplesByBin[bin] = new List<BinDaySample>();
-        }
+        var sampleCounts = new int[_binsPerDay];
+        var weightSums = new double[_binsPerDay];
+        var weightedFreeSums = new double[_binsPerDay];
 
         foreach (var dayGroup in filteredHistory.GroupBy(point => new
                  {
@@ -80,22 +91,24 @@ public sealed class SafeArrivalForecastService
                 ? Math.Clamp(averageFreeSeats / capacity, 0, 1)
                 : 0;
 
-            samplesByBin[binIndex].Add(new BinDaySample(freeFraction, weightRaw));
+            sampleCounts[binIndex]++;
+            weightSums[binIndex] += weightRaw;
+            weightedFreeSums[binIndex] += weightRaw * freeFraction;
             dayCoverageMask[binIndex] |= (1 << dayOffset);
         }
 
         // N_eff normalization per bin: normalize day weights, then scale to effective sample size.
         for (var bin = 0; bin < _binsPerDay; bin++)
         {
-            var samples = samplesByBin[bin];
-            if (samples.Count == 0)
+            var daysWithDataCount = sampleCounts[bin];
+            if (daysWithDataCount == 0)
             {
                 alphaRaw[bin] = _settings.AlphaPrior;
                 betaRaw[bin] = _settings.BetaPrior;
                 continue;
             }
 
-            var weightSum = samples.Sum(sample => sample.WeightRaw);
+            var weightSum = weightSums[bin];
             if (weightSum <= 0)
             {
                 alphaRaw[bin] = _settings.AlphaPrior;
@@ -103,10 +116,9 @@ public sealed class SafeArrivalForecastService
                 continue;
             }
 
-            var weightedFraction = samples.Sum(sample => (sample.WeightRaw / weightSum) * sample.FreeFraction);
+            var weightedFraction = weightedFreeSums[bin] / weightSum;
             weightedFraction = Math.Clamp(weightedFraction, 0, 1);
 
-            var daysWithDataCount = samples.Count;
             var nEff = Math.Min(daysWithDataCount, MaxEffectiveSampleDays);
             var successes = nEff * weightedFraction;
 
@@ -290,5 +302,4 @@ public sealed class SafeArrivalForecastService
         return result;
     }
 
-    private readonly record struct BinDaySample(double FreeFraction, double WeightRaw);
 }
