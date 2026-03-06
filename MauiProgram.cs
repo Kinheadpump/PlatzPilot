@@ -44,7 +44,15 @@ public static class MauiProgram
 #endif
 
         builder.Services.AddSingleton(appConfig);
-        builder.Services.AddHttpClient(SeatFinderService.HttpClientName);
+        builder.Services.AddHttpClient(SeatFinderService.HttpClientName, client =>
+        {
+            if (Uri.TryCreate(appConfig.SeatFinder.BaseUrl, UriKind.Absolute, out var baseUri))
+            {
+                client.BaseAddress = baseUri;
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(Math.Max(1, appConfig.SeatFinder.RequestTimeoutSeconds));
+        });
 
         // ==========================================
         // 1. SERVICES

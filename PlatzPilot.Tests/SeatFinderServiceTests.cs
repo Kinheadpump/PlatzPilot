@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using Microsoft.Extensions.Logging.Abstractions;
 using PlatzPilot.Configuration;
 using PlatzPilot.Services;
 
@@ -24,7 +25,7 @@ public sealed class SeatFinderServiceTests
         {
             BaseAddress = new Uri("https://example.test/")
         };
-        var service = new SeatFinderService(new StubHttpClientFactory(client), config);
+        var service = new SeatFinderService(new StubHttpClientFactory(client), config, NullLogger<SeatFinderService>.Instance);
 
         var result = await service.FetchSeatDataAsync(limit: 1);
 
@@ -43,7 +44,7 @@ public sealed class SeatFinderServiceTests
         {
             BaseAddress = new Uri("https://example.test/")
         };
-        var service = new SeatFinderService(new StubHttpClientFactory(client), config);
+        var service = new SeatFinderService(new StubHttpClientFactory(client), config, NullLogger<SeatFinderService>.Instance);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.FetchSeatDataAsync(limit: 1));
     }
