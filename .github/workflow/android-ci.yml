@@ -1,15 +1,21 @@
-name: Android Build & Test
+name: Android Build & Release
 
 # Wann soll die Pipeline starten?
 on:
   push:
     branches: [ "main", "master" ]
+    # Neu: Reagiere auch auf Versions-Tags (z.B. v1.0.0, v2.1)
+    tags:
+      - 'v*'
   pull_request:
     branches: [ "main", "master" ]
 
+# Erlaubnis für den Bot, einen Release zu erstellen
+permissions:
+  contents: write
+
 jobs:
   build-and-test:
-    # Wir nutzen Windows für den Build, da MAUI hier am stabilsten läuft
     runs-on: windows-latest
 
     steps:
@@ -32,10 +38,17 @@ jobs:
       shell: pwsh
       run: .\scripts\build_android_apk.ps1
 
-    - name: 🚀 APK als Artifact hochladen
+    - name: 🚀 APK als temporäres Artifact hochladen (Immer)
       uses: actions/upload-artifact@v4
       with:
         name: PlatzPilot-Android-APK
-        # Der Pfad, wo unser Skript die APK ablegt
         path: bin\Release\net10.0-android\publish\*.apk
         if-no-files-found: error
+
+    - name: 🎉 Offiziellen GitHub Release erstellen (Nur bei Tags)
+      # Dieser Schritt läuft NUR, wenn ein Tag gepusht wurde, der mit "v" beginnt
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: bin\Release\net10.0-android\publish\*.apk
+        generate_release_notes: true
