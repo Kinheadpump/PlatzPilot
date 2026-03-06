@@ -1,25 +1,29 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PlatzPilot.Services;
 
 namespace PlatzPilot.ViewModels;
 
 public sealed partial class MainPageViewModel : ObservableObject
 {
     private const string OnboardingCompletedKey = "HasCompletedOnboarding";
+    private readonly IPreferencesService _preferencesService;
 
     public MainPageViewModel(
         SeatListViewModel seatList,
         FilterViewModel filters,
         NavigationViewModel navigation,
-        SettingsViewModel settings)
+        SettingsViewModel settings,
+        IPreferencesService preferencesService)
     {
+        _preferencesService = preferencesService;
 
         SeatList = seatList;
         Filters = filters;
         Navigation = navigation;
         Settings = settings;
 
-        var hasCompletedOnboarding = Preferences.Default.Get(OnboardingCompletedKey, false);
+        var hasCompletedOnboarding = _preferencesService.Get(OnboardingCompletedKey, false);
         IsOnboardingVisible = !hasCompletedOnboarding;
     }
 
@@ -39,7 +43,7 @@ public sealed partial class MainPageViewModel : ObservableObject
     [RelayCommand]
     private void CompleteOnboarding()
     {
-        Preferences.Default.Set(OnboardingCompletedKey, true);
+        _preferencesService.Set(OnboardingCompletedKey, true);
         IsOnboardingVisible = false;
     }
 }

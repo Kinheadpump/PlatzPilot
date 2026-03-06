@@ -12,6 +12,7 @@ public partial class SettingsViewModel : ObservableObject
 {
     private readonly AppConfig _config;
     private readonly INavigationService _navigationService;
+    private readonly IPreferencesService _preferencesService;
 
     private bool _isColorBlindMode;
     private bool _isCampusSouthOnly;
@@ -73,15 +74,19 @@ public partial class SettingsViewModel : ObservableObject
         set => SetProperty(ref _isAboutOpen, value);
     }
 
-    public SettingsViewModel(AppConfig config, INavigationService navigationService)
+    public SettingsViewModel(
+        AppConfig config,
+        INavigationService navigationService,
+        IPreferencesService preferencesService)
     {
         _config = config;
         _navigationService = navigationService;
+        _preferencesService = preferencesService;
 
-        _isColorBlindMode = Preferences.Default.Get(_config.Preferences.ColorBlindModeKey, false);
-        _isCampusSouthOnly = Preferences.Default.Get(_config.Preferences.CampusSouthOnlyKey, false);
-        _isHapticFeedbackEnabled = Preferences.Default.Get(_config.Preferences.HapticFeedbackKey, true);
-        _isHideClosedLocations = Preferences.Default.Get(_config.Preferences.HideClosedLocationsKey, false);
+        _isColorBlindMode = _preferencesService.Get(_config.Preferences.ColorBlindModeKey, false);
+        _isCampusSouthOnly = _preferencesService.Get(_config.Preferences.CampusSouthOnlyKey, false);
+        _isHapticFeedbackEnabled = _preferencesService.Get(_config.Preferences.HapticFeedbackKey, true);
+        _isHideClosedLocations = _preferencesService.Get(_config.Preferences.HideClosedLocationsKey, false);
 
         ApplySavedTheme();
     }
@@ -112,7 +117,7 @@ public partial class SettingsViewModel : ObservableObject
         var nextTheme = currentTheme == AppTheme.Dark ? AppTheme.Light : AppTheme.Dark;
 
         Application.Current.UserAppTheme = nextTheme;
-        Preferences.Default.Set(_config.Preferences.ThemeKey, nextTheme == AppTheme.Light ? _config.Theme.Light : _config.Theme.Dark);
+        _preferencesService.Set(_config.Preferences.ThemeKey, nextTheme == AppTheme.Light ? _config.Theme.Light : _config.Theme.Dark);
     }
 
     [RelayCommand]
@@ -167,7 +172,7 @@ public partial class SettingsViewModel : ObservableObject
             : "en";
 
         LocalizationResourceManager.Instance.SetCulture(new CultureInfo(cultureCode));
-        Preferences.Default.Set(_config.Preferences.LanguageKey, cultureCode);
+        _preferencesService.Set(_config.Preferences.LanguageKey, cultureCode);
     }
 
     [RelayCommand]
@@ -212,22 +217,22 @@ public partial class SettingsViewModel : ObservableObject
 
     private void OnIsColorBlindModeChanged(bool value)
     {
-        Preferences.Default.Set(_config.Preferences.ColorBlindModeKey, value);
+        _preferencesService.Set(_config.Preferences.ColorBlindModeKey, value);
     }
 
     private void OnIsCampusSouthOnlyChanged(bool value)
     {
-        Preferences.Default.Set(_config.Preferences.CampusSouthOnlyKey, value);
+        _preferencesService.Set(_config.Preferences.CampusSouthOnlyKey, value);
     }
 
     private void OnIsHapticFeedbackEnabledChanged(bool value)
     {
-        Preferences.Default.Set(_config.Preferences.HapticFeedbackKey, value);
+        _preferencesService.Set(_config.Preferences.HapticFeedbackKey, value);
     }
 
     private void OnIsHideClosedLocationsChanged(bool value)
     {
-        Preferences.Default.Set(_config.Preferences.HideClosedLocationsKey, value);
+        _preferencesService.Set(_config.Preferences.HideClosedLocationsKey, value);
     }
 
     private void ApplySavedTheme()
@@ -237,7 +242,7 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        var savedTheme = Preferences.Default.Get(_config.Preferences.ThemeKey, _config.Theme.System);
+        var savedTheme = _preferencesService.Get(_config.Preferences.ThemeKey, _config.Theme.System);
         Application.Current.UserAppTheme = savedTheme switch
         {
             var value when string.Equals(value, _config.Theme.Light, StringComparison.Ordinal) => AppTheme.Light,

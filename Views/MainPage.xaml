@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:PlatzPilot.ViewModels"
              xmlns:models="clr-namespace:PlatzPilot.Models"
-             xmlns:local="clr-namespace:PlatzPilot"
+             xmlns:constants="clr-namespace:PlatzPilot.Constants"
              xmlns:loc="clr-namespace:PlatzPilot.Localization"
              xmlns:views="clr-namespace:PlatzPilot.Views"
              xmlns:behaviors="clr-namespace:PlatzPilot.Behaviors"
@@ -65,7 +65,7 @@
                             Padding="0"
                             VerticalOptions="Center">
                         <ImageButton Command="{Binding Filters.ToggleSearchCommand}"
-                                     Source="{AppThemeBinding Light={x:Static local:AppAssets.SearchIconLight}, Dark={x:Static local:AppAssets.SearchIconDark}}"
+                                     Source="{AppThemeBinding Light={x:Static constants:AppAssets.SearchIconLight}, Dark={x:Static constants:AppAssets.SearchIconDark}}"
                                      WidthRequest="44"
                                      HeightRequest="44"
                                      MinimumWidthRequest="44"
@@ -88,7 +88,7 @@
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding Filters.ToggleFilterCommand}" />
                         </Border.GestureRecognizers>
-                        <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.FilterIconLight}, Dark={x:Static local:AppAssets.FilterIconDark}}"
+                        <Image Source="{AppThemeBinding Light={x:Static constants:AppAssets.FilterIconLight}, Dark={x:Static constants:AppAssets.FilterIconDark}}"
                                WidthRequest="24"
                                HeightRequest="24"
                                Aspect="AspectFit"
@@ -99,13 +99,13 @@
                                              Binding="{Binding Filters.IsFilterActive}"
                                              Value="True">
                                     <Setter Property="Source"
-                                            Value="{x:Static local:AppAssets.FilterIconActive}" />
+                                            Value="{x:Static constants:AppAssets.FilterIconActive}" />
                                 </DataTrigger>
                                 <DataTrigger TargetType="Image"
                                              Binding="{Binding Filters.IsFilterActive}"
                                              Value="False">
                                     <Setter Property="Source"
-                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.FilterIconLight}, Dark={x:Static local:AppAssets.FilterIconDark}}" />
+                                            Value="{AppThemeBinding Light={x:Static constants:AppAssets.FilterIconLight}, Dark={x:Static constants:AppAssets.FilterIconDark}}" />
                                 </DataTrigger>
                             </Image.Triggers>
                         </Image>
@@ -222,7 +222,7 @@
                                               VerticalOptions="Fill"
                                               HorizontalOptions="End">
                                             <ImageButton Grid.Row="0"
-                                                         Source="{x:Static local:AppAssets.FavoriteIconOutline}"
+                                                         Source="{x:Static constants:AppAssets.FavoriteIconOutline}"
                                                          WidthRequest="24"
                                                          HeightRequest="24"
                                                          MinimumWidthRequest="28"
@@ -239,7 +239,7 @@
                                                                  Binding="{Binding IsFavorite}"
                                                                  Value="True">
                                                         <Setter Property="Source"
-                                                                Value="{x:Static local:AppAssets.FavoriteIconFilled}" />
+                                                                Value="{x:Static constants:AppAssets.FavoriteIconFilled}" />
                                                         <Setter Property="Opacity"
                                                                 Value="1" />
                                                     </DataTrigger>
@@ -247,7 +247,7 @@
                                                                  Binding="{Binding IsFavorite}"
                                                                  Value="False">
                                                         <Setter Property="Source"
-                                                                Value="{x:Static local:AppAssets.FavoriteIconOutline}" />
+                                                                Value="{x:Static constants:AppAssets.FavoriteIconOutline}" />
                                                         <Setter Property="Opacity"
                                                                 Value="1" />
                                                     </DataTrigger>
@@ -374,7 +374,7 @@
                                        FontAttributes="Bold" />
 
                                 <ImageButton Grid.Column="1"
-                                             Source="{AppThemeBinding Light={x:Static local:AppAssets.DarkModeIconLight}, Dark={x:Static local:AppAssets.DarkModeIconDark}}"
+                                             Source="{AppThemeBinding Light={x:Static constants:AppAssets.DarkModeIconLight}, Dark={x:Static constants:AppAssets.DarkModeIconDark}}"
                                              Command="{Binding Settings.ToggleThemeCommand}"
                                              BackgroundColor="Transparent"
                                              HeightRequest="40"
@@ -391,7 +391,7 @@
                                        FontAttributes="Bold" />
 
                                 <ImageButton Grid.Column="1"
-                                             Source="{AppThemeBinding Light={x:Static local:AppAssets.LanguageIconLight}, Dark={x:Static local:AppAssets.LanguageIconDark}}"
+                                             Source="{AppThemeBinding Light={x:Static constants:AppAssets.LanguageIconLight}, Dark={x:Static constants:AppAssets.LanguageIconDark}}"
                                              Command="{Binding Settings.ChangeLanguageCommand}"
                                              BackgroundColor="Transparent"
                                              HeightRequest="40"
@@ -425,13 +425,13 @@
                                                              Binding="{Binding Settings.IsColorBlindMode}"
                                                              Value="True">
                                                     <Setter Property="Source"
-                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOnIconLight}, Dark={x:Static local:AppAssets.ColorBlindOnIconDark}}" />
+                                                            Value="{AppThemeBinding Light={x:Static constants:AppAssets.ColorBlindOnIconLight}, Dark={x:Static constants:AppAssets.ColorBlindOnIconDark}}" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Image"
                                                              Binding="{Binding Settings.IsColorBlindMode}"
                                                              Value="False">
                                                     <Setter Property="Source"
-                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.ColorBlindOffIconLight}, Dark={x:Static local:AppAssets.ColorBlindOffIconDark}}" />
+                                                            Value="{AppThemeBinding Light={x:Static constants:AppAssets.ColorBlindOffIconLight}, Dark={x:Static constants:AppAssets.ColorBlindOffIconDark}}" />
                                                 </DataTrigger>
                                             </Image.Triggers>
                                         </Image>
@@ -481,13 +481,13 @@
                                                              Binding="{Binding Settings.IsCampusSouthOnly}"
                                                              Value="True">
                                                     <Setter Property="Source"
-                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
+                                                            Value="{AppThemeBinding Light={x:Static constants:AppAssets.CampusSouthOnIconLight}, Dark={x:Static constants:AppAssets.CampusSouthOnIconDark}}" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Image"
                                                              Binding="{Binding Settings.IsCampusSouthOnly}"
                                                              Value="False">
                                                     <Setter Property="Source"
-                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
+                                                            Value="{AppThemeBinding Light={x:Static constants:AppAssets.CampusSouthOffIconLight}, Dark={x:Static constants:AppAssets.CampusSouthOffIconDark}}" />
                                                 </DataTrigger>
                                             </Image.Triggers>
                                         </Image>
@@ -524,13 +524,13 @@
                                                              Binding="{Binding Settings.IsHapticFeedbackEnabled}"
                                                              Value="True">
                                                     <Setter Property="Source"
-                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
+                                                            Value="{AppThemeBinding Light={x:Static constants:AppAssets.CampusSouthOnIconLight}, Dark={x:Static constants:AppAssets.CampusSouthOnIconDark}}" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Image"
                                                              Binding="{Binding Settings.IsHapticFeedbackEnabled}"
                                                              Value="False">
                                                     <Setter Property="Source"
-                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
+                                                            Value="{AppThemeBinding Light={x:Static constants:AppAssets.CampusSouthOffIconLight}, Dark={x:Static constants:AppAssets.CampusSouthOffIconDark}}" />
                                                 </DataTrigger>
                                             </Image.Triggers>
                                         </Image>
@@ -567,13 +567,13 @@
                                                              Binding="{Binding Settings.IsHideClosedLocations}"
                                                              Value="True">
                                                     <Setter Property="Source"
-                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOnIconLight}, Dark={x:Static local:AppAssets.CampusSouthOnIconDark}}" />
+                                                            Value="{AppThemeBinding Light={x:Static constants:AppAssets.CampusSouthOnIconLight}, Dark={x:Static constants:AppAssets.CampusSouthOnIconDark}}" />
                                                 </DataTrigger>
                                                 <DataTrigger TargetType="Image"
                                                              Binding="{Binding Settings.IsHideClosedLocations}"
                                                              Value="False">
                                                     <Setter Property="Source"
-                                                            Value="{AppThemeBinding Light={x:Static local:AppAssets.CampusSouthOffIconLight}, Dark={x:Static local:AppAssets.CampusSouthOffIconDark}}" />
+                                                            Value="{AppThemeBinding Light={x:Static constants:AppAssets.CampusSouthOffIconLight}, Dark={x:Static constants:AppAssets.CampusSouthOffIconDark}}" />
                                                 </DataTrigger>
                                             </Image.Triggers>
                                         </Image>
@@ -690,9 +690,9 @@
                                      Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding Navigation.SwitchTabCommand}"
-                                              CommandParameter="{x:Static local:AppTabs.Home}" />
+                                              CommandParameter="{x:Static constants:AppTabs.Home}" />
                     </VerticalStackLayout.GestureRecognizers>
-                    <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.HomeIconLight}, Dark={x:Static local:AppAssets.HomeIconDark}}"
+                    <Image Source="{AppThemeBinding Light={x:Static constants:AppAssets.HomeIconLight}, Dark={x:Static constants:AppAssets.HomeIconDark}}"
                            HeightRequest="24"
                            WidthRequest="24"
                            HorizontalOptions="Center" />
@@ -703,19 +703,19 @@
                     <VerticalStackLayout.Triggers>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding Navigation.CurrentTab}"
-                                     Value="{x:Static local:AppTabs.Home}">
+                                     Value="{x:Static constants:AppTabs.Home}">
                             <Setter Property="Opacity"
                                     Value="1.0" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding Navigation.CurrentTab}"
-                                     Value="{x:Static local:AppTabs.Favorites}">
+                                     Value="{x:Static constants:AppTabs.Favorites}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding Navigation.CurrentTab}"
-                                     Value="{x:Static local:AppTabs.Settings}">
+                                     Value="{x:Static constants:AppTabs.Settings}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
@@ -729,9 +729,9 @@
                                      Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding Navigation.SwitchTabCommand}"
-                                              CommandParameter="{x:Static local:AppTabs.Favorites}" />
+                                              CommandParameter="{x:Static constants:AppTabs.Favorites}" />
                     </VerticalStackLayout.GestureRecognizers>
-                    <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.FavoritesIconLight}, Dark={x:Static local:AppAssets.FavoritesIconDark}}"
+                    <Image Source="{AppThemeBinding Light={x:Static constants:AppAssets.FavoritesIconLight}, Dark={x:Static constants:AppAssets.FavoritesIconDark}}"
                            HeightRequest="24"
                            WidthRequest="24"
                            HorizontalOptions="Center" />
@@ -742,19 +742,19 @@
                     <VerticalStackLayout.Triggers>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding Navigation.CurrentTab}"
-                                     Value="{x:Static local:AppTabs.Favorites}">
+                                     Value="{x:Static constants:AppTabs.Favorites}">
                             <Setter Property="Opacity"
                                     Value="1.0" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding Navigation.CurrentTab}"
-                                     Value="{x:Static local:AppTabs.Home}">
+                                     Value="{x:Static constants:AppTabs.Home}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding Navigation.CurrentTab}"
-                                     Value="{x:Static local:AppTabs.Settings}">
+                                     Value="{x:Static constants:AppTabs.Settings}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
@@ -768,9 +768,9 @@
                                      Spacing="4">
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding Navigation.SwitchTabCommand}"
-                                              CommandParameter="{x:Static local:AppTabs.Settings}" />
+                                              CommandParameter="{x:Static constants:AppTabs.Settings}" />
                     </VerticalStackLayout.GestureRecognizers>
-                    <Image Source="{AppThemeBinding Light={x:Static local:AppAssets.SettingsIconLight}, Dark={x:Static local:AppAssets.SettingsIconDark}}"
+                    <Image Source="{AppThemeBinding Light={x:Static constants:AppAssets.SettingsIconLight}, Dark={x:Static constants:AppAssets.SettingsIconDark}}"
                            HeightRequest="24"
                            WidthRequest="24"
                            HorizontalOptions="Center" />
@@ -781,19 +781,19 @@
                     <VerticalStackLayout.Triggers>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding Navigation.CurrentTab}"
-                                     Value="{x:Static local:AppTabs.Settings}">
+                                     Value="{x:Static constants:AppTabs.Settings}">
                             <Setter Property="Opacity"
                                     Value="1.0" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding Navigation.CurrentTab}"
-                                     Value="{x:Static local:AppTabs.Home}">
+                                     Value="{x:Static constants:AppTabs.Home}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
                         <DataTrigger TargetType="VerticalStackLayout"
                                      Binding="{Binding Navigation.CurrentTab}"
-                                     Value="{x:Static local:AppTabs.Favorites}">
+                                     Value="{x:Static constants:AppTabs.Favorites}">
                             <Setter Property="Opacity"
                                     Value="0.3" />
                         </DataTrigger>
@@ -939,10 +939,10 @@
                                             <DatePicker Grid.Column="0"
                                                         Date="{Binding Filters.SelectedDate}"
                                                         MaximumDate="{Binding Filters.MaxSelectableDate}"
-                                                        Format="{x:Static local:AppFormats.DatePicker}" />
+                                                        Format="{x:Static constants:AppFormats.DatePicker}" />
                                             <TimePicker Grid.Column="1"
                                                         Time="{Binding Filters.SelectedTime}"
-                                                        Format="{x:Static local:AppFormats.TimePicker}" />
+                                                        Format="{x:Static constants:AppFormats.TimePicker}" />
                                         </Grid>
                                     </Border>
                                 </VerticalStackLayout>
@@ -1091,7 +1091,7 @@
 
                     <ScrollView Grid.Row="1">
                         <VerticalStackLayout Spacing="10">
-                            <Image Source="{x:Static local:AppAssets.SettingsLogo}"
+                            <Image Source="{x:Static constants:AppAssets.SettingsLogo}"
                                    HeightRequest="72"
                                    WidthRequest="72"
                                    Margin="0,4,0,0"
@@ -1269,3 +1269,4 @@
 
     </Grid>
 </ContentPage>
+

@@ -1,6 +1,6 @@
 using PlatzPilot.Configuration;
 
-namespace PlatzPilot;
+namespace PlatzPilot.Constants;
 
 public static class AppTabs
 {
