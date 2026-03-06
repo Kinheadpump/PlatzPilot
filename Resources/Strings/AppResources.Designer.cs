@@ -88,6 +88,18 @@ public class AppResources
     public static string EquipmentPower => ResourceManager.GetString("EquipmentPower", resourceCulture) ?? string.Empty;
     public static string EquipmentWhiteboard => ResourceManager.GetString("EquipmentWhiteboard", resourceCulture) ?? string.Empty;
     public static string OpeningHoursTitle => ResourceManager.GetString("OpeningHoursTitle", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursClosedSpecialText => ResourceManager.GetString("OpeningHoursClosedSpecialText", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursUnknownText => ResourceManager.GetString("OpeningHoursUnknownText", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursAlwaysOpenText => ResourceManager.GetString("OpeningHoursAlwaysOpenText", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursClosedText => ResourceManager.GetString("OpeningHoursClosedText", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursHoursSuffix => ResourceManager.GetString("OpeningHoursHoursSuffix", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursTimeRangeFormat => ResourceManager.GetString("OpeningHoursTimeRangeFormat", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursTimeRangeSeparator => ResourceManager.GetString("OpeningHoursTimeRangeSeparator", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursClosedOpensTodayFormat => ResourceManager.GetString("OpeningHoursClosedOpensTodayFormat", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursClosedOpensTomorrowFormat => ResourceManager.GetString("OpeningHoursClosedOpensTomorrowFormat", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursClosedOpensOnDateFormat => ResourceManager.GetString("OpeningHoursClosedOpensOnDateFormat", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursNoRoomsText => ResourceManager.GetString("OpeningHoursNoRoomsText", resourceCulture) ?? string.Empty;
+    public static string OpeningHoursUnknownObjectText => ResourceManager.GetString("OpeningHoursUnknownObjectText", resourceCulture) ?? string.Empty;
     public static string SortTitle => ResourceManager.GetString("SortTitle", resourceCulture) ?? string.Empty;
     public static string SortByLabel => ResourceManager.GetString("SortByLabel", resourceCulture) ?? string.Empty;
     public static string ShowResultsFormat => ResourceManager.GetString("ShowResultsFormat", resourceCulture) ?? string.Empty;
@@ -144,3 +156,4 @@ public class AppResources
 }
 
 #nullable restore
+

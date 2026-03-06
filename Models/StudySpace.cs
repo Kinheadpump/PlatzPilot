@@ -45,23 +45,22 @@ public class StudySpace
                 return string.Empty;
             }
 
-            var openingText = AppConfigProvider.Current.OpeningHoursText;
             if (OpeningHours?.TryGetNextOpeningTime(ReferenceTime, out var nextOpening) == true)
             {
                 if (nextOpening.Date == ReferenceTime.Date)
                 {
-                    return string.Format(openingText.ClosedOpensTodayFormat, nextOpening);
+                    return string.Format(AppResources.OpeningHoursClosedOpensTodayFormat, nextOpening);
                 }
 
                 if (nextOpening.Date == ReferenceTime.Date.AddDays(1))
                 {
-                    return string.Format(openingText.ClosedOpensTomorrowFormat, nextOpening);
+                    return string.Format(AppResources.OpeningHoursClosedOpensTomorrowFormat, nextOpening);
                 }
 
-                return string.Format(openingText.ClosedOpensOnDateFormat, nextOpening);
+                return string.Format(AppResources.OpeningHoursClosedOpensOnDateFormat, nextOpening);
             }
 
-            return openingText.ClosedText;
+            return AppResources.OpeningHoursClosedText;
         }
     }
 

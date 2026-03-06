@@ -181,7 +181,7 @@ public partial class SeatListViewModel : ObservableObject
     [RelayCommand]
     private async Task ResetFiltersAsync()
     {
-        var hadActiveFilters = _filters.IsAnyFilterActive();
+        var hadActiveFilters = _filters.IsFilterActive;
 
         _filters.ResetToDefaults();
         _filters.MarkFiltersApplied();

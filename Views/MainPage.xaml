@@ -26,7 +26,7 @@
                     StrokeShape="RoundRectangle 10"
                     Padding="10,6"
                     Margin="0,0,0,8">
-                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[OfflineBannerText]}"
+                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[OfflineBannerText], x:DataType=loc:LocalizationResourceManager}"
                        FontSize="12"
                        FontAttributes="Bold"
                        TextColor="{AppThemeBinding Light=#7a5a00, Dark=#f5d77a}"
@@ -43,7 +43,7 @@
                       ColumnSpacing="8"
                       VerticalOptions="Center">
                     <Label Grid.Column="0"
-                           Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[HomeTitle]}"
+                           Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[HomeTitle], x:DataType=loc:LocalizationResourceManager}"
                            FontSize="22"
                            FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light=#6b7280, Dark=#cbd5e1}"
@@ -51,7 +51,7 @@
                            IsVisible="{Binding Filters.IsSearchInactive}" />
 
                     <SearchBar Grid.Column="0"
-                               Placeholder="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SearchPlaceholder]}"
+                               Placeholder="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SearchPlaceholder], x:DataType=loc:LocalizationResourceManager}"
                                Text="{Binding Filters.SearchText}"
                                IsVisible="{Binding Filters.IsSearchActive}"
                                BackgroundColor="Transparent" />
@@ -194,7 +194,7 @@
                                                 <VerticalStackLayout Grid.Column="1"
                                                                      Spacing="2"
                                                                      HorizontalOptions="End">
-                                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[ManualCountLabel]}"
+                                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[ManualCountLabel], x:DataType=loc:LocalizationResourceManager}"
                                                            FontSize="10"
                                                            TextColor="DarkOrange"
                                                            IsVisible="{Binding IsManualCountVisible}"
@@ -232,7 +232,7 @@
                                                          HorizontalOptions="End"
                                                          VerticalOptions="Start"
                                                          BackgroundColor="Transparent"
-                                                         Command="{Binding Source={RelativeSource AncestorType={x:Type views:MainPage}}, Path=BindingContext.SeatList.ToggleFavoriteCommand}"
+                                                         Command="{Binding Source={RelativeSource AncestorType={x:Type views:MainPage}}, Path=ViewModel.SeatList.ToggleFavoriteCommand, x:DataType=views:MainPage}"
                                                          CommandParameter="{Binding .}">
                                                 <ImageButton.Triggers>
                                                     <DataTrigger TargetType="ImageButton"
@@ -334,7 +334,7 @@
                                      HorizontalOptions="Center"
                                      Spacing="10"
                                      IsVisible="{Binding SeatList.IsFavoritesEmpty}">
-                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[FavoritesEmptyText]}"
+                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[FavoritesEmptyText], x:DataType=loc:LocalizationResourceManager}"
                            FontSize="16"
                            HorizontalTextAlignment="Center"
                            HorizontalOptions="Center"
@@ -348,7 +348,7 @@
                     IsVisible="{Binding Navigation.IsSettingsContentVisible}"
                     Margin="15,30,15,15">
             <VerticalStackLayout Spacing="25">
-                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsTitle]}"
+                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsTitle], x:DataType=loc:LocalizationResourceManager}"
                        FontAttributes="Bold"
                        FontSize="28"
                        Margin="0,10,0,10" />
@@ -356,7 +356,7 @@
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
                       RowSpacing="10">
                     <Label Grid.Row="0"
-                           Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsDisplayTitle]}"
+                           Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsDisplayTitle], x:DataType=loc:LocalizationResourceManager}"
                            FontSize="16"
                            FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light=#4a4a4a, Dark=#cfcfcf}" />
@@ -369,7 +369,7 @@
                             StrokeThickness="1">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*, Auto">
-                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsDesignLabel]}"
+                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsDesignLabel], x:DataType=loc:LocalizationResourceManager}"
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
 
@@ -386,7 +386,7 @@
                                      Color="{AppThemeBinding Light=#ededed, Dark=#2a2a2a}" />
 
                             <Grid ColumnDefinitions="*, Auto">
-                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[LanguageLabel]}"
+                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[LanguageLabel], x:DataType=loc:LocalizationResourceManager}"
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
 
@@ -403,7 +403,7 @@
                                      Color="{AppThemeBinding Light=#ededed, Dark=#2a2a2a}" />
 
                             <Grid ColumnDefinitions="*, Auto">
-                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[ColorBlindModeLabel]}"
+                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[ColorBlindModeLabel], x:DataType=loc:LocalizationResourceManager}"
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
 
@@ -446,7 +446,7 @@
                     </Border>
 
                     <Label Grid.Row="2"
-                           Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsFeedbackTitle]}"
+                           Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsFeedbackTitle], x:DataType=loc:LocalizationResourceManager}"
                            FontSize="16"
                            FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light=#4a4a4a, Dark=#cfcfcf}" />
@@ -459,7 +459,7 @@
                             StrokeThickness="1">
                         <VerticalStackLayout Spacing="12">
                             <Grid ColumnDefinitions="*, Auto">
-                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[CampusSouthOnlyLabel]}"
+                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[CampusSouthOnlyLabel], x:DataType=loc:LocalizationResourceManager}"
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
 
@@ -502,7 +502,7 @@
                                      Color="{AppThemeBinding Light=#ededed, Dark=#2a2a2a}" />
 
                             <Grid ColumnDefinitions="*, Auto">
-                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsHapticLabel]}"
+                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsHapticLabel], x:DataType=loc:LocalizationResourceManager}"
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
 
@@ -545,7 +545,7 @@
                                      Color="{AppThemeBinding Light=#ededed, Dark=#2a2a2a}" />
 
                             <Grid ColumnDefinitions="*, Auto">
-                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[HideClosedLocationsLabel]}"
+                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[HideClosedLocationsLabel], x:DataType=loc:LocalizationResourceManager}"
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
 
@@ -587,7 +587,7 @@
                     </Border>
 
                     <Label Grid.Row="4"
-                           Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsInfoTitle]}"
+                           Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsInfoTitle], x:DataType=loc:LocalizationResourceManager}"
                            FontSize="16"
                            FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light=#4a4a4a, Dark=#cfcfcf}" />
@@ -605,7 +605,7 @@
                                   RowSpacing="10">
                                 <Button Grid.Row="0"
                                         Grid.Column="0"
-                                        Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[ImpressumLabel]}"
+                                        Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[ImpressumLabel], x:DataType=loc:LocalizationResourceManager}"
                                         Command="{Binding Settings.ShowImpressumCommand}"
                                         BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
                                         TextColor="{AppThemeBinding Light=Black, Dark=White}"
@@ -617,7 +617,7 @@
                                         Padding="10,8" />
                                 <Button Grid.Row="0"
                                         Grid.Column="1"
-                                        Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[PrivacyLabel]}"
+                                        Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[PrivacyLabel], x:DataType=loc:LocalizationResourceManager}"
                                         Command="{Binding Settings.ShowPrivacyCommand}"
                                         BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
                                         TextColor="{AppThemeBinding Light=Black, Dark=White}"
@@ -629,7 +629,7 @@
                                         Padding="10,8" />
                                 <Button Grid.Row="1"
                                         Grid.Column="0"
-                                        Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[LicensesLabel]}"
+                                        Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[LicensesLabel], x:DataType=loc:LocalizationResourceManager}"
                                         Command="{Binding Settings.ShowLicensesCommand}"
                                         BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
                                         TextColor="{AppThemeBinding Light=Black, Dark=White}"
@@ -641,7 +641,7 @@
                                         Padding="10,8" />
                                 <Button Grid.Row="1"
                                         Grid.Column="1"
-                                        Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[GithubLabel]}"
+                                        Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[GithubLabel], x:DataType=loc:LocalizationResourceManager}"
                                         Command="{Binding Settings.OpenGithubCommand}"
                                         BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
                                         TextColor="{AppThemeBinding Light=Black, Dark=White}"
@@ -653,7 +653,7 @@
                                         Padding="10,8" />
                             </Grid>
 
-                            <Button Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[AboutButtonLabel]}"
+                            <Button Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[AboutButtonLabel], x:DataType=loc:LocalizationResourceManager}"
                                     Command="{Binding Settings.OpenAboutCommand}"
                                     BackgroundColor="{AppThemeBinding Light=#f1f2f6, Dark=#2a2a2a}"
                                     TextColor="{AppThemeBinding Light=Black, Dark=White}"
@@ -696,7 +696,7 @@
                            HeightRequest="24"
                            WidthRequest="24"
                            HorizontalOptions="Center" />
-                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[HomeTabLabel]}"
+                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[HomeTabLabel], x:DataType=loc:LocalizationResourceManager}"
                            FontSize="10"
                            HorizontalOptions="Center"
                            FontAttributes="Bold" />
@@ -735,7 +735,7 @@
                            HeightRequest="24"
                            WidthRequest="24"
                            HorizontalOptions="Center" />
-                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[FavoritesLabel]}"
+                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[FavoritesLabel], x:DataType=loc:LocalizationResourceManager}"
                            FontSize="10"
                            HorizontalOptions="Center"
                            FontAttributes="Bold" />
@@ -774,7 +774,7 @@
                            HeightRequest="24"
                            WidthRequest="24"
                            HorizontalOptions="Center" />
-                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsLabel]}"
+                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsLabel], x:DataType=loc:LocalizationResourceManager}"
                            FontSize="10"
                            HorizontalOptions="Center"
                            FontAttributes="Bold" />
@@ -828,11 +828,11 @@
                                      HorizontalOptions="Center"
                                      Color="{AppThemeBinding Light=#d7d7d7, Dark=#3b3b3b}"
                                      CornerRadius="4" />
-                            <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[FilterTitle]}"
+                            <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[FilterTitle], x:DataType=loc:LocalizationResourceManager}"
                                    FontSize="22"
                                    FontAttributes="Bold" />
                         </VerticalStackLayout>
-                        <Button Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[FilterReset]}"
+                        <Button Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[FilterReset], x:DataType=loc:LocalizationResourceManager}"
                                 Command="{Binding SeatList.ResetFiltersCommand}"
                                 BackgroundColor="{AppThemeBinding Light=#e9f0ff, Dark=#24324d}"
                                 TextColor="{AppThemeBinding Light=#1f4db8, Dark=#9ec1ff}"
@@ -853,12 +853,12 @@
                                     Padding="14"
                                     StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="10">
-                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SortTitle]}"
+                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SortTitle], x:DataType=loc:LocalizationResourceManager}"
                                            FontAttributes="Bold"
                                            FontSize="16" />
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
-                                        <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SortByLabel]}"
+                                        <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SortByLabel], x:DataType=loc:LocalizationResourceManager}"
                                                VerticalOptions="Center" />
                                         <Picker Grid.Column="1"
                                                 ItemsSource="{Binding Filters.SortOptions}"
@@ -872,14 +872,14 @@
                                     Padding="14"
                                     StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="12">
-                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[WhenTitle]}"
+                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[WhenTitle], x:DataType=loc:LocalizationResourceManager}"
                                            FontAttributes="Bold"
                                            FontSize="16" />
 
                                     <Grid ColumnDefinitions="*,*"
                                           ColumnSpacing="8">
                                         <Button Grid.Column="0"
-                                                Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[WhenNow]}"
+                                                Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[WhenNow], x:DataType=loc:LocalizationResourceManager}"
                                                 Command="{Binding Filters.SetWhenNowCommand}"
                                                 CornerRadius="10"
                                                 Padding="10,8">
@@ -903,7 +903,7 @@
                                             </Button.Triggers>
                                         </Button>
                                         <Button Grid.Column="1"
-                                                Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[WhenBefore]}"
+                                                Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[WhenBefore], x:DataType=loc:LocalizationResourceManager}"
                                                 Command="{Binding Filters.SetWhenBeforeCommand}"
                                                 CornerRadius="10"
                                                 Padding="10,8">
@@ -953,28 +953,28 @@
                                     Padding="14"
                                     StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="10">
-                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[RoomTypeTitle]}"
+                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[RoomTypeTitle], x:DataType=loc:LocalizationResourceManager}"
                                            FontAttributes="Bold"
                                            FontSize="16" />
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding Filters.IsGroupRoomSelected}" />
                                         <Label Grid.Column="1"
-                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[RoomTypeGroup]}"
+                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[RoomTypeGroup], x:DataType=loc:LocalizationResourceManager}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding Filters.IsSilentStudySelected}" />
                                         <Label Grid.Column="1"
-                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[RoomTypeSilent]}"
+                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[RoomTypeSilent], x:DataType=loc:LocalizationResourceManager}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding Filters.IsNoReservationSelected}" />
                                         <Label Grid.Column="1"
-                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[RoomTypeNoReservation]}"
+                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[RoomTypeNoReservation], x:DataType=loc:LocalizationResourceManager}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                 </VerticalStackLayout>
@@ -985,7 +985,7 @@
                                     Padding="14"
                                     StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="10">
-                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[EquipmentTitle]}"
+                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[EquipmentTitle], x:DataType=loc:LocalizationResourceManager}"
                                            FontAttributes="Bold"
                                            FontSize="16" />
 
@@ -993,21 +993,21 @@
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding Filters.RequireFreeWifi}" />
                                         <Label Grid.Column="1"
-                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[EquipmentWifi]}"
+                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[EquipmentWifi], x:DataType=loc:LocalizationResourceManager}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding Filters.RequirePowerOutlets}" />
                                         <Label Grid.Column="1"
-                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[EquipmentPower]}"
+                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[EquipmentPower], x:DataType=loc:LocalizationResourceManager}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                     <Grid ColumnDefinitions="Auto,*"
                                           ColumnSpacing="10">
                                         <CheckBox IsChecked="{Binding Filters.RequireWhiteboard}" />
                                         <Label Grid.Column="1"
-                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[EquipmentWhiteboard]}"
+                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[EquipmentWhiteboard], x:DataType=loc:LocalizationResourceManager}"
                                                VerticalOptions="Center" />
                                     </Grid>
                                 </VerticalStackLayout>
@@ -1018,7 +1018,7 @@
                                     Padding="14"
                                     StrokeShape="RoundRectangle 12">
                                 <VerticalStackLayout Spacing="10">
-                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[OpeningHoursTitle]}"
+                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[OpeningHoursTitle], x:DataType=loc:LocalizationResourceManager}"
                                            FontAttributes="Bold"
                                            FontSize="16" />
                                     <Label Text="{Binding Filters.MinimumOpenHoursText}"
@@ -1072,13 +1072,13 @@
                     <Grid Grid.Row="0"
                           ColumnDefinitions="*,Auto"
                           ColumnSpacing="12">
-                        <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[AboutTitle]}"
+                        <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[AboutTitle], x:DataType=loc:LocalizationResourceManager}"
                                FontSize="20"
                                FontAttributes="Bold"
                                VerticalOptions="Center" />
                         <Button x:Name="AboutCloseButton"
                                 Grid.Column="1"
-                                Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[AboutCloseLabel]}"
+                                Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[AboutCloseLabel], x:DataType=loc:LocalizationResourceManager}"
                                 Command="{Binding Settings.CloseAboutCommand}"
                                 BackgroundColor="{AppThemeBinding Light=#e9f0ff, Dark=#24324d}"
                                 TextColor="{AppThemeBinding Light=#1f4db8, Dark=#9ec1ff}"
@@ -1104,7 +1104,7 @@
                                    FontSize="12"
                                    TextColor="Gray"
                                    HorizontalOptions="Center" />
-                            <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsDisclaimer]}"
+                            <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsDisclaimer], x:DataType=loc:LocalizationResourceManager}"
                                    FontSize="12"
                                    TextColor="Gray"
                                    HorizontalTextAlignment="Center"
@@ -1249,7 +1249,7 @@
                             BackgroundColor="{AppThemeBinding Light=#F2F2F7, Dark=#2C2C2E}"
                             StrokeShape="RoundRectangle 8"
                             Padding="10">
-                        <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsDisclaimer]}"
+                        <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsDisclaimer], x:DataType=loc:LocalizationResourceManager}"
                                FontSize="12"
                                TextColor="#8E8E93"
                                LineBreakMode="WordWrap" />
@@ -1269,4 +1269,6 @@
 
     </Grid>
 </ContentPage>
+
+
 

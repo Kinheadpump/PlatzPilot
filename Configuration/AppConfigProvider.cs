@@ -158,7 +158,6 @@ public static class AppConfigProvider
         Current.SafeArrival = loaded.SafeArrival ?? new SafeArrivalConfig();
         Current.MensaForecast = loaded.MensaForecast ?? new MensaForecastConfig();
         Current.StudentAccess = loaded.StudentAccess ?? new StudentAccessConfig();
-        Current.OpeningHoursText = loaded.OpeningHoursText ?? new OpeningHoursTextConfig();
         Current.OpeningHours = loaded.OpeningHours ?? new OpeningHoursSettings();
         Current.RoomTypes = loaded.RoomTypes ?? new RoomTypeConfig();
         Current.Sort = loaded.Sort ?? new SortConfig();

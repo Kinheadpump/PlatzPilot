@@ -8,8 +8,9 @@
     xmlns:views="clr-namespace:PlatzPilot.Views"
     Title="{x:Static constants:AppInfoValues.Name}">
 
-    <ShellContent Title="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[HomeTabLabel]}"
+    <ShellContent Title="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[HomeTabLabel], x:DataType=loc:LocalizationResourceManager}"
                   ContentTemplate="{DataTemplate views:MainPage}"
                   Route="{x:Static constants:AppRoutes.MainPage}" />
 
 </Shell>
+
