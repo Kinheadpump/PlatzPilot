@@ -9,7 +9,6 @@ public static class AppText
     public static string HomeTitle => Text.HomeTitle;
     public static string HomeTabLabel => Text.HomeTabLabel;
     public static string SearchPlaceholder => Text.SearchPlaceholder;
-    public static string EmptyListText => Text.EmptyListText;
     public static string NoResultsTitle => Text.NoResultsTitle;
     public static string NoResultsSubtitle => Text.NoResultsSubtitle;
     public static string FavoritesEmptyText => Text.FavoritesEmptyText;
@@ -24,7 +23,6 @@ public static class AppText
     public static string RecommendationFormat => Text.RecommendationFormat;
     public static string PeakNoneText => Text.PeakNoneText;
     public static string PeakFormat => Text.PeakFormat;
-    public static string QualityPrefix => Text.QualityPrefix;
     public static string QualityFormat => Text.QualityFormat;
     public static string QualityLow => Text.QualityLow;
     public static string QualityMedium => Text.QualityMedium;
@@ -62,10 +60,7 @@ public static class AppText
     public static string GroupedLocationSubtitleFormat => Text.GroupedLocationSubtitleFormat;
     public static string OpeningHoursLabel => Text.OpeningHoursLabel;
     public static string LastCountLabel => Text.LastCountLabel;
-    public static string OccupancyInfoTitle => Text.OccupancyInfoTitle;
-    public static string OccupancyLabel => Text.OccupancyLabel;
     public static string RoomsInBuildingLabel => Text.RoomsInBuildingLabel;
-    public static string AvailabilitySuffix => Text.AvailabilitySuffix;
     public static string HomeAvailabilitySubFormat => Text.HomeAvailabilitySubFormat;
     public static string LastUpdatedFormat => Text.LastUpdatedFormat;
     public static string LastUpdatedUnknownText => Text.LastUpdatedUnknownText;
@@ -99,5 +94,4 @@ public static class AppText
     public static string ChartLabel6Hours => Text.ChartLabel6Hours;
     public static string ChartLabel12Hours => Text.ChartLabel12Hours;
     public static string ChartLabel18Hours => Text.ChartLabel18Hours;
-    public static string ChartLabel24Hours => Text.ChartLabel24Hours;
 }
