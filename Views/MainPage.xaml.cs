@@ -28,6 +28,10 @@ public partial class MainPage : ContentPage
             await Task.Delay(AppConfigProvider.Current.UiNumbers.InitialLoadDelayMs);
             await _viewModel.SeatList.LoadSpacesAsync();
         }
+        else
+        {
+            await _viewModel.SeatList.RefreshIfStaleAsync();
+        }
 
         if (_viewModel.Filters.IsBeforeMode && PastTimeFilterPanel != null)
         {

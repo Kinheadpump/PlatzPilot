@@ -66,6 +66,7 @@ public class StudySpace
 
     public DateTime LastUpdated { get; set; }
     public bool IsManualCount { get; set; }
+    public bool IsManualCountVisible => IsManualCount && IsOpen;
     public bool IsMensaVirtual { get; set; }
     public List<SeatHistoryPoint> SeatHistory { get; set; } = [];
     public SafeArrivalRecommendation? SafeArrivalRecommendation { get; set; }
