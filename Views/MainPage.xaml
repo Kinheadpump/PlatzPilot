@@ -4,6 +4,7 @@
              xmlns:viewmodels="clr-namespace:PlatzPilot.ViewModels"
              xmlns:models="clr-namespace:PlatzPilot.Models"
              xmlns:local="clr-namespace:PlatzPilot"
+             xmlns:views="clr-namespace:PlatzPilot.Views"
              xmlns:behaviors="clr-namespace:PlatzPilot.Behaviors"
              x:Class="PlatzPilot.Views.MainPage"
              x:DataType="viewmodels:MainPageViewModel"
@@ -230,7 +231,7 @@
                                                          HorizontalOptions="End"
                                                          VerticalOptions="Start"
                                                          BackgroundColor="Transparent"
-                                                         Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainPageViewModel}}, Path=SeatList.ToggleFavoriteCommand}"
+                                                         Command="{Binding Source={RelativeSource AncestorType={x:Type views:MainPage}}, Path=BindingContext.SeatList.ToggleFavoriteCommand}"
                                                          CommandParameter="{Binding .}">
                                                 <ImageButton.Triggers>
                                                     <DataTrigger TargetType="ImageButton"
