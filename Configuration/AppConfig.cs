@@ -5,7 +5,6 @@ namespace PlatzPilot.Configuration;
 
 public sealed class AppConfig
 {
-    public UiTextConfig UiText { get; set; } = new();
     public UiNumbersConfig UiNumbers { get; set; } = new();
     public PreferencesConfig Preferences { get; set; } = new();
     public UrlConfig Urls { get; set; } = new();

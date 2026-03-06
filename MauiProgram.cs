@@ -12,6 +12,7 @@ public static class MauiProgram
     public static MauiApp CreateMauiApp()
     {
         var appConfig = AppConfigProvider.LoadFromEmbeddedResource();
+        LocalizationService.ApplySavedLanguage(appConfig);
 
         var builder = MauiApp.CreateBuilder();
         builder

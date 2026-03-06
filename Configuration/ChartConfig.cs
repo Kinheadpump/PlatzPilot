@@ -14,6 +14,7 @@ public sealed class ChartConfig
     public bool ShowYAxisText { get; set; }
     public float MinValue { get; set; } = 0f;
     public float MaxValue { get; set; } = 1f;
+    public int MinSeriesPoints { get; set; } = 2;
     public string LineColorLight { get; set; } = "#1f6feb";
     public string LineColorDark { get; set; } = "#9ec1ff";
     public string BackgroundColorLight { get; set; } = "#ffffff";

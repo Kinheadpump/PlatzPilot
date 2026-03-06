@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using PlatzPilot.Configuration;
 using PlatzPilot.Services;
 using System.Globalization;
+using PlatzPilot.Localization;
+using PlatzPilot.Resources.Strings;
 
 namespace PlatzPilot.ViewModels;
 
@@ -94,7 +96,7 @@ public partial class SettingsViewModel : ObservableObject
             var version = string.IsNullOrWhiteSpace(AppInfo.VersionString) ? _config.AppInfo.Version : AppInfo.VersionString;
             var build = string.IsNullOrWhiteSpace(AppInfo.BuildString) ? "0" : AppInfo.BuildString;
 
-            return string.Format(CultureInfo.CurrentCulture, _config.UiText.SettingsVersionFormat, version, build);
+            return string.Format(CultureInfo.CurrentCulture, AppResources.SettingsVersionFormat, version, build);
         }
     }
 
@@ -138,6 +140,37 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task ChangeLanguageAsync()
+    {
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page == null)
+        {
+            return;
+        }
+
+        var selection = await MainThread.InvokeOnMainThreadAsync(() =>
+            page.DisplayActionSheetAsync(
+                AppResources.LanguageSelectTitle,
+                AppResources.LanguageOptionCancel,
+                null,
+                AppResources.LanguageOptionGerman,
+                AppResources.LanguageOptionEnglish));
+
+        if (string.IsNullOrWhiteSpace(selection) ||
+            string.Equals(selection, AppResources.LanguageOptionCancel, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var cultureCode = string.Equals(selection, AppResources.LanguageOptionGerman, StringComparison.Ordinal)
+            ? "de"
+            : "en";
+
+        LocalizationResourceManager.Instance.SetCulture(new CultureInfo(cultureCode));
+        Preferences.Default.Set(_config.Preferences.LanguageKey, cultureCode);
+    }
+
+    [RelayCommand]
     private void OpenAbout()
     {
         IsAboutOpen = true;
@@ -174,7 +207,7 @@ public partial class SettingsViewModel : ObservableObject
     private async Task ShowLicensesAsync()
     {
         CloseAboutIfOpen();
-        await ShowDialogAsync(_config.UiText.LicensesTitle, _config.UiText.LicensesText);
+        await ShowDialogAsync(AppResources.LicensesTitle, AppResources.LicensesText);
     }
 
     private void OnIsColorBlindModeChanged(bool value)
@@ -223,7 +256,7 @@ public partial class SettingsViewModel : ObservableObject
 
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            await page.DisplayAlertAsync(title, message, _config.UiText.OkButtonLabel);
+            await page.DisplayAlertAsync(title, message, AppResources.OkButtonLabel);
         });
     }
 
@@ -235,3 +268,4 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 }
+

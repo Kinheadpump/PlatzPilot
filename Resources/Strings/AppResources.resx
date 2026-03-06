@@ -1,0 +1,358 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root xmlns:ns1="urn:schemas-microsoft-com:xml-msdata" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:schema id="root">
+    <xs:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xs:element name="root" ns1:IsDataSet="true">
+      <xs:complexType>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element name="metadata">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" />
+              </xs:sequence>
+              <xs:attribute name="name" use="required" type="xsd:string" />
+              <xs:attribute name="type" type="xsd:string" />
+              <xs:attribute name="mimetype" type="xsd:string" />
+              <xs:attribute ref="xml:space" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="assembly">
+            <xs:complexType>
+              <xs:attribute name="alias" type="xsd:string" />
+              <xs:attribute name="name" type="xsd:string" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="data">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" />
+                <xs:element name="comment" type="xsd:string" minOccurs="0" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" />
+              <xs:attribute name="type" type="xsd:string" />
+              <xs:attribute name="mimetype" type="xsd:string" />
+              <xs:attribute ref="xml:space" />
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="resheader">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="value" type="xsd:string" minOccurs="0" />
+              </xs:sequence>
+              <xs:attribute name="name" type="xsd:string" use="required" />
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
+  </xs:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="HomeTitle" xml:space="preserve">
+    <value>Karlsruhe</value>
+  </data>
+  <data name="HomeTabLabel" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="SearchPlaceholder" xml:space="preserve">
+    <value>Nach Bib oder Kürzel suchen...</value>
+  </data>
+  <data name="NoResultsTitle" xml:space="preserve">
+    <value>Verstecken sich die Plätze?</value>
+  </data>
+  <data name="NoResultsSubtitle" xml:space="preserve">
+    <value>Wir konnten leider nichts finden.</value>
+  </data>
+  <data name="FavoritesEmptyText" xml:space="preserve">
+    <value>Hier ist noch nichts los! Tippe auf den Stern bei einem Gebäude, um es hier zu sehen.</value>
+  </data>
+  <data name="OfflineBannerText" xml:space="preserve">
+    <value>Bist du im Bib-Keller? Wir haben gerade kein Internet.</value>
+  </data>
+  <data name="ClosedLabel" xml:space="preserve">
+    <value>Geschlossen</value>
+  </data>
+  <data name="ClosedStudentsLabel" xml:space="preserve">
+    <value>Geschlossen (Außer für Studierende)</value>
+  </data>
+  <data name="ManualCountLabel" xml:space="preserve">
+    <value>Manuell gezählt</value>
+  </data>
+  <data name="AvailabilityFormat" xml:space="preserve">
+    <value>{0} von {1} belegt</value>
+  </data>
+  <data name="OccupancyApproxPercent" xml:space="preserve">
+    <value>~ {0:P0} belegt</value>
+  </data>
+  <data name="NoCurrentInfoText" xml:space="preserve">
+    <value>Keine Information</value>
+  </data>
+  <data name="DataStaleText" xml:space="preserve">
+    <value>⚠️ Daten älter als 1h</value>
+  </data>
+  <data name="RecommendationNoneText" xml:space="preserve">
+    <value>Empfohlene Ankunft: keine sichere Zeit</value>
+  </data>
+  <data name="RecommendationFormat" xml:space="preserve">
+    <value>Empfohlene Ankunft bis {0:hh\:mm}</value>
+  </data>
+  <data name="PeakNoneText" xml:space="preserve">
+    <value>Auslastungs Peak ⌀: keine Daten</value>
+  </data>
+  <data name="PeakFormat" xml:space="preserve">
+    <value>Auslastungs Peak ⌀: {0:hh\:mm} Uhr</value>
+  </data>
+  <data name="QualityFormat" xml:space="preserve">
+    <value>Empfehlungsqualität: {0}</value>
+  </data>
+  <data name="QualityLow" xml:space="preserve">
+    <value>Niedrig</value>
+  </data>
+  <data name="QualityMedium" xml:space="preserve">
+    <value>Mittel</value>
+  </data>
+  <data name="QualityHigh" xml:space="preserve">
+    <value>Hoch</value>
+  </data>
+  <data name="PeakTrendFormat" xml:space="preserve">
+    <value>Peak-Trend: {0}</value>
+  </data>
+  <data name="PeakTrendEarlier" xml:space="preserve">
+    <value>wird früher</value>
+  </data>
+  <data name="PeakTrendLater" xml:space="preserve">
+    <value>wird später</value>
+  </data>
+  <data name="PeakTrendFlat" xml:space="preserve">
+    <value>bleibt gleich</value>
+  </data>
+  <data name="MensaVirtualName" xml:space="preserve">
+    <value>Mensa (virtuell)</value>
+  </data>
+  <data name="MensaDisplayName" xml:space="preserve">
+    <value>Mensa am Adenauerring</value>
+  </data>
+  <data name="MensaFluxFillingFastLabel" xml:space="preserve">
+    <value>Mensa füllt sich schnell</value>
+  </data>
+  <data name="MensaFluxEmptyingLabel" xml:space="preserve">
+    <value>Mensa leert sich</value>
+  </data>
+  <data name="CampusRadarLabel" xml:space="preserve">
+    <value>Mensa-Radar</value>
+  </data>
+  <data name="FavoritesLabel" xml:space="preserve">
+    <value>Favoriten</value>
+  </data>
+  <data name="SettingsLabel" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="FilterTitle" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="FilterReset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="WhenTitle" xml:space="preserve">
+    <value>Wann?</value>
+  </data>
+  <data name="WhenNow" xml:space="preserve">
+    <value>Jetzt</value>
+  </data>
+  <data name="WhenBefore" xml:space="preserve">
+    <value>Vorher</value>
+  </data>
+  <data name="RoomTypeTitle" xml:space="preserve">
+    <value>Raumtyp</value>
+  </data>
+  <data name="RoomTypeGroup" xml:space="preserve">
+    <value>Gruppenraum</value>
+  </data>
+  <data name="RoomTypeSilent" xml:space="preserve">
+    <value>Stillarbeitsraum</value>
+  </data>
+  <data name="RoomTypeNoReservation" xml:space="preserve">
+    <value>Ohne Reservierung</value>
+  </data>
+  <data name="EquipmentTitle" xml:space="preserve">
+    <value>Ausstattung</value>
+  </data>
+  <data name="EquipmentWifi" xml:space="preserve">
+    <value>Free WiFi</value>
+  </data>
+  <data name="EquipmentPower" xml:space="preserve">
+    <value>Steckdosen am Platz</value>
+  </data>
+  <data name="EquipmentWhiteboard" xml:space="preserve">
+    <value>Whiteboard vorhanden</value>
+  </data>
+  <data name="OpeningHoursTitle" xml:space="preserve">
+    <value>Öffnungszeiten</value>
+  </data>
+  <data name="SortTitle" xml:space="preserve">
+    <value>Sortierung</value>
+  </data>
+  <data name="SortByLabel" xml:space="preserve">
+    <value>Sortieren nach:</value>
+  </data>
+  <data name="ShowResultsFormat" xml:space="preserve">
+    <value>{0} Gebäude anzeigen</value>
+  </data>
+  <data name="MinimumOpenHoursFormat" xml:space="preserve">
+    <value>Noch geöffnet für: mind. {0} Stunden</value>
+  </data>
+  <data name="OpenMapLabel" xml:space="preserve">
+    <value>Auf Karte</value>
+  </data>
+  <data name="OpenWebsiteLabel" xml:space="preserve">
+    <value>Website</value>
+  </data>
+  <data name="BuildingLabel" xml:space="preserve">
+    <value>Gebäude:</value>
+  </data>
+  <data name="BuildingFormat" xml:space="preserve">
+    <value>Gebäude {0}</value>
+  </data>
+  <data name="SingleLocationSubtitle" xml:space="preserve">
+    <value>1 Lernort</value>
+  </data>
+  <data name="GroupedLocationSubtitleFormat" xml:space="preserve">
+    <value>{0} Lernorte</value>
+  </data>
+  <data name="OpeningHoursLabel" xml:space="preserve">
+    <value>Öffnungszeit:</value>
+  </data>
+  <data name="LastCountLabel" xml:space="preserve">
+    <value>Letzte Zählung:</value>
+  </data>
+  <data name="RoomsInBuildingLabel" xml:space="preserve">
+    <value>Räume in diesem Gebäude</value>
+  </data>
+  <data name="HomeAvailabilitySubFormat" xml:space="preserve">
+    <value>von {0} belegt</value>
+  </data>
+  <data name="LastUpdatedFormat" xml:space="preserve">
+    <value>{0:dd.MM.yy HH:mm} Uhr</value>
+  </data>
+  <data name="LastUpdatedUnknownText" xml:space="preserve">
+    <value>Unbekannt</value>
+  </data>
+  <data name="SettingsTitle" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="SettingsDesignLabel" xml:space="preserve">
+    <value>Design (Hell / Dunkel)</value>
+  </data>
+  <data name="SettingsDisplayTitle" xml:space="preserve">
+    <value>Anzeige</value>
+  </data>
+  <data name="SettingsFeedbackTitle" xml:space="preserve">
+    <value>Präferenzen</value>
+  </data>
+  <data name="SettingsInfoTitle" xml:space="preserve">
+    <value>Informationen</value>
+  </data>
+  <data name="SettingsHapticLabel" xml:space="preserve">
+    <value>Haptisches Feedback</value>
+  </data>
+  <data name="HideClosedLocationsLabel" xml:space="preserve">
+    <value>Geschlossene Gebäude ausblenden</value>
+  </data>
+  <data name="SettingsVersionFormat" xml:space="preserve">
+    <value>Version {0} (Build {1})</value>
+  </data>
+  <data name="SettingsDisclaimer" xml:space="preserve">
+    <value>Diese App ist ein studentisches Projekt und steht in keiner offiziellen Verbindung zum Karlsruher Institut für Technologie (KIT) oder der KIT-Bibliothek.</value>
+  </data>
+  <data name="AboutButtonLabel" xml:space="preserve">
+    <value>Über die App</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>Über die App</value>
+  </data>
+  <data name="AboutCloseLabel" xml:space="preserve">
+    <value>Schließen</value>
+  </data>
+  <data name="GithubLabel" xml:space="preserve">
+    <value>Github</value>
+  </data>
+  <data name="ImpressumLabel" xml:space="preserve">
+    <value>Impressum</value>
+  </data>
+  <data name="PrivacyLabel" xml:space="preserve">
+    <value>Datenschutz</value>
+  </data>
+  <data name="LicensesLabel" xml:space="preserve">
+    <value>Lizenzen</value>
+  </data>
+  <data name="LicensesTitle" xml:space="preserve">
+    <value>Open-Source-Lizenzen</value>
+  </data>
+  <data name="LicensesText" xml:space="preserve">
+    <value>Diese App verwendet folgende Open-Source-Bibliotheken unter der MIT-Lizenz:
+
+1. .NET MAUI Community Toolkit
+Copyright (c) .NET Foundation and Contributors
+
+2. Microcharts
+Copyright (c) 2017 Aloïs Deniel
+
+3. Feather Icons
+Copyright (c) 2013-2022 Cole Bemis
+
+Die vollständige MIT-Lizenz lautet:
+Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugehörigen Dokumentation zu nutzen, zu kopieren, zu ändern und zu vertreiben, wird unter der Bedingung erteilt, dass der obige Urheberrechtshinweis in allen Kopien enthalten ist. DIE SOFTWARE WIRD OHNE JEDE AUSDRÜCKLICHE ODER IMPLIZIERTE GARANTIE BEREITGESTELLT.</value>
+  </data>
+  <data name="ColorBlindModeLabel" xml:space="preserve">
+    <value>Rot-Grün Schwäche</value>
+  </data>
+  <data name="CampusSouthOnlyLabel" xml:space="preserve">
+    <value>Nur Campus Süd</value>
+  </data>
+  <data name="BackGlyph" xml:space="preserve">
+    <value>◀</value>
+  </data>
+  <data name="OkButtonLabel" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="FavoriteIconFilled" xml:space="preserve">
+    <value>★</value>
+  </data>
+  <data name="FavoriteIconOutline" xml:space="preserve">
+    <value>☆</value>
+  </data>
+  <data name="LevelFormat" xml:space="preserve">
+    <value>Ebene {0}</value>
+  </data>
+  <data name="RoomFormat" xml:space="preserve">
+    <value>Raum {0}</value>
+  </data>
+  <data name="BuildingUnknownText" xml:space="preserve">
+    <value>Keine Info</value>
+  </data>
+  <data name="ChartLabel6Hours" xml:space="preserve">
+    <value>vor 6 Std.</value>
+  </data>
+  <data name="ChartLabel12Hours" xml:space="preserve">
+    <value>vor 12 Std.</value>
+  </data>
+  <data name="ChartLabel18Hours" xml:space="preserve">
+    <value>vor 18 Std.</value>
+  </data>
+  <data name="ErrorMessage_NoConnection" xml:space="preserve">
+    <value>Keine Verbindung zum KIT-Server. Bitte sp├ñter erneut versuchen.</value>
+  </data>
+  <data name="BuildingName_BadischeLandesbibliothek" xml:space="preserve">
+    <value>Badische Landesbibliothek</value>
+  </data>
+<data name="LanguageLabel" xml:space="preserve"><value>Sprache</value></data><data name="LanguageSelectTitle" xml:space="preserve"><value>Sprache auswählen</value></data><data name="LanguageOptionGerman" xml:space="preserve"><value>Deutsch</value></data><data name="LanguageOptionEnglish" xml:space="preserve"><value>Englisch</value></data><data name="LanguageOptionCancel" xml:space="preserve"><value>Abbrechen</value></data></root>

@@ -9,17 +9,18 @@ namespace PlatzPilot.Services;
 
 public class SeatFinderService
 {
-    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
     public const string HttpClientName = "SeatFinder";
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly SeatFinderConfig _settings;
     private readonly InternalConfig _internal;
+    private readonly TimeSpan _requestTimeout;
 
     public SeatFinderService(IHttpClientFactory httpClientFactory, AppConfig config)
     {
         _httpClientFactory = httpClientFactory;
         _settings = config.SeatFinder;
         _internal = config.Internal;
+        _requestTimeout = TimeSpan.FromSeconds(Math.Max(1, _settings.RequestTimeoutSeconds));
     }
 
     public async Task<List<StudySpace>> FetchSeatDataAsync(
@@ -62,7 +63,7 @@ public class SeatFinderService
             var client = _httpClientFactory.CreateClient(HttpClientName);
 
             // Combine request timeout with caller cancellation to avoid hanging requests.
-            using var timeoutCts = new CancellationTokenSource(RequestTimeout);
+            using var timeoutCts = new CancellationTokenSource(_requestTimeout);
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken);
 
             var responseText = await client.GetStringAsync(requestUrl, linkedCts.Token);
@@ -79,7 +80,7 @@ public class SeatFinderService
             string cleanJson = responseText.Substring(startIdx + 1, endIdx - startIdx - 1);
 
             var parsedData = JsonSerializer.Deserialize<List<SeatFinderResponseDto>>(cleanJson);
-            if (parsedData == null || parsedData.Count < 2) return resultList;
+            if (parsedData == null || parsedData.Count < _settings.JsonpMinBlocks) return resultList;
 
             var liveData = parsedData[0];
             var metaData = parsedData[1].Locations;

@@ -9,6 +9,7 @@ using Microsoft.Maui.Devices;
 using Microsoft.Maui.Networking;
 using PlatzPilot.Configuration;
 using PlatzPilot.Models;
+using PlatzPilot.Resources.Strings;
 using PlatzPilot.Services;
 
 namespace PlatzPilot.ViewModels;
@@ -24,7 +25,6 @@ public partial class SeatListViewModel : ObservableObject
     private readonly FilterViewModel _filters;
     private readonly NavigationViewModel _navigation;
     private readonly SettingsViewModel _settings;
-    private const int SkeletonItemCount = 6;
 
     private ObservableCollection<UiLocation> _uiLocations = [];
     private UiLocation? _selectedLocation;
@@ -144,11 +144,11 @@ public partial class SeatListViewModel : ObservableObject
     public bool IsHomeEmpty => UiLocations.Count == 0 && _navigation.CurrentTab == _config.Tabs.Home;
     public bool IsFavoritesEmpty => !IsBusy && UiLocations.Count == 0 && _navigation.CurrentTab == _config.Tabs.Favorites;
     public bool IsNoResultsEmpty => UiLocations.Count == 0 && _allSpaces.Count > 0 && _navigation.CurrentTab == _config.Tabs.Home && _navigation.IsMainContentVisible;
-    public string EmptyStateTitle => IsNoResultsEmpty ? _config.UiText.NoResultsTitle : string.Empty;
-    public string EmptyStateSubtitle => IsNoResultsEmpty ? _config.UiText.NoResultsSubtitle : string.Empty;
+    public string EmptyStateTitle => IsNoResultsEmpty ? AppResources.NoResultsTitle : string.Empty;
+    public string EmptyStateSubtitle => IsNoResultsEmpty ? AppResources.NoResultsSubtitle : string.Empty;
     public bool IsEmptySubtitleVisible => IsNoResultsEmpty;
     public string ShowResultsButtonText =>
-        string.Format(CultureInfo.CurrentCulture, _config.UiText.ShowResultsFormat, FilteredLocationCount);
+        string.Format(CultureInfo.CurrentCulture, AppResources.ShowResultsFormat, FilteredLocationCount);
 
     public SeatListViewModel(
         SeatFinderService seatFinderService,
@@ -1005,7 +1005,7 @@ public partial class SeatListViewModel : ObservableObject
             return;
         }
 
-        var skeletons = CreateSkeletonLocations(SkeletonItemCount);
+        var skeletons = CreateSkeletonLocations(_config.UiNumbers.SkeletonItemCount);
         ReplaceUiLocations(skeletons);
         FilteredLocationCount = 0;
     }
@@ -1355,7 +1355,7 @@ public partial class SeatListViewModel : ObservableObject
             : 0;
         var mensaOpeningStart = isMensa ? _mensaForecastCache?.WindowStart : null;
         var mensaOpeningEnd = isMensa ? _mensaForecastCache?.OpeningHoursEnd : null;
-        var subtitle = isMensa ? AppText.CampusRadarLabel : AppText.SingleLocationSubtitle;
+        var subtitle = isMensa ? AppResources.CampusRadarLabel : AppResources.SingleLocationSubtitle;
 
         return new UiLocation
         {
@@ -1390,8 +1390,8 @@ public partial class SeatListViewModel : ObservableObject
         var displayName = _config.BuildingNames.TryGetValue(normalizedBuildingKey, out var mappedName)
             ? mappedName
             : isBadischeLandesbibliothek
-                ? "Badische Landesbibliothek"
-                : string.Format(CultureInfo.CurrentCulture, _config.UiText.BuildingFormat, normalizedBuildingKey);
+                ? AppResources.BuildingName_BadischeLandesbibliothek
+                : string.Format(CultureInfo.CurrentCulture, AppResources.BuildingFormat, normalizedBuildingKey);
 
         var buildingRecommendation = GetCachedBuildingRecommendation(normalizedBuildingKey);
         var series = GetChartSeriesForBuilding(normalizedBuildingKey);
@@ -1402,7 +1402,7 @@ public partial class SeatListViewModel : ObservableObject
         {
             Name = displayName,
             TileName = displayName,
-            Subtitle = string.Format(CultureInfo.CurrentCulture, _config.UiText.GroupedLocationSubtitleFormat, spaces.Count),
+            Subtitle = string.Format(CultureInfo.CurrentCulture, AppResources.GroupedLocationSubtitleFormat, spaces.Count),
             BuildingNumber = isBadischeLandesbibliothek ? null : normalizedBuildingKey,
             BuildingDisplayOverride = isBadischeLandesbibliothek ? displayName : null,
             TotalSeats = spaces.Sum(space => space.TotalSeats),
@@ -1521,23 +1521,23 @@ public partial class SeatListViewModel : ObservableObject
         if (recommendation == null)
         {
             return new ArrivalInsight(
-                RecommendedArrivalText: AppText.RecommendationNoneText,
+                RecommendedArrivalText: AppResources.RecommendationNoneText,
                 HasInsights: false,
-                PeakAverageText: AppText.PeakNoneText,
-                SafetyLevelText: string.Format(CultureInfo.CurrentCulture, AppText.QualityFormat, AppText.QualityLow),
-                PeakTrendText: string.Format(CultureInfo.CurrentCulture, AppText.PeakTrendFormat, AppText.PeakTrendFlat));
+                PeakAverageText: AppResources.PeakNoneText,
+                SafetyLevelText: string.Format(CultureInfo.CurrentCulture, AppResources.QualityFormat, AppResources.QualityLow),
+                PeakTrendText: string.Format(CultureInfo.CurrentCulture, AppResources.PeakTrendFormat, AppResources.PeakTrendFlat));
         }
 
         var recommendedArrivalText = recommendation.HasRecommendation
-            ? string.Format(CultureInfo.CurrentCulture, AppText.RecommendationFormat, recommendation.LatestSafeTime)
-            : AppText.RecommendationNoneText;
+            ? string.Format(CultureInfo.CurrentCulture, AppResources.RecommendationFormat, recommendation.LatestSafeTime)
+            : AppResources.RecommendationNoneText;
 
         var hasInsights = recommendation.HasPeakData;
         var peakAverageText = recommendation.HasPeakData
-            ? string.Format(CultureInfo.CurrentCulture, AppText.PeakFormat, recommendation.PeakTime)
-            : AppText.PeakNoneText;
-        var safetyLevelText = string.Format(CultureInfo.CurrentCulture, AppText.QualityFormat, GetSafetyLevel(recommendation));
-        var peakTrendText = string.Format(CultureInfo.CurrentCulture, AppText.PeakTrendFormat, GetPeakTrendLabel(recommendation.PeakTrendMinutesPerDay));
+            ? string.Format(CultureInfo.CurrentCulture, AppResources.PeakFormat, recommendation.PeakTime)
+            : AppResources.PeakNoneText;
+        var safetyLevelText = string.Format(CultureInfo.CurrentCulture, AppResources.QualityFormat, GetSafetyLevel(recommendation));
+        var peakTrendText = string.Format(CultureInfo.CurrentCulture, AppResources.PeakTrendFormat, GetPeakTrendLabel(recommendation.PeakTrendMinutesPerDay));
 
         return new ArrivalInsight(
             RecommendedArrivalText: recommendedArrivalText,
@@ -1551,21 +1551,21 @@ public partial class SeatListViewModel : ObservableObject
     {
         if (!recommendation.HasRecommendation)
         {
-            return AppText.QualityLow;
+            return AppResources.QualityLow;
         }
 
         if (recommendation.ConfidenceFlag &&
             recommendation.Probability >= AppConfigProvider.Current.SafeArrival.HighProbabilityThreshold)
         {
-            return AppText.QualityHigh;
+            return AppResources.QualityHigh;
         }
 
         if (recommendation.Probability >= AppConfigProvider.Current.SafeArrival.MediumProbabilityThreshold)
         {
-            return AppText.QualityMedium;
+            return AppResources.QualityMedium;
         }
 
-        return AppText.QualityLow;
+        return AppResources.QualityLow;
     }
 
     private static string GetPeakTrendLabel(double trendMinutesPerDay)
@@ -1573,15 +1573,15 @@ public partial class SeatListViewModel : ObservableObject
         var flatThreshold = AppConfigProvider.Current.SafeArrival.TrendFlatThresholdMinutes;
         if (trendMinutesPerDay > flatThreshold)
         {
-            return AppText.PeakTrendLater;
+            return AppResources.PeakTrendLater;
         }
 
         if (trendMinutesPerDay < -flatThreshold)
         {
-            return AppText.PeakTrendEarlier;
+            return AppResources.PeakTrendEarlier;
         }
 
-        return AppText.PeakTrendFlat;
+        return AppResources.PeakTrendFlat;
     }
 
     private readonly record struct ArrivalInsight(
@@ -1604,7 +1604,7 @@ public partial class SeatListViewModel : ObservableObject
     private (string After, string Before) GetWeeklyHistoryWindow()
     {
         var now = DateTime.Now;
-        var start = now.Date.AddDays(-7);
+        var start = now.Date.AddDays(-_config.SeatFinder.WeeklyHistoryWindowDays);
         return (
             start.ToString(_config.Internal.ApiDateTimeFormat, CultureInfo.InvariantCulture),
             now.ToString(_config.Internal.ApiDateTimeFormat, CultureInfo.InvariantCulture));
@@ -1634,7 +1634,7 @@ public partial class SeatListViewModel : ObservableObject
 
             if (Vibration.Default.IsSupported)
             {
-                Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(40));
+                Vibration.Default.Vibrate(TimeSpan.FromMilliseconds(_config.UiNumbers.HapticFallbackDurationMs));
             }
         }
         catch (Exception)
@@ -1653,7 +1653,7 @@ public partial class SeatListViewModel : ObservableObject
 
         try
         {
-            await Task.Delay(2500, cts.Token);
+            await Task.Delay(_config.UiNumbers.OfflineBannerDurationMs, cts.Token);
         }
         catch (TaskCanceledException)
         {
@@ -1678,3 +1678,4 @@ public partial class SeatListViewModel : ObservableObject
     }
 
 }
+

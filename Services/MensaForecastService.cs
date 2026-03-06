@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Linq;
 using PlatzPilot.Configuration;
 using PlatzPilot.Models;
+using PlatzPilot.Resources.Strings;
 
 namespace PlatzPilot.Services;
 
@@ -132,7 +133,7 @@ public sealed class MensaForecastService
             var virtualSpace = new StudySpace
             {
                 Id = MensaVirtualSpaceId,
-                Name = _config.UiText.MensaVirtualName,
+                Name = AppResources.MensaVirtualName,
                 TotalSeats = capacity,
                 OpeningHours = BuildMensaOpeningHours(referenceDate, windowStart, windowEnd),
                 ReferenceTime = referenceDate
@@ -187,7 +188,7 @@ public sealed class MensaForecastService
         return new StudySpace
         {
             Id = MensaVirtualSpaceId,
-            Name = _config.UiText.MensaDisplayName,
+            Name = AppResources.MensaDisplayName,
             TotalSeats = capacity,
             OccupiedSeats = occupiedSeats,
             FreeSeats = freeSeats,
@@ -656,12 +657,12 @@ public sealed class MensaForecastService
         var flux = (nowDeficit - pastDeficit) / deltaMinutes * MensaFluxLookbackMinutes;
         if (flux > MensaFluxThreshold)
         {
-            return _config.UiText.MensaFluxFillingFastLabel;
+            return AppResources.MensaFluxFillingFastLabel;
         }
 
         if (flux < -MensaFluxThreshold)
         {
-            return _config.UiText.MensaFluxEmptyingLabel;
+            return AppResources.MensaFluxEmptyingLabel;
         }
 
         return string.Empty;
@@ -1013,3 +1014,4 @@ public sealed record MensaForecastResult(
 public sealed record MensaSpaceSnapshot(
     Dictionary<DateTime, SortedList<int, int>> OccupiedByDay,
     SortedList<int, int> OccupiedToday);
+
