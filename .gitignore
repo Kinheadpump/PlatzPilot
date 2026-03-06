@@ -5,7 +5,9 @@
 
 # eigene Dateien
 auslastung.json
-lasten.txt
+
+# Secrets
+app_config.json
 
 # keystore files
 *.keystore
