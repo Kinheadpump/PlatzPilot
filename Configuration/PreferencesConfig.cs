@@ -6,6 +6,7 @@ public sealed class PreferencesConfig
     public string SortModeKey { get; set; } = string.Empty;
     public string TabModeKey { get; set; } = string.Empty;
     public string ThemeKey { get; set; } = string.Empty;
+    public string LanguageKey { get; set; } = string.Empty;
     public string ColorBlindModeKey { get; set; } = string.Empty;
     public string CampusSouthOnlyKey { get; set; } = string.Empty;
     public string HapticFeedbackKey { get; set; } = string.Empty;

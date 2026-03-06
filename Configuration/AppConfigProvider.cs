@@ -151,7 +151,6 @@ public static class AppConfigProvider
 
     private static void ApplyLoadedConfig(AppConfig loaded)
     {
-        Current.UiText = loaded.UiText ?? new UiTextConfig();
         Current.UiNumbers = loaded.UiNumbers ?? new UiNumbersConfig();
         Current.Preferences = loaded.Preferences ?? new PreferencesConfig();
         Current.Urls = loaded.Urls ?? new UrlConfig();

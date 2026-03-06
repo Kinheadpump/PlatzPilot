@@ -15,6 +15,8 @@ public static class AppAssets
     public static string FavoriteIconFilled => Assets.FavoriteIconFilled;
     public static string DarkModeIconLight => Assets.DarkModeIconLight;
     public static string DarkModeIconDark => Assets.DarkModeIconDark;
+    public static string LanguageIconLight => Assets.LanguageIconLight;
+    public static string LanguageIconDark => Assets.LanguageIconDark;
     public static string SettingsLogo => Assets.SettingsLogo;
     public static string HomeIconLight => Assets.HomeIconLight;
     public static string HomeIconDark => Assets.HomeIconDark;

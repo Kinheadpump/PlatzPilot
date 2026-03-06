@@ -11,6 +11,8 @@ public sealed class UiAssetsConfig
     public string FavoriteIconFilled { get; set; } = string.Empty;
     public string DarkModeIconLight { get; set; } = string.Empty;
     public string DarkModeIconDark { get; set; } = string.Empty;
+    public string LanguageIconLight { get; set; } = string.Empty;
+    public string LanguageIconDark { get; set; } = string.Empty;
     public string SettingsLogo { get; set; } = string.Empty;
     public string HomeIconLight { get; set; } = string.Empty;
     public string HomeIconDark { get; set; } = string.Empty;

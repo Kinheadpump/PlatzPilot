@@ -20,4 +20,7 @@ public sealed class SeatFinderConfig
     public string QueryParameterSeparator { get; set; } = string.Empty;
     public SeatFinderQueryConfig Query { get; set; } = new();
     public string SpaceFeaturesFileName { get; set; } = string.Empty;
+    public int RequestTimeoutSeconds { get; set; } = 10;
+    public int JsonpMinBlocks { get; set; } = 2;
+    public int WeeklyHistoryWindowDays { get; set; } = 7;
 }

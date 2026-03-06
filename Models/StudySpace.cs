@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.Maui.Graphics;
 using PlatzPilot.Configuration;
+using PlatzPilot.Resources.Strings;
 
 namespace PlatzPilot.Models;
 
@@ -33,8 +34,8 @@ public class StudySpace
     public bool IsStudentOnlyClosed => !IsOpen && IsStudentAccessLocation && IsWithinStudentAccessHours;
     public bool HasLevel => !string.IsNullOrWhiteSpace(Level);
     public bool HasRoom => !string.IsNullOrWhiteSpace(Room);
-    public string LevelDisplayText => string.Format(AppText.LevelFormat, Level);
-    public string RoomDisplayText => string.Format(AppText.RoomFormat, Room);
+    public string LevelDisplayText => string.Format(AppResources.LevelFormat, Level);
+    public string RoomDisplayText => string.Format(AppResources.RoomFormat, Room);
     public string ClosedStatusText
     {
         get
@@ -79,25 +80,25 @@ public class StudySpace
             if (IsMensaVirtual && TotalSeats > 0)
             {
                 var rate = Math.Clamp(OccupiedSeats / (double)TotalSeats, 0, 1);
-                return string.Format(CultureInfo.CurrentCulture, "~ {0:P0} belegt", rate);
+                return string.Format(CultureInfo.CurrentCulture, AppResources.OccupancyApproxPercent, rate);
             }
 
             var occupiedSeats = TotalSeats > 0
                 ? Math.Clamp(OccupiedSeats, 0, TotalSeats)
                 : Math.Max(0, OccupiedSeats);
-            return string.Format(AppText.AvailabilityFormat, occupiedSeats, TotalSeats);
+            return string.Format(AppResources.AvailabilityFormat, occupiedSeats, TotalSeats);
         }
     }
-    public string AvailabilityDisplayText => IsOpen ? AvailabilityText : AppText.NoCurrentInfoText;
+    public string AvailabilityDisplayText => IsOpen ? AvailabilityText : AppResources.NoCurrentInfoText;
     public bool HasValidLastUpdated => LastUpdated.Year > AppConfigProvider.Current.UiNumbers.UnknownYearThreshold;
     public bool IsDataStale => IsOpen &&
                                HasValidLastUpdated &&
                                DateTime.Now - LastUpdated > TimeSpan.FromMinutes(30);
-    public string ClosedLabelText => IsStudentOnlyClosed ? AppText.ClosedStudentsLabel : AppText.ClosedLabel;
+    public string ClosedLabelText => IsStudentOnlyClosed ? AppResources.ClosedStudentsLabel : AppResources.ClosedLabel;
     public string StatusText => !IsOpen
         ? ClosedLabelText
         : IsDataStale
-            ? AppText.DataStaleText
+            ? AppResources.DataStaleText
             : string.Empty;
     public bool HasStatusText => !string.IsNullOrWhiteSpace(StatusText);
     public Color StatusTextColor => !IsOpen
@@ -166,3 +167,4 @@ public class StudySpace
         }
     }
 }
+

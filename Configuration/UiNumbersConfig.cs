@@ -14,4 +14,7 @@ public sealed class UiNumbersConfig
     public int FilterSheetAnimationDurationMs { get; set; } = 160;
     public double FilterSheetTranslationOffset { get; set; } = -8;
     public double OpeningHoursSliderSnapEpsilon { get; set; } = 0.001;
+    public int SkeletonItemCount { get; set; } = 6;
+    public int OfflineBannerDurationMs { get; set; } = 2500;
+    public int HapticFallbackDurationMs { get; set; } = 40;
 }

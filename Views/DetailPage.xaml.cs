@@ -213,7 +213,8 @@ public partial class DetailPage : ContentPage, IQueryAttributable
 
         var chartConfig = AppConfigProvider.Current.Charts;
         var series = location.OccupancySeries;
-        if (series == null || series.Count < 2)
+        var minPoints = Math.Max(2, chartConfig.MinSeriesPoints);
+        if (series == null || series.Count < minPoints)
         {
             OccupancyChart = null;
             return;

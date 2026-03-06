@@ -1,6 +1,7 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using PlatzPilot.Configuration;
+using PlatzPilot.Resources.Strings;
 
 namespace PlatzPilot.Models;
 
@@ -23,14 +24,14 @@ public partial class UiLocation : ObservableObject
     public string BuildingDisplayText => !string.IsNullOrWhiteSpace(BuildingDisplayOverride)
         ? BuildingDisplayOverride
         : string.IsNullOrWhiteSpace(BuildingNumber)
-            ? AppText.BuildingUnknownText
+            ? AppResources.BuildingUnknownText
             : BuildingNumber;
     public DateTime ReferenceTime { get; set; } = DateTime.Now;
-    public string BestArrivalText { get; set; } = AppText.RecommendationNoneText;
+    public string BestArrivalText { get; set; } = AppResources.RecommendationNoneText;
     public bool HasArrivalInsights { get; set; }
-    public string PeakAverageText { get; set; } = AppText.PeakNoneText;
-    public string SafetyLevelText { get; set; } = string.Format(AppText.QualityFormat, AppText.QualityLow);
-    public string PeakTrendText { get; set; } = string.Format(AppText.PeakTrendFormat, AppText.PeakTrendFlat);
+    public string PeakAverageText { get; set; } = AppResources.PeakNoneText;
+    public string SafetyLevelText { get; set; } = string.Format(AppResources.QualityFormat, AppResources.QualityLow);
+    public string PeakTrendText { get; set; } = string.Format(AppResources.PeakTrendFormat, AppResources.PeakTrendFlat);
     public IReadOnlyList<float> OccupancySeries { get; set; } = Array.Empty<float>();
     public bool IsMensaVirtual { get; set; }
     public double MensaOccupancyRate { get; set; }
@@ -42,8 +43,8 @@ public partial class UiLocation : ObservableObject
     
     public string LastUpdatedText => LastUpdated.HasValue &&
                                      LastUpdated.Value.Year > AppConfigProvider.Current.UiNumbers.UnknownYearThreshold
-        ? string.Format(AppText.LastUpdatedFormat, LastUpdated.Value)
-        : AppText.LastUpdatedUnknownText;
+        ? string.Format(AppResources.LastUpdatedFormat, LastUpdated.Value)
+        : AppResources.LastUpdatedUnknownText;
 
     public double Latitude => SubSpaces.FirstOrDefault()?.Latitude ?? 0;
     public double Longitude => SubSpaces.FirstOrDefault()?.Longitude ?? 0;
@@ -55,14 +56,14 @@ public partial class UiLocation : ObservableObject
     public bool IsOpen => SubSpaces.FirstOrDefault()?.OpeningHours?.IsCurrentlyOpen(ReferenceTime) ?? true;
 
     public bool IsStudentOnlyClosed => !IsOpen && IsStudentAccessLocation && IsWithinStudentAccessHours;
-    public string ClosedStatusText => IsStudentOnlyClosed ? AppText.ClosedStudentsLabel : AppText.ClosedLabel;
+    public string ClosedStatusText => IsStudentOnlyClosed ? AppResources.ClosedStudentsLabel : AppResources.ClosedLabel;
     public bool IsDataStale => IsOpen &&
                                LastUpdated.HasValue &&
                                DateTime.Now - LastUpdated.Value > TimeSpan.FromMinutes(30);
     public string StatusText => !IsOpen
         ? ClosedStatusText
         : IsDataStale
-            ? AppText.DataStaleText
+            ? AppResources.DataStaleText
             : string.Empty;
     public bool HasStatusText => !string.IsNullOrWhiteSpace(StatusText);
     public Color StatusTextColor => !IsOpen
@@ -101,7 +102,7 @@ public partial class UiLocation : ObservableObject
 
             if (IsStudentOnlyClosed)
             {
-                return AppText.ClosedStudentsLabel;
+                return AppResources.ClosedStudentsLabel;
             }
             
             if (firstSpace == null)
@@ -142,18 +143,18 @@ public partial class UiLocation : ObservableObject
             if (IsMensaVirtual && TotalSeats > 0)
             {
                 var rate = Math.Clamp(OccupiedSeats / (double)TotalSeats, 0, 1);
-                return string.Format(CultureInfo.CurrentCulture, "~ {0:P0} belegt", rate);
+                return string.Format(CultureInfo.CurrentCulture, AppResources.OccupancyApproxPercent, rate);
             }
 
             var occupiedSeats = TotalSeats > 0
                 ? Math.Clamp(OccupiedSeats, 0, TotalSeats)
                 : Math.Max(0, OccupiedSeats);
-            return string.Format(AppText.AvailabilityFormat, occupiedSeats, TotalSeats);
+            return string.Format(AppResources.AvailabilityFormat, occupiedSeats, TotalSeats);
         }
     }
 
-    public string HomeAvailabilityText => IsOpen ? AvailabilityText : AppText.NoCurrentInfoText;
-    public string HomeAvailabilitySubText => string.Format(AppText.HomeAvailabilitySubFormat, TotalSeats);
+    public string HomeAvailabilityText => IsOpen ? AvailabilityText : AppResources.NoCurrentInfoText;
+    public string HomeAvailabilitySubText => string.Format(AppResources.HomeAvailabilitySubFormat, TotalSeats);
     public bool IsHomeAvailabilitySubVisible => IsOpen;
     public double HomeOccupancyRate
     {
@@ -235,8 +236,9 @@ public partial class UiLocation : ObservableObject
     }
 
     // Diese Properties steuern das Aussehen des Sterns in der UI automatisch!
-    public string FavoriteIcon => IsFavorite ? AppText.FavoriteIconFilled : AppText.FavoriteIconOutline;
+    public string FavoriteIcon => IsFavorite ? AppResources.FavoriteIconFilled : AppResources.FavoriteIconOutline;
     public Color FavoriteColor => IsFavorite
         ? Color.FromArgb(AppConfigProvider.Current.UiColors.FavoriteOnColor)
         : Color.FromArgb(AppConfigProvider.Current.UiColors.FavoriteOffColor);
 }
+

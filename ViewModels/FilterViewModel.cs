@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Devices;
 using PlatzPilot.Configuration;
+using PlatzPilot.Resources.Strings;
 
 namespace PlatzPilot.ViewModels;
 
@@ -244,7 +245,7 @@ public partial class FilterViewModel : ObservableObject
     public double MinimumOpenHoursMin => _config.UiNumbers.MinOpeningHours;
     public double MinimumOpenHoursMax => _config.UiNumbers.MaxOpeningHours;
     public string MinimumOpenHoursText =>
-        string.Format(CultureInfo.CurrentCulture, _config.UiText.MinimumOpenHoursFormat, MinimumOpenHours);
+        string.Format(CultureInfo.CurrentCulture, AppResources.MinimumOpenHoursFormat, MinimumOpenHours);
 
     public void MarkFiltersApplied()
     {
@@ -519,3 +520,4 @@ public partial class FilterViewModel : ObservableObject
         }
     }
 }
+
