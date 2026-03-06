@@ -1,0 +1,41 @@
+name: Android Build & Test
+
+# Wann soll die Pipeline starten?
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    # Wir nutzen Windows für den Build, da MAUI hier am stabilsten läuft
+    runs-on: windows-latest
+
+    steps:
+    - name: 📥 Code auschecken
+      uses: actions/checkout@v4
+
+    - name: ⚙️ Setup .NET 10
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: 🛠️ MAUI Workload installieren
+      run: dotnet workload install maui-android
+
+    - name: 🧪 Unit Tests ausführen
+      shell: pwsh
+      run: .\scripts\run_tests.ps1
+
+    - name: 📦 Android APK bauen
+      shell: pwsh
+      run: .\scripts\build_android_apk.ps1
+
+    - name: 🚀 APK als Artifact hochladen
+      uses: actions/upload-artifact@v4
+      with:
+        name: PlatzPilot-Android-APK
+        # Der Pfad, wo unser Skript die APK ablegt
+        path: bin\Release\net10.0-android\publish\*.apk
+        if-no-files-found: error
