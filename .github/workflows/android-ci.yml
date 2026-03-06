@@ -39,17 +39,16 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: PlatzPilot-Android-APK
-        path: bin/Release/**/*.apk
+        path: bin/Release/net10.0-android/publish/*.apk
         if-no-files-found: error
 
     - name: 🎉 Offiziellen GitHub Release erstellen (Nur bei Tags)
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v2
       with:
-        files: bin/Release/**/*.apk
+        # HIER GEÄNDERT: Findet nur genau 1 Datei
+        files: bin/Release/net10.0-android/publish/*.apk
         generate_release_notes: true
         prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
-        # NEU: Erzwingt das Überschreiben, falls doch noch Reste da sind
-        fail_on_unmatched_files: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
