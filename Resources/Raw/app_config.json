@@ -105,6 +105,7 @@
     "studentClosedLabelTopMargin": 4,
     "defaultBeforeTime": "12:00",
     "initialLoadDelayMs": 100,
+    "resumeRefreshThresholdMinutes": 20,
     "filterSheetAnimationDurationMs": 160,
     "filterSheetTranslationOffset": -8,
     "openingHoursSliderSnapEpsilon": 0.001

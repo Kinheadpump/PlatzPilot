@@ -195,7 +195,7 @@
                                                     <Label Text="{x:Static local:AppText.ManualCountLabel}"
                                                            FontSize="10"
                                                            TextColor="DarkOrange"
-                                                           IsVisible="{Binding IsManualCount}"
+                                                           IsVisible="{Binding IsManualCountVisible}"
                                                            HorizontalTextAlignment="End" />
                                                     <Label Text="{Binding HomeAvailabilityText}"
                                                            FontAttributes="Bold"

@@ -15,6 +15,7 @@ public partial class UiLocation : ObservableObject
     public int FreeSeats { get; set; }
     public int OccupiedSeats { get; set; }
     public bool IsManualCount { get; set; }
+    public bool IsManualCountVisible => IsManualCount && IsOpen;
     public List<StudySpace> SubSpaces { get; set; } = new();
     public string? MainUrl => SubSpaces.FirstOrDefault()?.Url;
     public string? BuildingNumber { get; set; }
@@ -96,6 +97,11 @@ public partial class UiLocation : ObservableObject
                     start,
                     end);
                 return timeRange + openingText.HoursSuffix;
+            }
+
+            if (IsStudentOnlyClosed)
+            {
+                return AppText.ClosedStudentsLabel;
             }
             
             if (firstSpace == null)

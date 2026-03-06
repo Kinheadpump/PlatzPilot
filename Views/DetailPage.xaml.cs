@@ -6,6 +6,7 @@ using Microsoft.Maui.ApplicationModel;
 using Microcharts;
 using PlatzPilot.Configuration;
 using PlatzPilot.Models;
+using PlatzPilot.ViewModels;
 using SkiaSharp;
 
 namespace PlatzPilot.Views;
@@ -13,6 +14,7 @@ namespace PlatzPilot.Views;
 public partial class DetailPage : ContentPage, IQueryAttributable
 {
     private UiLocation? _locationData;
+    private readonly SeatListViewModel _seatList;
     private static readonly Lazy<Regex> LevelNumberRegex = new(() =>
         new Regex(AppConfigProvider.Current.Internal.LevelNumberRegex, RegexOptions.Compiled));
 
@@ -41,15 +43,24 @@ public partial class DetailPage : ContentPage, IQueryAttributable
     public bool HasChartData => OccupancyChart != null;
     public double ChartHeight => AppConfigProvider.Current.Charts.Height;
 
-    public DetailPage()
+    public DetailPage(SeatListViewModel seatList)
     {
         InitializeComponent();
 
+        _seatList = seatList;
         OpenUrlCommand = new Command<string>(async url => await OpenUrlAsync(url));
         OpenMapCommand = new Command(async () => await OpenMapAsync());
         GoBackCommand = new Command(async () => await Shell.Current.GoToAsync(AppConfigProvider.Current.Internal.BackNavigationRoute));
 
         BindingContext = this;
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+
+        await _seatList.RefreshIfStaleAsync();
+        TryUpdateLocationData();
     }
 
     protected override bool OnBackButtonPressed()
@@ -68,6 +79,21 @@ public partial class DetailPage : ContentPage, IQueryAttributable
         if (query.TryGetValue(key, out var value) && value is UiLocation location)
         {
             LocationData = location;
+            TryUpdateLocationData();
+        }
+    }
+
+    private void TryUpdateLocationData()
+    {
+        if (LocationData == null)
+        {
+            return;
+        }
+
+        var updated = _seatList.FindMatchingLocation(LocationData);
+        if (updated != null && !ReferenceEquals(updated, LocationData))
+        {
+            LocationData = updated;
         }
     }
 

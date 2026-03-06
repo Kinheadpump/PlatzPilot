@@ -478,6 +478,52 @@ public partial class SeatListViewModel : ObservableObject
                TimeSpan.FromMinutes(_config.SeatFinder.LiveRefreshIntervalMinutes);
     }
 
+    public async Task RefreshIfStaleAsync(TimeSpan? minimumAge = null)
+    {
+        if (IsBusy || IsRefreshing)
+        {
+            return;
+        }
+
+        if (_lastLiveSnapshotFetchUtc == DateTime.MinValue)
+        {
+            return;
+        }
+
+        var configuredMinutes = Math.Max(1, _config.UiNumbers.ResumeRefreshThresholdMinutes);
+        var threshold = minimumAge ?? TimeSpan.FromMinutes(configuredMinutes);
+        if (DateTime.UtcNow - _lastLiveSnapshotFetchUtc < threshold)
+        {
+            return;
+        }
+
+        await LoadSpacesAsync();
+    }
+
+    public UiLocation? FindMatchingLocation(UiLocation? location)
+    {
+        if (location == null)
+        {
+            return null;
+        }
+
+        var key = BuildLocationKey(location);
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return null;
+        }
+
+        foreach (var candidate in UiLocations)
+        {
+            if (string.Equals(BuildLocationKey(candidate), key, StringComparison.OrdinalIgnoreCase))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
     private void OnSelectedLocationChanged(UiLocation? value)
     {
         if (value == null || value.IsSkeleton)
@@ -1255,6 +1301,21 @@ public partial class SeatListViewModel : ObservableObject
         }
 
         return space.Building ?? string.Empty;
+    }
+
+    private static string BuildLocationKey(UiLocation location)
+    {
+        if (location.SubSpaces.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var ids = location.SubSpaces
+            .Select(space => space.Id)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase);
+
+        return string.Join("|", ids);
     }
 
     private List<UiLocation> MapSpacesToUiLocations(IEnumerable<StudySpace> spaces)
