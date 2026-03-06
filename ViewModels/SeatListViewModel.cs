@@ -1355,7 +1355,7 @@ public partial class SeatListViewModel : ObservableObject
             : 0;
         var mensaOpeningStart = isMensa ? _mensaForecastCache?.WindowStart : null;
         var mensaOpeningEnd = isMensa ? _mensaForecastCache?.OpeningHoursEnd : null;
-        var subtitle = isMensa ? "Campus-Radar" : AppText.SingleLocationSubtitle;
+        var subtitle = isMensa ? AppText.CampusRadarLabel : AppText.SingleLocationSubtitle;
 
         return new UiLocation
         {

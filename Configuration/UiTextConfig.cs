@@ -35,6 +35,7 @@ public sealed class UiTextConfig
     public string MensaDisplayName { get; set; } = string.Empty;
     public string MensaFluxFillingFastLabel { get; set; } = string.Empty;
     public string MensaFluxEmptyingLabel { get; set; } = string.Empty;
+    public string CampusRadarLabel { get; set; } = string.Empty;
     public string FavoritesLabel { get; set; } = string.Empty;
     public string SettingsLabel { get; set; } = string.Empty;
     public string FilterTitle { get; set; } = string.Empty;

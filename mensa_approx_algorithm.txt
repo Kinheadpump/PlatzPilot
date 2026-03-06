@@ -78,7 +78,7 @@ Coverage Ratio (Datenqualitäts-Check)
 
 UI-Metriken (Ausgabe für Nutzer)
 --------------------------------
-- Badge/Label: "Campus-Radar"
+- Badge/Label: "Mensa-Radar"
 - Auslastungs-Metrik: ~ 85 % belegt (basierend auf D_campus(t) / Capacity)
 - Empfohlene Ankunftszeit: SafeArrival-Ergebnis minus 15 Minuten Queue-Buffer
   (nicht vor Öffnungszeit)

@@ -33,6 +33,7 @@ public static class AppText
     public static string PeakTrendEarlier => Text.PeakTrendEarlier;
     public static string PeakTrendLater => Text.PeakTrendLater;
     public static string PeakTrendFlat => Text.PeakTrendFlat;
+    public static string CampusRadarLabel => Text.CampusRadarLabel;
     public static string FavoritesLabel => Text.FavoritesLabel;
     public static string SettingsLabel => Text.SettingsLabel;
     public static string FilterTitle => Text.FilterTitle;
