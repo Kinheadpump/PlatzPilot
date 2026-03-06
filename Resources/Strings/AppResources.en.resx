@@ -347,7 +347,14 @@ Copyright (c) 2017 Aloïs Deniel
 Copyright (c) 2013-2022 Cole Bemis
 
 The full MIT License is:
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to use, copy, modify, and distribute the software, subject to the following conditions: the above copyright notice and this permission notice shall be included in all copies. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.</value>
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to use, copy, modify, and distribute the software, subject to the following conditions: the above copyright notice and this permission notice shall be included in all copies. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+
+In addition, this app uses the following font under the SIL Open Font License (OFL):
+
+Nunito
+Copyright (c) Vernon Adams, Cyreal, Jacques Le Bailly
+
+This font is provided via Google Fonts and is licensed under the SIL Open Font License, Version 1.1.</value>
   </data>
   <data name="ColorBlindModeLabel" xml:space="preserve">
     <value>Red-green deficiency</value>
