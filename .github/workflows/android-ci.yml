@@ -49,3 +49,7 @@ jobs:
         files: bin/Release/**/*.apk
         generate_release_notes: true
         prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
+        # NEU: Erzwingt das Überschreiben, falls doch noch Reste da sind
+        fail_on_unmatched_files: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
