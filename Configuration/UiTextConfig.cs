@@ -7,7 +7,6 @@ public sealed class UiTextConfig
     public string HomeTitle { get; set; } = string.Empty;
     public string HomeTabLabel { get; set; } = string.Empty;
     public string SearchPlaceholder { get; set; } = string.Empty;
-    public string EmptyListText { get; set; } = string.Empty;
     public string NoResultsTitle { get; set; } = string.Empty;
     public string NoResultsSubtitle { get; set; } = string.Empty;
     public string FavoritesEmptyText { get; set; } = string.Empty;
@@ -22,7 +21,6 @@ public sealed class UiTextConfig
     public string RecommendationFormat { get; set; } = string.Empty;
     public string PeakNoneText { get; set; } = string.Empty;
     public string PeakFormat { get; set; } = string.Empty;
-    public string QualityPrefix { get; set; } = string.Empty;
     public string QualityFormat { get; set; } = string.Empty;
     public string QualityLow { get; set; } = string.Empty;
     public string QualityMedium { get; set; } = string.Empty;
@@ -64,10 +62,7 @@ public sealed class UiTextConfig
     public string GroupedLocationSubtitleFormat { get; set; } = string.Empty;
     public string OpeningHoursLabel { get; set; } = string.Empty;
     public string LastCountLabel { get; set; } = string.Empty;
-    public string OccupancyInfoTitle { get; set; } = string.Empty;
-    public string OccupancyLabel { get; set; } = string.Empty;
     public string RoomsInBuildingLabel { get; set; } = string.Empty;
-    public string AvailabilitySuffix { get; set; } = string.Empty;
     public string HomeAvailabilitySubFormat { get; set; } = string.Empty;
     public string LastUpdatedFormat { get; set; } = string.Empty;
     public string LastUpdatedUnknownText { get; set; } = string.Empty;
@@ -101,5 +96,4 @@ public sealed class UiTextConfig
     public string ChartLabel6Hours { get; set; } = string.Empty;
     public string ChartLabel12Hours { get; set; } = string.Empty;
     public string ChartLabel18Hours { get; set; } = string.Empty;
-    public string ChartLabel24Hours { get; set; } = string.Empty;
 }
