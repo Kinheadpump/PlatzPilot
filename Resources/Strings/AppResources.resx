@@ -347,7 +347,14 @@ Copyright (c) 2017 Aloïs Deniel
 Copyright (c) 2013-2022 Cole Bemis
 
 Die vollständige MIT-Lizenz lautet:
-Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugehörigen Dokumentation zu nutzen, zu kopieren, zu ändern und zu vertreiben, wird unter der Bedingung erteilt, dass der obige Urheberrechtshinweis in allen Kopien enthalten ist. DIE SOFTWARE WIRD OHNE JEDE AUSDRÜCKLICHE ODER IMPLIZIERTE GARANTIE BEREITGESTELLT.</value>
+Die hiermit unentgeltlich erteilte Erlaubnis, Kopien der Software und der zugehörigen Dokumentation zu nutzen, zu kopieren, zu ändern und zu vertreiben, wird unter der Bedingung erteilt, dass der obige Urheberrechtshinweis in allen Kopien enthalten ist. DIE SOFTWARE WIRD OHNE JEDE AUSDRÜCKLICHE ODER IMPLIZIERTE GARANTIE BEREITGESTELLT.
+
+Darüber hinaus verwendet diese App folgende Schriftart unter der SIL Open Font License (OFL):
+
+Nunito
+Copyright (c) Vernon Adams, Cyreal, Jacques Le Bailly
+
+Diese Schriftart wird über Google Fonts bereitgestellt und ist lizenziert unter der SIL Open Font License, Version 1.1.</value>
   </data>
   <data name="ColorBlindModeLabel" xml:space="preserve">
     <value>Rot-Grün Schwäche</value>

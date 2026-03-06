@@ -175,11 +175,11 @@
     "entries": [
       {
         "fileName": "OpenSans-Regular.ttf",
-        "alias": "OpenSansRegular"
+        "alias": "NunitoRegular"
       },
       {
         "fileName": "OpenSans-Semibold.ttf",
-        "alias": "OpenSansSemibold"
+        "alias": "NunitoSemibold"
       }
     ]
   },

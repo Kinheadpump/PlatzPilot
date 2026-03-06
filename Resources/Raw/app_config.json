@@ -174,12 +174,12 @@
   "fonts": {
     "entries": [
       {
-        "fileName": "OpenSans-Regular.ttf",
-        "alias": "OpenSansRegular"
+        "fileName": "Nunito-Medium.ttf",
+        "alias": "NunitoRegular"
       },
       {
-        "fileName": "OpenSans-Semibold.ttf",
-        "alias": "OpenSansSemibold"
+        "fileName": "Nunito-SemiBold.ttf",
+        "alias": "NunitoSemibold"
       }
     ]
   },
