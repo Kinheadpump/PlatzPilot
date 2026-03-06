@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Globalization;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 using PlatzPilot.Configuration;
 using PlatzPilot.Models;
 
@@ -14,13 +15,15 @@ public class SeatFinderService
     private readonly SeatFinderConfig _settings;
     private readonly InternalConfig _internal;
     private readonly TimeSpan _requestTimeout;
+    private readonly ILogger<SeatFinderService> _logger;
 
-    public SeatFinderService(IHttpClientFactory httpClientFactory, AppConfig config)
+    public SeatFinderService(IHttpClientFactory httpClientFactory, AppConfig config, ILogger<SeatFinderService> logger)
     {
         _httpClientFactory = httpClientFactory;
         _settings = config.SeatFinder;
         _internal = config.Internal;
         _requestTimeout = TimeSpan.FromSeconds(Math.Max(1, _settings.RequestTimeoutSeconds));
+        _logger = logger;
     }
 
     public async Task<List<StudySpace>> FetchSeatDataAsync(
@@ -73,7 +76,6 @@ public class SeatFinderService
 
             if (startIdx == -1 || endIdx == -1 || endIdx <= startIdx) 
             {
-                System.Diagnostics.Debug.WriteLine(_internal.JsonpParseErrorText);
                 throw new InvalidOperationException(_internal.JsonpParseErrorText);
             }
 
@@ -124,22 +126,38 @@ public class SeatFinderService
         }
         catch (TaskCanceledException ex)
         {
-            System.Diagnostics.Debug.WriteLine(string.Format(
-                CultureInfo.CurrentCulture,
-                _internal.HttpRequestErrorFormat,
-                ex.Message));
+            if (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogInformation(ex, "SeatFinder request canceled by caller.");
+                throw;
+            }
+
+            _logger.LogError(
+                ex,
+                "SeatFinder request timed out after {TimeoutSeconds} seconds. Url: {RequestUrl}",
+                _requestTimeout.TotalSeconds,
+                requestUrl);
+            throw new HttpRequestException("SeatFinder request timed out.", ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "SeatFinder JSONP parse failed. Url: {RequestUrl}", requestUrl);
             throw;
         }
-        catch (InvalidOperationException)
+        catch (JsonException ex)
         {
+            _logger.LogError(ex, "SeatFinder JSON deserialization failed. Url: {RequestUrl}", requestUrl);
+            throw new InvalidOperationException("SeatFinder response JSON was invalid.", ex);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "SeatFinder request failed. Url: {RequestUrl}", requestUrl);
             throw;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine(string.Format(
-                CultureInfo.CurrentCulture,
-                _internal.HttpRequestErrorFormat,
-                ex.Message));
+            _logger.LogError(ex, "SeatFinder unexpected error. Url: {RequestUrl}", requestUrl);
+            throw;
         }
 
         return resultList;

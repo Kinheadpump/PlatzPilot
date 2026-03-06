@@ -88,13 +88,14 @@ internal static class SafeArrivalMath
         return maxValue + Math.Log(sum);
     }
 
-    internal static int CountBits(int value)
+    internal static int CountBits(long value)
     {
+        var remaining = (ulong)value;
         var count = 0;
-        while (value != 0)
+        while (remaining != 0)
         {
-            count += value & 1;
-            value >>= 1;
+            count += (int)(remaining & 1UL);
+            remaining >>= 1;
         }
 
         return count;

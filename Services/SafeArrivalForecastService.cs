@@ -61,7 +61,7 @@ public sealed class SafeArrivalForecastService
         var alphaRaw = new double[_binsPerDay];
         var betaRaw = new double[_binsPerDay];
         var supportRaw = new double[_binsPerDay];
-        var dayCoverageMask = new int[_binsPerDay];
+        var dayCoverageMask = new long[_binsPerDay];
 
         var sampleCounts = new int[_binsPerDay];
         var weightSums = new double[_binsPerDay];
@@ -81,7 +81,8 @@ public sealed class SafeArrivalForecastService
             }
 
             var binIndex = dayGroup.Key.Bin;
-            var dayOffset = Math.Clamp((int)daysAgo, 0, _settings.DayCoverageMaxOffsetDays);
+            var maxOffset = Math.Min(_settings.DayCoverageMaxOffsetDays, 63);
+            var dayOffset = Math.Clamp((int)daysAgo, 0, maxOffset);
             var weightRaw = Math.Exp(-daysAgo / _settings.TauDays);
             var averageFreeSeats = dayGroup
                 .Select(point => Math.Clamp(point.FreeSeats, 0, capacity))
@@ -94,7 +95,7 @@ public sealed class SafeArrivalForecastService
             sampleCounts[binIndex]++;
             weightSums[binIndex] += weightRaw;
             weightedFreeSums[binIndex] += weightRaw * freeFraction;
-            dayCoverageMask[binIndex] |= (1 << dayOffset);
+            dayCoverageMask[binIndex] |= (1L << dayOffset);
         }
 
         // N_eff normalization per bin: normalize day weights, then scale to effective sample size.

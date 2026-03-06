@@ -4,7 +4,7 @@ name: Android Build & Release
 on:
   push:
     branches: [ "main", "master" ]
-    # Neu: Reagiere auch auf Versions-Tags (z.B. v1.0.0, v2.1)
+    # Reagiere auf Versions-Tags (z.B. v1.0.0, v1.0.0-beta.1)
     tags:
       - 'v*'
   pull_request:
@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   build-and-test:
+    # Wir nutzen Windows, da MAUI-Builds hier am stabilsten laufen
     runs-on: windows-latest
 
     steps:
@@ -42,13 +43,17 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: PlatzPilot-Android-APK
-        path: bin\Release\net10.0-android\publish\*.apk
+        # Pfade mit Slashes '/' (auch auf Windows-Runnern für Globs nötig)
+        path: bin/Release/**/*.apk
         if-no-files-found: error
 
     - name: 🎉 Offiziellen GitHub Release erstellen (Nur bei Tags)
+      # Dieser Schritt läuft NUR, wenn ein Tag gepusht wurde, der mit "v" beginnt
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v2
       with:
-        files: bin\Release\net10.0-android\publish\*.apk
+        # Sucht alle .apk Dateien im Release-Verzeichnis
+        files: bin/Release/**/*.apk
         generate_release_notes: true
+        # Automatische Erkennung: Tags mit "-beta" oder "-rc" werden als Pre-Release markiert
         prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
