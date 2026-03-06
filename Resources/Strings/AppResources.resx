@@ -199,6 +199,42 @@
   <data name="OpeningHoursTitle" xml:space="preserve">
     <value>Öffnungszeiten</value>
   </data>
+  <data name="OpeningHoursClosedSpecialText" xml:space="preserve">
+    <value>Geschlossen (Sonderöffnungszeiten)</value>
+  </data>
+  <data name="OpeningHoursUnknownText" xml:space="preserve">
+    <value>Unbekannt</value>
+  </data>
+  <data name="OpeningHoursAlwaysOpenText" xml:space="preserve">
+    <value>24 Stunden geöffnet</value>
+  </data>
+  <data name="OpeningHoursClosedText" xml:space="preserve">
+    <value>Geschlossen</value>
+  </data>
+  <data name="OpeningHoursHoursSuffix" xml:space="preserve">
+    <value> Uhr</value>
+  </data>
+  <data name="OpeningHoursTimeRangeFormat" xml:space="preserve">
+    <value>{0:HH:mm} - {1:HH:mm}</value>
+  </data>
+  <data name="OpeningHoursTimeRangeSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="OpeningHoursClosedOpensTodayFormat" xml:space="preserve">
+    <value>Geschlossen - öffnet heute um {0:HH:mm} Uhr</value>
+  </data>
+  <data name="OpeningHoursClosedOpensTomorrowFormat" xml:space="preserve">
+    <value>Geschlossen - öffnet morgen um {0:HH:mm} Uhr</value>
+  </data>
+  <data name="OpeningHoursClosedOpensOnDateFormat" xml:space="preserve">
+    <value>Geschlossen - öffnet am {0:dd.MM.} um {0:HH:mm} Uhr</value>
+  </data>
+  <data name="OpeningHoursNoRoomsText" xml:space="preserve">
+    <value>Keine Räume</value>
+  </data>
+  <data name="OpeningHoursUnknownObjectText" xml:space="preserve">
+    <value>Unbekannt (Objekt Null)</value>
+  </data>
   <data name="SortTitle" xml:space="preserve">
     <value>Sortierung</value>
   </data>

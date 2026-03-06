@@ -80,24 +80,23 @@ public partial class UiLocation : ObservableObject
         get
         {
             var firstSpace = SubSpaces.FirstOrDefault();
-            var openingText = AppConfigProvider.Current.OpeningHoursText;
 
             if (IsMensaVirtual && MensaOpeningStart.HasValue && MensaOpeningEnd.HasValue)
             {
                 var day = ReferenceTime.DayOfWeek;
                 if (day < DayOfWeek.Monday || day > DayOfWeek.Friday)
                 {
-                    return openingText.ClosedText;
+                    return AppResources.OpeningHoursClosedText;
                 }
 
                 var start = ReferenceTime.Date.Add(MensaOpeningStart.Value);
                 var end = ReferenceTime.Date.Add(MensaOpeningEnd.Value);
                 var timeRange = string.Format(
                     CultureInfo.CurrentCulture,
-                    openingText.TimeRangeFormat,
+                    AppResources.OpeningHoursTimeRangeFormat,
                     start,
                     end);
-                return timeRange + openingText.HoursSuffix;
+                return timeRange + AppResources.OpeningHoursHoursSuffix;
             }
 
             if (IsStudentOnlyClosed)
@@ -107,29 +106,29 @@ public partial class UiLocation : ObservableObject
             
             if (firstSpace == null)
             {
-                return openingText.NoRoomsText;
+                return AppResources.OpeningHoursNoRoomsText;
             }
 
             if (firstSpace.OpeningHours == null)
             {
-                return openingText.UnknownObjectText;
+                return AppResources.OpeningHoursUnknownObjectText;
             }
 
             var text = firstSpace.OpeningHours.GetTodayOpeningHoursText(ReferenceTime);
-            if (text.StartsWith(openingText.ClosedText, StringComparison.OrdinalIgnoreCase) &&
+            if (text.StartsWith(AppResources.OpeningHoursClosedText, StringComparison.OrdinalIgnoreCase) &&
                 firstSpace.OpeningHours.TryGetNextOpeningTime(ReferenceTime, out var nextOpening))
             {
                 if (nextOpening.Date == ReferenceTime.Date)
                 {
-                    return string.Format(openingText.ClosedOpensTodayFormat, nextOpening);
+                    return string.Format(AppResources.OpeningHoursClosedOpensTodayFormat, nextOpening);
                 }
 
                 if (nextOpening.Date == ReferenceTime.Date.AddDays(1))
                 {
-                    return string.Format(openingText.ClosedOpensTomorrowFormat, nextOpening);
+                    return string.Format(AppResources.OpeningHoursClosedOpensTomorrowFormat, nextOpening);
                 }
 
-                return string.Format(openingText.ClosedOpensOnDateFormat, nextOpening);
+                return string.Format(AppResources.OpeningHoursClosedOpensOnDateFormat, nextOpening);
             }
 
             return text;

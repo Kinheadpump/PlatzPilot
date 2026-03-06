@@ -142,20 +142,6 @@
       "Informatikom"
     ]
   },
-  "openingHoursText": {
-    "closedSpecialText": "Geschlossen (Sonderöffnungszeiten)",
-    "unknownText": "Unbekannt",
-    "alwaysOpenText": "24 Stunden geöffnet",
-    "closedText": "Geschlossen",
-    "hoursSuffix": " Uhr",
-    "timeRangeFormat": "{0:HH:mm} - {1:HH:mm}",
-    "timeRangeSeparator": ", ",
-    "closedOpensTodayFormat": "Geschlossen - öffnet heute um {0:HH:mm} Uhr",
-    "closedOpensTomorrowFormat": "Geschlossen - öffnet morgen um {0:HH:mm} Uhr",
-    "closedOpensOnDateFormat": "Geschlossen - öffnet am {0:dd.MM.} um {0:HH:mm} Uhr",
-    "noRoomsText": "Keine Räume",
-    "unknownObjectText": "Unbekannt (Objekt Null)"
-  },
   "openingHours": {
     "maxNextOpeningWeeks": 3,
     "daysPerWeek": 7,
@@ -212,10 +198,10 @@
     "closedColor": "#b0b0b0"
   },
   "colorBlindness": {
-    "lowColor": "#648FFF",
-    "mediumColor": "#FFB000",
-    "highColor": "#DC267F",
-    "fullColor": "#DC267F"
+    "lowColor": "#332288",
+    "mediumColor": "#88CCEE",
+    "highColor": "#DDCC77",
+    "fullColor": "#CC6677"
   },
   "campusSouth": {
     "excludedNameContains": [

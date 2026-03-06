@@ -12,7 +12,6 @@ public sealed class AppConfig
     public SafeArrivalConfig SafeArrival { get; set; } = new();
     public MensaForecastConfig MensaForecast { get; set; } = new();
     public StudentAccessConfig StudentAccess { get; set; } = new();
-    public OpeningHoursTextConfig OpeningHoursText { get; set; } = new();
     public OpeningHoursSettings OpeningHours { get; set; } = new();
     public RoomTypeConfig RoomTypes { get; set; } = new();
     public SortConfig Sort { get; set; } = new();

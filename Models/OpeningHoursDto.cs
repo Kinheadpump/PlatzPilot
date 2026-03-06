@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.Json.Serialization;
 using PlatzPilot.Configuration;
+using PlatzPilot.Resources.Strings;
 
 namespace PlatzPilot.Models;
 
@@ -43,7 +44,6 @@ public class OpeningHoursDto
     public string GetTodayOpeningHoursText(DateTime? referenceTime = null)
     {
         var now = referenceTime ?? DateTime.Now;
-        var textConfig = AppConfigProvider.Current.OpeningHoursText;
 
         // 1. VORRANGSCHALTUNG: Ausnahmen prüfen
         if (ExceptionalOpeningHours != null)
@@ -57,7 +57,7 @@ public class OpeningHoursDto
                 {
                     if (exception.OpeningHours == null || exception.OpeningHours.Count == 0)
                     {
-                        return textConfig.ClosedSpecialText;
+                        return AppResources.OpeningHoursClosedSpecialText;
                     }
                 }
             }
@@ -66,7 +66,7 @@ public class OpeningHoursDto
         // 2. NORMALE ZEITEN
         if (WeeklyOpeningHours == null || WeeklyOpeningHours.Count == 0)
         {
-            return textConfig.UnknownText;
+            return AppResources.OpeningHoursUnknownText;
         }
 
         if (WeeklyOpeningHours.Count == 1)
@@ -81,19 +81,19 @@ public class OpeningHoursDto
                     var settings = AppConfigProvider.Current.OpeningHours;
                     if (start.Value.TimeOfDay == TimeSpan.Zero && end.Value.TimeOfDay.Hours >= settings.AlwaysOpenHourThreshold)
                     {
-                        return textConfig.AlwaysOpenText;
+                        return AppResources.OpeningHoursAlwaysOpenText;
                     }
 
                     var timeRange = string.Format(
                         CultureInfo.CurrentCulture,
-                        textConfig.TimeRangeFormat,
+                        AppResources.OpeningHoursTimeRangeFormat,
                         start.Value,
                         end.Value);
-                    return timeRange + textConfig.HoursSuffix;
+                    return timeRange + AppResources.OpeningHoursHoursSuffix;
                 }
             }
 
-            return textConfig.UnknownText;
+            return AppResources.OpeningHoursUnknownText;
         }
 
         var today = now.DayOfWeek;
@@ -113,7 +113,7 @@ public class OpeningHoursDto
             {
                 var timeRange = string.Format(
                     CultureInfo.CurrentCulture,
-                    textConfig.TimeRangeFormat,
+                    AppResources.OpeningHoursTimeRangeFormat,
                     start.Value,
                     end.Value);
                 todaysBlocks.Add(timeRange);
@@ -122,10 +122,10 @@ public class OpeningHoursDto
 
         if (todaysBlocks.Count == 0)
         {
-            return textConfig.ClosedText;
+            return AppResources.OpeningHoursClosedText;
         }
 
-        return string.Join(textConfig.TimeRangeSeparator, todaysBlocks) + textConfig.HoursSuffix;
+        return string.Join(AppResources.OpeningHoursTimeRangeSeparator, todaysBlocks) + AppResources.OpeningHoursHoursSuffix;
     }
 
     public double GetRemainingOpenHours(DateTime? referenceTime = null)

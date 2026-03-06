@@ -7,6 +7,7 @@ namespace PlatzPilot.Views;
 public partial class MainPage : ContentPage
 {
     private readonly MainPageViewModel _viewModel;
+    public MainPageViewModel ViewModel => _viewModel;
 
     public MainPage(MainPageViewModel viewModel)
     {
