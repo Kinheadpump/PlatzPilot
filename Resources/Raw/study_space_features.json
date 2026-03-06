@@ -6,7 +6,7 @@
       "roomTypes": [
         "Stillarbeitsraum"
       ],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
@@ -18,7 +18,7 @@
         "Stillarbeitsraum",
         "Gruppenraum"
       ],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": true
@@ -29,7 +29,7 @@
       "roomTypes": [
         "Stillarbeitsraum"
       ],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
@@ -40,7 +40,7 @@
       "roomTypes": [
         "Stillarbeitsraum"
       ],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": true
@@ -49,7 +49,7 @@
       "id": "LSW",
       "nickname": "Lesesaal Wirtschaft",
       "roomTypes": [],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
@@ -60,7 +60,7 @@
       "roomTypes": [
         "Gruppenraum"
       ],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": true
@@ -77,7 +77,7 @@
       "id": "L3",
       "nickname": "Lernplatz 3. OG",
       "roomTypes": [],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
@@ -88,7 +88,7 @@
       "roomTypes": [
         "Gruppenraum"
       ],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": true,
       "requiresReservation": false
@@ -99,7 +99,7 @@
       "roomTypes": [
         "Stillarbeitsraum"
       ],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
@@ -108,7 +108,7 @@
       "id": "L1",
       "nickname": "Lernplatz 1. OG",
       "roomTypes": [],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
@@ -117,7 +117,7 @@
       "id": "LEG",
       "nickname": "Lernplatz EG",
       "roomTypes": [],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
@@ -135,7 +135,7 @@
       "id": "FBP",
       "nickname": "Fachbibliothek Physik",
       "roomTypes": [],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": false,
       "whiteboard": false,
       "requiresReservation": false
@@ -146,7 +146,7 @@
       "roomTypes": [
         "Stillarbeitsraum"
       ],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
@@ -154,9 +154,9 @@
     {
       "id": "FBA",
       "nickname": "Fakultätsbibliothek Architektur",
-      "roomTypes": [],
-      "freeWifi": false,
-      "powerOutlets": false,
+      "roomTypes": ["Stillarbeitsraum"],
+      "freeWifi": true,
+      "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
     },
@@ -167,7 +167,7 @@
         "Gruppenraum",
         "Stillarbeitsraum"
       ],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
@@ -178,7 +178,7 @@
       "roomTypes": [
         "Stillarbeitsraum"
       ],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
@@ -189,7 +189,7 @@
       "roomTypes": [
         "Gruppenraum"
       ],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
@@ -198,7 +198,7 @@
       "id": "FBD",
       "nickname": "Fachbibliothek DHBW",
       "roomTypes": [],
-      "freeWifi": false,
+      "freeWifi": true,
       "powerOutlets": true,
       "whiteboard": false,
       "requiresReservation": false
