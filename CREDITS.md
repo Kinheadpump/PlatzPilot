@@ -18,3 +18,8 @@ Ein großes Dankeschön geht an KIT, dessen Ressourcen in diesem Projekt verwend
   * **Autor:** Cole Bemis & Mitwirkende
   * **Quelle:** [Feather Icons](https://feathericons.com/)
   * **Lizenz:** MIT License
+
+* **Nunito**
+  * **Autoren:** Vernon Adams, Cyreal, Jacques Le Bailly
+  * **Quelle:** [Google Fonts](https://fonts.google.com/specimen/Nunito)
+  * **Lizenz:** SIL Open Font License, Version 1.1 (OFL)

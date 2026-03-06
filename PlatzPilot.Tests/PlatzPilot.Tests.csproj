@@ -8,6 +8,10 @@
     <GenerateWin32Resources>false</GenerateWin32Resources>
     <UseAppHost>false</UseAppHost>
     <OutputType>Library</OutputType>
+    <DisableMauiImageProcessing>true</DisableMauiImageProcessing>
+    <UseMaui>false</UseMaui>
+    <MauiEnableDefaultItems>false</MauiEnableDefaultItems>
+    <BuildProjectReferences>false</BuildProjectReferences>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,5 +28,11 @@
   <ItemGroup>
     <ProjectReference Include="..\PlatzPilot.csproj" />
   </ItemGroup>
+
+  <Target Name="BuildAppForTests" BeforeTargets="ResolveReferences">
+    <MSBuild Projects="..\PlatzPilot.csproj"
+             Targets="Build"
+             Properties="TargetFramework=net10.0-windows10.0.19041.0;DisableMauiImageProcessing=false;UseMaui=true;MauiEnableDefaultItems=true" />
+  </Target>
 
 </Project>

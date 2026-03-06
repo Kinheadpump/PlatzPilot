@@ -71,10 +71,10 @@ public class SeatFinderService
             int startIdx = responseText.IndexOf('(');
             int endIdx = responseText.LastIndexOf(')');
 
-            if (startIdx == -1 || endIdx == -1) 
+            if (startIdx == -1 || endIdx == -1 || endIdx <= startIdx) 
             {
                 System.Diagnostics.Debug.WriteLine(_internal.JsonpParseErrorText);
-                return resultList;
+                throw new InvalidOperationException(_internal.JsonpParseErrorText);
             }
 
             string cleanJson = responseText.Substring(startIdx + 1, endIdx - startIdx - 1);
@@ -128,6 +128,10 @@ public class SeatFinderService
                 CultureInfo.CurrentCulture,
                 _internal.HttpRequestErrorFormat,
                 ex.Message));
+            throw;
+        }
+        catch (InvalidOperationException)
+        {
             throw;
         }
         catch (Exception ex)
