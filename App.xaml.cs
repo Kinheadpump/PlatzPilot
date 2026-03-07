@@ -1,4 +1,6 @@
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
+using PlatzPilot.Messages;
 using PlatzPilot.Views;
 
 namespace PlatzPilot;
@@ -15,6 +17,8 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(_serviceProvider.GetRequiredService<AppShell>());
+        var window = new Window(_serviceProvider.GetRequiredService<AppShell>());
+        window.Resumed += (_, _) => WeakReferenceMessenger.Default.Send(new AppResumedMessage());
+        return window;
     }
 }
