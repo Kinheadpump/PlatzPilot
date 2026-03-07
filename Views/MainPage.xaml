@@ -1134,128 +1134,134 @@
                             Radius="20"
                             Offset="0,8" />
                 </Border.Shadow>
-                <VerticalStackLayout Spacing="16">
-                    <Label Text="Willkommen bei PlatzPilot"
-                           FontSize="22"
-                           FontAttributes="Bold"
-                           TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
-
-                    <Grid ColumnDefinitions="Auto,*"
-                          ColumnSpacing="12"
-                          RowSpacing="4">
-                        <Label Grid.Column="0"
-                               Text="📚"
-                               FontSize="18"
-                               VerticalOptions="Start" />
-                        <VerticalStackLayout Grid.Column="1"
-                                             Spacing="2">
-                            <Label Text="Live-Auslastung"
-                                   FontSize="14"
+                <Grid RowDefinitions="*, Auto"
+                      RowSpacing="16">
+                    <ScrollView Grid.Row="0">
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="Willkommen bei PlatzPilot"
+                                   FontSize="22"
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
-                            <Label Text="Finde in Echtzeit heraus, wo noch Lernplätze frei sind."
-                                   FontSize="13"
-                                   LineHeight="1.3"
-                                   TextColor="{AppThemeBinding Light=#3A3A3C, Dark=#D1D1D6}"
-                                   LineBreakMode="WordWrap" />
-                        </VerticalStackLayout>
-                    </Grid>
 
-                    <Grid ColumnDefinitions="Auto,*"
-                          ColumnSpacing="12"
-                          RowSpacing="4">
-                        <Label Grid.Column="0"
-                               Text="🍲"
-                               FontSize="18"
-                               VerticalOptions="Start" />
-                        <VerticalStackLayout Grid.Column="1"
-                                             Spacing="2">
-                            <Label Text="Mensa-Radar"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
-                            <Label Text="Überprüfe, wie voll die Mensa ungefähr ist, bevor du losgehst."
-                                   FontSize="13"
-                                   LineHeight="1.3"
-                                   TextColor="{AppThemeBinding Light=#3A3A3C, Dark=#D1D1D6}"
-                                   LineBreakMode="WordWrap" />
-                        </VerticalStackLayout>
-                    </Grid>
-                
-                    <Grid ColumnDefinitions="Auto,*"
-                          ColumnSpacing="12"
-                          RowSpacing="4">
-                        <Label Grid.Column="0"
-                               Text="🎛️"
-                               FontSize="18"
-                               VerticalOptions="Start" />
-                        <VerticalStackLayout Grid.Column="1"
-                                             Spacing="2">
-                            <Label Text="Dein perfekter Platz"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
-                            <Label Text="Filtere gezielt nach den Plätzen, die du brauchst."
-                                   FontSize="13"
-                                   LineHeight="1.3"
-                                   TextColor="{AppThemeBinding Light=#3A3A3C, Dark=#D1D1D6}"
-                                   LineBreakMode="WordWrap" />
-                        </VerticalStackLayout>
-                    </Grid>
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="12"
+                                  RowSpacing="4">
+                                <Label Grid.Column="0"
+                                       Text="📚"
+                                       FontSize="18"
+                                       VerticalOptions="Start" />
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="2">
+                                    <Label Text="Live-Auslastung"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
+                                    <Label Text="Finde in Echtzeit heraus, wo noch Lernplätze frei sind."
+                                           FontSize="13"
+                                           LineHeight="1.3"
+                                           TextColor="{AppThemeBinding Light=#3A3A3C, Dark=#D1D1D6}"
+                                           LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
 
-                    <Grid ColumnDefinitions="Auto,*"
-                          ColumnSpacing="12"
-                          RowSpacing="4">
-                        <Label Grid.Column="0"
-                               Text="⏱️"
-                               FontSize="18"
-                               VerticalOptions="Start" />
-                        <VerticalStackLayout Grid.Column="1"
-                                             Spacing="2">
-                            <Label Text="Statistische Prognosen"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
-                            <Label Text="Wir berechnen auf Basis vergangener Daten, bis wann du spätestens ankommen solltest, um einen Platz zu bekommen."
-                                   FontSize="13"
-                                   LineHeight="1.3"
-                                   TextColor="{AppThemeBinding Light=#3A3A3C, Dark=#D1D1D6}"
-                                   LineBreakMode="WordWrap" />
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="12"
+                                  RowSpacing="4">
+                                <Label Grid.Column="0"
+                                       Text="🍲"
+                                       FontSize="18"
+                                       VerticalOptions="Start" />
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="2">
+                                    <Label Text="Mensa-Radar"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
+                                    <Label Text="Überprüfe, wie voll die Mensa ungefähr ist, bevor du losgehst."
+                                           FontSize="13"
+                                           LineHeight="1.3"
+                                           TextColor="{AppThemeBinding Light=#3A3A3C, Dark=#D1D1D6}"
+                                           LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="12"
+                                  RowSpacing="4">
+                                <Label Grid.Column="0"
+                                       Text="🎛️"
+                                       FontSize="18"
+                                       VerticalOptions="Start" />
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="2">
+                                    <Label Text="Dein perfekter Platz"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
+                                    <Label Text="Filtere gezielt nach den Plätzen, die du brauchst."
+                                           FontSize="13"
+                                           LineHeight="1.3"
+                                           TextColor="{AppThemeBinding Light=#3A3A3C, Dark=#D1D1D6}"
+                                           LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="12"
+                                  RowSpacing="4">
+                                <Label Grid.Column="0"
+                                       Text="⏱️"
+                                       FontSize="18"
+                                       VerticalOptions="Start" />
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="2">
+                                    <Label Text="Statistische Prognosen"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
+                                    <Label Text="Wir berechnen auf Basis vergangener Daten, bis wann du spätestens ankommen solltest, um einen Platz zu bekommen."
+                                           FontSize="13"
+                                           LineHeight="1.3"
+                                           TextColor="{AppThemeBinding Light=#3A3A3C, Dark=#D1D1D6}"
+                                           LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="12"
+                                  RowSpacing="4">
+                                <Label Grid.Column="0"
+                                       Text="⭐"
+                                       FontSize="18"
+                                       VerticalOptions="Start" />
+                                <VerticalStackLayout Grid.Column="1"
+                                                     Spacing="2">
+                                    <Label Text="Favoriten"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
+                                    <Label Text="Speichere deine Lieblings-Orte für den direkten Überblick beim App-Start."
+                                           FontSize="13"
+                                           LineHeight="1.3"
+                                           TextColor="{AppThemeBinding Light=#3A3A3C, Dark=#D1D1D6}"
+                                           LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <Border StrokeThickness="0"
+                                    BackgroundColor="{AppThemeBinding Light=#F2F2F7, Dark=#2C2C2E}"
+                                    StrokeShape="RoundRectangle 8"
+                                    Padding="10">
+                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsDisclaimer], x:DataType=loc:LocalizationResourceManager}"
+                                       FontSize="12"
+                                       TextColor="#8E8E93"
+                                       LineBreakMode="WordWrap" />
+                            </Border>
                         </VerticalStackLayout>
-                    </Grid>
+                    </ScrollView>
 
-                    <Grid ColumnDefinitions="Auto,*"
-                          ColumnSpacing="12"
-                          RowSpacing="4">
-                        <Label Grid.Column="0"
-                               Text="⭐"
-                               FontSize="18"
-                               VerticalOptions="Start" />
-                        <VerticalStackLayout Grid.Column="1"
-                                             Spacing="2">
-                            <Label Text="Favoriten"
-                                   FontSize="14"
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
-                            <Label Text="Speichere deine Lieblings-Orte für den direkten Überblick beim App-Start."
-                                   FontSize="13"
-                                   LineHeight="1.3"
-                                   TextColor="{AppThemeBinding Light=#3A3A3C, Dark=#D1D1D6}"
-                                   LineBreakMode="WordWrap" />
-                        </VerticalStackLayout>
-                    </Grid>
-
-                    <Border StrokeThickness="0"
-                            BackgroundColor="{AppThemeBinding Light=#F2F2F7, Dark=#2C2C2E}"
-                            StrokeShape="RoundRectangle 8"
-                            Padding="10">
-                        <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsDisclaimer], x:DataType=loc:LocalizationResourceManager}"
-                               FontSize="12"
-                               TextColor="#8E8E93"
-                               LineBreakMode="WordWrap" />
-                    </Border>
-
-                    <Button Text="Verstanden &amp; Loslegen"
+                    <Button Grid.Row="1"
+                            Text="Verstanden &amp; Loslegen"
                             Command="{Binding CompleteOnboardingCommand}"
                             HeightRequest="50"
                             CornerRadius="12"
@@ -1263,7 +1269,7 @@
                             TextColor="White"
                             FontAttributes="Bold"
                             HorizontalOptions="Fill" />
-                </VerticalStackLayout>
+                </Grid>
             </Border>
         </Grid>
 
