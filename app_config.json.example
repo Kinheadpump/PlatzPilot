@@ -30,7 +30,8 @@
   "urls": {
     "github": "https://github.com/Kinheadpump/PlatzPilot",
     "privacy": "https://kinheadpump.github.io/privacy.html",
-    "impressum": "https://kinheadpump.github.io/impressum.html"
+    "impressum": "https://kinheadpump.github.io/impressum.html",
+    "discordCrashWebhook": ""
   },
   "seatFinder": {
     "baseUrl": "https://seatfinder.bibliothek.kit.edu/karlsruhe/getdata.php",

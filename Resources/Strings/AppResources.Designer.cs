@@ -120,6 +120,7 @@ public class AppResources
     public static string SettingsDesignLabel => ResourceManager.GetString("SettingsDesignLabel", resourceCulture) ?? string.Empty;
     public static string SettingsDisplayTitle => ResourceManager.GetString("SettingsDisplayTitle", resourceCulture) ?? string.Empty;
     public static string SettingsFeedbackTitle => ResourceManager.GetString("SettingsFeedbackTitle", resourceCulture) ?? string.Empty;
+    public static string SettingsCrashReportLabel => ResourceManager.GetString("SettingsCrashReportLabel", resourceCulture) ?? string.Empty;
     public static string SettingsInfoTitle => ResourceManager.GetString("SettingsInfoTitle", resourceCulture) ?? string.Empty;
     public static string SettingsHapticLabel => ResourceManager.GetString("SettingsHapticLabel", resourceCulture) ?? string.Empty;
     public static string HideClosedLocationsLabel => ResourceManager.GetString("HideClosedLocationsLabel", resourceCulture) ?? string.Empty;
@@ -153,6 +154,10 @@ public class AppResources
     public static string LanguageOptionGerman => ResourceManager.GetString("LanguageOptionGerman", resourceCulture) ?? string.Empty;
     public static string LanguageOptionEnglish => ResourceManager.GetString("LanguageOptionEnglish", resourceCulture) ?? string.Empty;
     public static string LanguageOptionCancel => ResourceManager.GetString("LanguageOptionCancel", resourceCulture) ?? string.Empty;
+    public static string CrashReportTitle => ResourceManager.GetString("CrashReportTitle", resourceCulture) ?? string.Empty;
+    public static string CrashReportNo => ResourceManager.GetString("CrashReportNo", resourceCulture) ?? string.Empty;
+    public static string CrashReportSend => ResourceManager.GetString("CrashReportSend", resourceCulture) ?? string.Empty;
+    public static string CrashReportNeverAsk => ResourceManager.GetString("CrashReportNeverAsk", resourceCulture) ?? string.Empty;
 }
 
 #nullable restore

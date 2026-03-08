@@ -86,6 +86,8 @@ public static class MauiProgram
         builder.Services.AddTransient<DetailPage>();
         builder.Services.AddSingleton<AppShell>();
 
+        CrashHandler.Initialize();
+
 
         return builder.Build();
     }
