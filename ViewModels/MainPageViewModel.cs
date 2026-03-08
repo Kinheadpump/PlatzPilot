@@ -37,9 +37,9 @@ public sealed partial class MainPageViewModel : ObservableObject, IDisposable
 
         SeatList.PropertyChanged += OnSeatListPropertyChanged;
         WeakReferenceMessenger.Default.Register<AppResumedMessage>(this, (_, _) =>
-            MainThread.BeginInvokeOnMainThread(HandleAppResumed));
+            MainThreadHelper.BeginInvoke(HandleAppResumed));
         WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) =>
-            MainThread.BeginInvokeOnMainThread(UpdateSelectedCityFromPreferences));
+            MainThreadHelper.BeginInvoke(UpdateSelectedCityFromPreferences));
 
         foreach (var city in _config.SeatFinder.Cities.OrderBy(city => city.DisplayName))
         {

@@ -1,12 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PlatzPilot.Configuration;
+using PlatzPilot.Services;
 
 namespace PlatzPilot.ViewModels;
 
 public partial class NavigationViewModel : ObservableObject
 {
     private readonly AppConfig _config;
+    private readonly IPreferencesService _preferencesService;
 
     private string _currentTab = string.Empty;
 
@@ -23,10 +25,11 @@ public partial class NavigationViewModel : ObservableObject
         }
     }
 
-    public NavigationViewModel(AppConfig config)
+    public NavigationViewModel(AppConfig config, IPreferencesService preferencesService)
     {
         _config = config;
-        CurrentTab = ResolveInitialTab(Preferences.Default.Get(_config.Preferences.TabModeKey, _config.Tabs.Home));
+        _preferencesService = preferencesService;
+        CurrentTab = ResolveInitialTab(_preferencesService.Get(_config.Preferences.TabModeKey, _config.Tabs.Home));
     }
 
     public bool IsMainContentVisible => CurrentTab != _config.Tabs.Settings;
@@ -37,7 +40,7 @@ public partial class NavigationViewModel : ObservableObject
     {
         tabName = NormalizeTab(tabName);
         CurrentTab = tabName;
-        Preferences.Default.Set(_config.Preferences.TabModeKey, tabName);
+        _preferencesService.Set(_config.Preferences.TabModeKey, tabName);
     }
 
     private string NormalizeTab(string tabName)

@@ -196,7 +196,7 @@ public partial class SeatListViewModel : ObservableObject, IDisposable
         _navigation.PropertyChanged += OnNavigationPropertyChanged;
         _settings.PropertyChanged += OnSettingsPropertyChanged;
         WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) =>
-            MainThread.BeginInvokeOnMainThread(OnCityChanged));
+            MainThreadHelper.BeginInvoke(OnCityChanged));
 
         FilteredLocationCount = 0;
     }
@@ -325,13 +325,13 @@ public partial class SeatListViewModel : ObservableObject, IDisposable
 
     private List<string> GetFavoriteNames()
     {
-        var json = Preferences.Default.Get(_config.Preferences.FavoritesKey, _config.Preferences.EmptyListJson);
+        var json = _preferencesService.Get(_config.Preferences.FavoritesKey, _config.Preferences.EmptyListJson);
         return JsonSerializer.Deserialize<List<string>>(json) ?? [];
     }
 
     private void SaveFavoriteNames(List<string> favorites)
     {
-        Preferences.Default.Set(_config.Preferences.FavoritesKey, JsonSerializer.Serialize(favorites));
+        _preferencesService.Set(_config.Preferences.FavoritesKey, JsonSerializer.Serialize(favorites));
     }
 
     [RelayCommand]
@@ -610,7 +610,7 @@ public partial class SeatListViewModel : ObservableObject, IDisposable
             return;
         }
 
-        MainThread.BeginInvokeOnMainThread(async () => await GoToDetailAsync(value));
+        MainThreadHelper.BeginInvoke(async () => await GoToDetailAsync(value));
         SelectedLocation = null;
     }
 
