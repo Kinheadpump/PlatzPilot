@@ -583,6 +583,35 @@
                                     </Grid>
                                 </Border>
                             </Grid>
+
+                            <BoxView HeightRequest="1"
+                                     Color="{AppThemeBinding Light=#ededed, Dark=#2a2a2a}" />
+
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsCrashReportLabel], x:DataType=loc:LocalizationResourceManager}"
+                                       VerticalOptions="Center"
+                                       FontAttributes="Bold" />
+
+                                <Border Grid.Column="1"
+                                        StrokeThickness="0"
+                                        BackgroundColor="Transparent"
+                                        HeightRequest="40"
+                                        WidthRequest="40"
+                                        Padding="8">
+                                    <Grid>
+                                        <Image HeightRequest="24"
+                                               WidthRequest="24"
+                                               Aspect="AspectFit"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True"
+                                               Source="{Binding Settings.CrashReportIcon}" />
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Settings.ToggleCrashReportCommand}" />
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+                                </Border>
+                            </Grid>
                         </VerticalStackLayout>
                     </Border>
 
@@ -668,6 +697,7 @@
                         </VerticalStackLayout>
                     </Border>
                 </Grid>
+
             </VerticalStackLayout>
         </ScrollView>
 

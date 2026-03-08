@@ -398,4 +398,20 @@ This font is provided via Google Fonts and is licensed under the SIL Open Font L
   <data name="BuildingName_BadischeLandesbibliothek" xml:space="preserve">
     <value>Badische Landesbibliothek</value>
   </data>
-<data name="LanguageLabel" xml:space="preserve"><value>Language</value></data><data name="LanguageSelectTitle" xml:space="preserve"><value>Choose language</value></data><data name="LanguageOptionGerman" xml:space="preserve"><value>German</value></data><data name="LanguageOptionEnglish" xml:space="preserve"><value>English</value></data><data name="LanguageOptionCancel" xml:space="preserve"><value>Cancel</value></data></root>
+<data name="LanguageLabel" xml:space="preserve"><value>Language</value></data><data name="LanguageSelectTitle" xml:space="preserve"><value>Choose language</value></data><data name="LanguageOptionGerman" xml:space="preserve"><value>German</value></data><data name="LanguageOptionEnglish" xml:space="preserve"><value>English</value></data><data name="LanguageOptionCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="CrashReportTitle" xml:space="preserve">
+    <value>Send crash report?</value>
+  </data>
+  <data name="CrashReportNo" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="CrashReportSend" xml:space="preserve">
+    <value>Yes, send</value>
+  </data>
+  <data name="CrashReportNeverAsk" xml:space="preserve">
+    <value>Never ask again</value>
+  </data>
+  <data name="SettingsCrashReportLabel" xml:space="preserve">
+    <value>Ask to send crash reports</value>
+  </data>
+</root>
