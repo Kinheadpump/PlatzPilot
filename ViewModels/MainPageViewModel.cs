@@ -45,8 +45,6 @@ public sealed partial class MainPageViewModel : ObservableObject
 
         UpdateSelectedCityFromPreferences();
 
-        _preferencesService.Set(_onboardingCompletedKey, false);
-
         var hasCompletedOnboarding = _preferencesService.Get(_onboardingCompletedKey, false);
         IsOnboardingVisible = !hasCompletedOnboarding;
     }
