@@ -96,9 +96,8 @@ public class SeatFinderService
                 throw new InvalidOperationException(_internal.JsonpParseErrorText);
             }
 
-            string cleanJson = responseText.Substring(startIdx + 1, endIdx - startIdx - 1);
-
-            var parsedData = JsonSerializer.Deserialize<List<SeatFinderResponseDto>>(cleanJson);
+            var cleanJsonSpan = responseText.AsSpan(startIdx + 1, endIdx - startIdx - 1);
+            var parsedData = JsonSerializer.Deserialize<List<SeatFinderResponseDto>>(cleanJsonSpan);
             if (parsedData == null || parsedData.Count < _settings.JsonpMinBlocks) return resultList;
 
             var liveData = parsedData[0];

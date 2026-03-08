@@ -13,6 +13,7 @@ namespace PlatzPilot.ViewModels;
 public sealed partial class MainPageViewModel : ObservableObject, IDisposable
 {
     private const string _onboardingCompletedKey = "HasCompletedOnboarding";
+    private static readonly TimeSpan RefreshCooldown = TimeSpan.FromMinutes(5);
     private readonly AppConfig _config;
     private readonly IPreferencesService _preferencesService;
     private DateTime _lastRefreshTime = DateTime.MinValue;
@@ -41,10 +42,8 @@ public sealed partial class MainPageViewModel : ObservableObject, IDisposable
         WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) =>
             MainThreadHelper.BeginInvoke(UpdateSelectedCityFromPreferences));
 
-        foreach (var city in _config.SeatFinder.Cities.OrderBy(city => city.DisplayName))
-        {
-            AvailableCities.Add(city);
-        }
+        AvailableCities = new ObservableCollection<CityConfig>(
+            _config.SeatFinder.Cities.OrderBy(city => city.DisplayName));
 
         UpdateSelectedCityFromPreferences();
 
@@ -57,7 +56,7 @@ public sealed partial class MainPageViewModel : ObservableObject, IDisposable
     public NavigationViewModel Navigation { get; }
     public SettingsViewModel Settings { get; }
 
-    public ObservableCollection<CityConfig> AvailableCities { get; } = new();
+    public ObservableCollection<CityConfig> AvailableCities { get; }
 
     public CityConfig? SelectedCity
     {
@@ -82,7 +81,7 @@ public sealed partial class MainPageViewModel : ObservableObject, IDisposable
 
     private void HandleAppResumed()
     {
-        if (DateTime.Now - _lastRefreshTime <= TimeSpan.FromMinutes(5))
+        if (DateTime.Now - _lastRefreshTime <= RefreshCooldown)
         {
             return;
         }

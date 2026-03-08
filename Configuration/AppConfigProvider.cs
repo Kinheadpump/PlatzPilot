@@ -12,7 +12,7 @@ namespace PlatzPilot.Configuration;
 public static class AppConfigProvider
 {
     private const string DefaultConfigFileName = "app_config.json";
-    private static readonly SemaphoreSlim LoadSemaphore = new(1, 1);
+    private static readonly object _syncObj = new();
     private static readonly JsonSerializerOptions SerializerOptions = CreateSerializerOptions();
 
     public static AppConfig Current { get; } = new();
@@ -20,39 +20,38 @@ public static class AppConfigProvider
 
     public static AppConfig LoadFromEmbeddedResource(string? resourceName = null)
     {
-        var lockTaken = false;
         try
         {
-            LoadSemaphore.Wait();
-            lockTaken = true;
-
-            if (IsLoaded)
+            lock (_syncObj)
             {
-                return Current;
-            }
+                if (IsLoaded)
+                {
+                    return Current;
+                }
 
-            var assembly = typeof(AppConfigProvider).Assembly;
-            var resolvedResourceName = string.IsNullOrWhiteSpace(resourceName)
-                ? assembly.GetManifestResourceNames()
-                    .FirstOrDefault(name => name.EndsWith(DefaultConfigFileName, StringComparison.OrdinalIgnoreCase))
-                : resourceName;
+                var assembly = typeof(AppConfigProvider).Assembly;
+                var resolvedResourceName = string.IsNullOrWhiteSpace(resourceName)
+                    ? assembly.GetManifestResourceNames()
+                        .FirstOrDefault(name => name.EndsWith(DefaultConfigFileName, StringComparison.OrdinalIgnoreCase))
+                    : resourceName;
 
-            if (string.IsNullOrWhiteSpace(resolvedResourceName))
-            {
-                return Current;
-            }
+                if (string.IsNullOrWhiteSpace(resolvedResourceName))
+                {
+                    return Current;
+                }
 
-            using var stream = assembly.GetManifestResourceStream(resolvedResourceName);
-            if (stream == null)
-            {
-                return Current;
-            }
+                using var stream = assembly.GetManifestResourceStream(resolvedResourceName);
+                if (stream == null)
+                {
+                    return Current;
+                }
 
-            var loaded = JsonSerializer.Deserialize<AppConfig>(stream, SerializerOptions);
-            if (loaded != null)
-            {
-                ApplyLoadedConfig(loaded);
-                IsLoaded = true;
+                var loaded = JsonSerializer.Deserialize<AppConfig>(stream, SerializerOptions);
+                if (loaded != null)
+                {
+                    ApplyLoadedConfig(loaded);
+                    IsLoaded = true;
+                }
             }
         }
         catch (Exception ex)
@@ -70,13 +69,6 @@ public static class AppConfigProvider
                 DefaultConfigFileName,
                 ex.Message));
         }
-        finally
-        {
-            if (lockTaken)
-            {
-                LoadSemaphore.Release();
-            }
-        }
 
         return Current;
     }
@@ -87,15 +79,14 @@ public static class AppConfigProvider
             ? DefaultConfigFileName
             : fileName;
 
-        var lockTaken = false;
         try
         {
-            await LoadSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-            lockTaken = true;
-
-            if (IsLoaded)
+            lock (_syncObj)
             {
-                return Current;
+                if (IsLoaded)
+                {
+                    return Current;
+                }
             }
 
             await using var stream = await FileSystem.OpenAppPackageFileAsync(resolvedFileName)
@@ -106,10 +97,18 @@ public static class AppConfigProvider
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            if (loaded != null)
+            lock (_syncObj)
             {
-                ApplyLoadedConfig(loaded);
-                IsLoaded = true;
+                if (IsLoaded)
+                {
+                    return Current;
+                }
+
+                if (loaded != null)
+                {
+                    ApplyLoadedConfig(loaded);
+                    IsLoaded = true;
+                }
             }
         }
         catch (Exception ex)
@@ -126,13 +125,6 @@ public static class AppConfigProvider
                 format,
                 resolvedFileName,
                 ex.Message));
-        }
-        finally
-        {
-            if (lockTaken)
-            {
-                LoadSemaphore.Release();
-            }
         }
 
         return Current;

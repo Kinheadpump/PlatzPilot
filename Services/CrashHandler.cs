@@ -86,13 +86,14 @@ public static class CrashHandler
 
     private static void OnUnhandledException(object? sender, UnhandledExceptionEventArgs e)
     {
-        if (e.ExceptionObject is Exception exception)
+        if (e.ExceptionObject is Exception ex)
         {
-            HandleException(exception);
+            HandleException(ex);
             return;
         }
 
-        HandleException(new Exception($"Unhandled exception object: {e.ExceptionObject}"));
+        var unhandledObjectText = e.ExceptionObject?.ToString() ?? "null";
+        HandleUnhandledObject(unhandledObjectText);
     }
 
     private static void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
@@ -111,6 +112,25 @@ public static class CrashHandler
         try
         {
             var payload = BuildCrashReport(exception);
+            var filePath = Path.Combine(FileSystem.Current.AppDataDirectory, CrashFileName);
+            File.WriteAllText(filePath, payload);
+        }
+        catch
+        {
+            // Swallow any exception to avoid cascading crashes during shutdown.
+        }
+    }
+
+    private static void HandleUnhandledObject(string unhandledObjectText)
+    {
+        if (Preferences.Default.Get(CrashReportOptOutKey, false))
+        {
+            return;
+        }
+
+        try
+        {
+            var payload = BuildUnhandledObjectReport(unhandledObjectText);
             var filePath = Path.Combine(FileSystem.Current.AppDataDirectory, CrashFileName);
             File.WriteAllText(filePath, payload);
         }
@@ -147,6 +167,34 @@ public static class CrashHandler
         return JsonSerializer.Serialize(payload);
     }
 
+    private static string BuildUnhandledObjectReport(string unhandledObjectText)
+    {
+        var truncatedText = Truncate(unhandledObjectText, 4000);
+        var payload = new
+        {
+            embeds = new[]
+            {
+                new
+                {
+                    title = "🚨 PlatzPilot Crash Report",
+                    description = $"**Unhandled Object:**\n```text\n{truncatedText}\n```",
+                    color = 16711680,
+                    timestamp = DateTime.UtcNow.ToString("O"),
+                    fields = new[]
+                    {
+                        new { name = "App Version", value = AppInfo.Current.VersionString, inline = true },
+                        new { name = "OS", value = $"{DeviceInfo.Current.Platform} {DeviceInfo.Current.VersionString}", inline = true },
+                        new { name = "Device", value = $"{DeviceInfo.Current.Manufacturer} {DeviceInfo.Current.Model}", inline = true },
+                        new { name = "Exception Type", value = "Unhandled non-Exception object", inline = false },
+                        new { name = "Message", value = Truncate(unhandledObjectText, 1000), inline = false }
+                    }
+                }
+            }
+        };
+
+        return JsonSerializer.Serialize(payload);
+    }
+
     private static string Truncate(string value, int maxLength)
     {
         if (value.Length <= maxLength)
@@ -161,6 +209,12 @@ public static class CrashHandler
     {
         using var httpClient = new HttpClient();
         using var content = new StringContent(crashText, Encoding.UTF8, "application/json");
+        // ==========================================
+        // 🚨 TODO: CRITICAL SECURITY VULNERABILITY
+        // DO NOT SHIP THIS WEBHOOK URL IN PRODUCTION!
+        // Move to a backend (Azure Function/AWS Lambda) 
+        // before releasing to the App Store/Play Store.
+        // ==========================================
         await httpClient.PostAsync(discordWebhookUrl, content);
     }
 
