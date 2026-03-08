@@ -9,7 +9,7 @@ namespace PlatzPilot.ViewModels;
 
 public sealed partial class MainPageViewModel : ObservableObject
 {
-    private const string OnboardingCompletedKey = "HasCompletedOnboarding";
+    private const string _onboardingCompletedKey = "HasCompletedOnboarding";
     private readonly IPreferencesService _preferencesService;
     private DateTime _lastRefreshTime = DateTime.MinValue;
 
@@ -30,7 +30,7 @@ public sealed partial class MainPageViewModel : ObservableObject
         SeatList.PropertyChanged += OnSeatListPropertyChanged;
         WeakReferenceMessenger.Default.Register<AppResumedMessage>(this, (_, _) => HandleAppResumed());
 
-        var hasCompletedOnboarding = _preferencesService.Get(OnboardingCompletedKey, false);
+        var hasCompletedOnboarding = _preferencesService.Get(_onboardingCompletedKey, false);
         IsOnboardingVisible = !hasCompletedOnboarding;
     }
 
@@ -77,7 +77,7 @@ public sealed partial class MainPageViewModel : ObservableObject
     [RelayCommand]
     private void CompleteOnboarding()
     {
-        _preferencesService.Set(OnboardingCompletedKey, true);
+        _preferencesService.Set(_onboardingCompletedKey, true);
         IsOnboardingVisible = false;
     }
 }
