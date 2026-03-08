@@ -1,18 +1,20 @@
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Linq;
+using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using PlatzPilot.Configuration;
 using PlatzPilot.Constants;
-using PlatzPilot.Messages;
-using PlatzPilot.Services;
-using System.Globalization;
-using System.Threading;
 using PlatzPilot.Localization;
+using PlatzPilot.Messages;
 using PlatzPilot.Resources.Strings;
+using PlatzPilot.Services;
 
 namespace PlatzPilot.ViewModels;
 
-public partial class SettingsViewModel : ObservableObject
+public partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private const string _crashReportOptOutKey = "CrashReportOptOut";
     private readonly AppConfig _config;
@@ -24,7 +26,9 @@ public partial class SettingsViewModel : ObservableObject
     private bool _isHapticFeedbackEnabled;
     private bool _isHideClosedLocations;
     private bool _isAboutOpen;
+    private CityConfig? _selectedCity;
     private int _debugClickCount = 0;
+    private bool _disposed;
 
     public bool IsColorBlindMode
     {
@@ -80,19 +84,43 @@ public partial class SettingsViewModel : ObservableObject
         set => SetProperty(ref _isAboutOpen, value);
     }
 
+    public bool IsKarlsruheSelected => string.Equals(SelectedCity?.Id, CityIds.Karlsruhe, StringComparison.OrdinalIgnoreCase);
+    public double CampusSouthOpacity => IsKarlsruheSelected ? 1.0 : 0.4;
+    public string CampusSouthLabel => IsKarlsruheSelected
+        ? AppResources.CampusSouthOnlyLabel
+        : $"{AppResources.CampusSouthOnlyLabel} (Nur Karlsruhe)";
+
+    public ObservableCollection<CityConfig> AvailableCities { get; } = new();
+
+    public CityConfig? SelectedCity
+    {
+        get => _selectedCity;
+        set
+        {
+            if (SetProperty(ref _selectedCity, value) && value != null)
+            {
+                _preferencesService.SelectedCityId = value.Id;
+                OnPropertyChanged(nameof(IsKarlsruheSelected));
+                OnPropertyChanged(nameof(CampusSouthOpacity));
+                OnPropertyChanged(nameof(CampusSouthLabel));
+                WeakReferenceMessenger.Default.Send(new CityChangedMessage());
+            }
+        }
+    }
+
     public bool IsCrashReportEnabled
     {
-        get => !Preferences.Default.Get(_crashReportOptOutKey, false);
+        get => !_preferencesService.Get(_crashReportOptOutKey, false);
         set
         {
             var shouldOptOut = !value;
-            var currentOptOut = Preferences.Default.Get(_crashReportOptOutKey, false);
+            var currentOptOut = _preferencesService.Get(_crashReportOptOutKey, false);
             if (shouldOptOut == currentOptOut)
             {
                 return;
             }
 
-            Preferences.Default.Set(_crashReportOptOutKey, shouldOptOut);
+            _preferencesService.Set(_crashReportOptOutKey, shouldOptOut);
             OnPropertyChanged();
             OnPropertyChanged(nameof(CrashReportIcon));
         }
@@ -126,13 +154,23 @@ public partial class SettingsViewModel : ObservableObject
         _isHapticFeedbackEnabled = _preferencesService.Get(_config.Preferences.HapticFeedbackKey, true);
         _isHideClosedLocations = _preferencesService.Get(_config.Preferences.HideClosedLocationsKey, false);
 
+        foreach (var city in _config.SeatFinder.Cities.OrderBy(city => city.DisplayName))
+        {
+            AvailableCities.Add(city);
+        }
+        UpdateSelectedCityFromPreferences();
+
         ApplySavedTheme();
 
         WeakReferenceMessenger.Default.Register<CrashReportSettingsChangedMessage>(this, (_, _) =>
-        {
-            OnPropertyChanged(nameof(IsCrashReportEnabled));
-            OnPropertyChanged(nameof(CrashReportIcon));
-        });
+            MainThreadHelper.BeginInvoke(() =>
+            {
+                OnPropertyChanged(nameof(IsCrashReportEnabled));
+                OnPropertyChanged(nameof(CrashReportIcon));
+            }));
+
+        WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) =>
+            MainThreadHelper.BeginInvoke(UpdateSelectedCityFromPreferences));
     }
 
     public string AboutAppName =>
@@ -217,7 +255,7 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        var selection = await MainThread.InvokeOnMainThreadAsync(() =>
+        var selection = await MainThreadHelper.InvokeAsync(() =>
             page.DisplayActionSheetAsync(
                 AppResources.LanguageSelectTitle,
                 AppResources.LanguageOptionCancel,
@@ -315,6 +353,24 @@ public partial class SettingsViewModel : ObservableObject
         };
     }
 
+    private void UpdateSelectedCityFromPreferences()
+    {
+        var selectedCityId = _preferencesService.SelectedCityId;
+        var city = AvailableCities.FirstOrDefault(c => string.Equals(c.Id, selectedCityId, StringComparison.OrdinalIgnoreCase))
+            ?? AvailableCities.FirstOrDefault();
+
+        if (ReferenceEquals(_selectedCity, city))
+        {
+            return;
+        }
+
+        _selectedCity = city;
+        OnPropertyChanged(nameof(SelectedCity));
+        OnPropertyChanged(nameof(IsKarlsruheSelected));
+        OnPropertyChanged(nameof(CampusSouthOpacity));
+        OnPropertyChanged(nameof(CampusSouthLabel));
+    }
+
     private async Task ShowDialogAsync(string title, string message)
     {
         var page = Application.Current?.Windows.FirstOrDefault()?.Page;
@@ -323,7 +379,7 @@ public partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        await MainThread.InvokeOnMainThreadAsync(async () =>
+        await MainThreadHelper.InvokeAsync(async () =>
         {
             await page.DisplayAlertAsync(title, message, AppResources.OkButtonLabel);
         });
@@ -335,6 +391,17 @@ public partial class SettingsViewModel : ObservableObject
         {
             IsAboutOpen = false;
         }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        WeakReferenceMessenger.Default.UnregisterAll(this);
     }
 }
 

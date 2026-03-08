@@ -1,12 +1,25 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace PlatzPilot.Configuration;
+
+public sealed class CityConfig
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("displayName")]
+    public string DisplayName { get; set; } = string.Empty;
+
+    [JsonPropertyName("locations")]
+    public List<string> Locations { get; set; } = [];
+}
 
 public sealed class SeatFinderConfig
 {
     public string BaseUrl { get; set; } = string.Empty;
     public string NowToken { get; set; } = string.Empty;
-    public List<string> Locations { get; set; } = [];
+    public List<CityConfig> Cities { get; set; } = new();
     public int WeeklyHistoryPoints { get; set; } = 2304;
     public int LiveSnapshotPoints { get; set; } = 1;
     public int LiveRefreshIntervalMinutes { get; set; } = 5;

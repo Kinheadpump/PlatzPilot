@@ -25,7 +25,11 @@ public sealed class SeatFinderServiceTests
         {
             BaseAddress = new Uri("https://example.test/")
         };
-        var service = new SeatFinderService(new StubHttpClientFactory(client), config, NullLogger<SeatFinderService>.Instance);
+        var service = new SeatFinderService(
+            new StubHttpClientFactory(client),
+            config,
+            new StubPreferencesService("karlsruhe"),
+            NullLogger<SeatFinderService>.Instance);
 
         var result = await service.FetchSeatDataAsync(limit: 1);
 
@@ -44,7 +48,11 @@ public sealed class SeatFinderServiceTests
         {
             BaseAddress = new Uri("https://example.test/")
         };
-        var service = new SeatFinderService(new StubHttpClientFactory(client), config, NullLogger<SeatFinderService>.Instance);
+        var service = new SeatFinderService(
+            new StubHttpClientFactory(client),
+            config,
+            new StubPreferencesService("karlsruhe"),
+            NullLogger<SeatFinderService>.Instance);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.FetchSeatDataAsync(limit: 1));
     }
@@ -55,9 +63,17 @@ public sealed class SeatFinderServiceTests
         {
             SeatFinder = new SeatFinderConfig
             {
-                BaseUrl = "https://example.test/seatfinder",
+                BaseUrl = "https://example.test/{0}/seatfinder",
                 NowToken = "now",
-                Locations = ["L1"],
+                Cities =
+                [
+                    new CityConfig
+                    {
+                        Id = "karlsruhe",
+                        DisplayName = "Karlsruhe",
+                        Locations = ["L1"]
+                    }
+                ],
                 CallbackPrefix = "PlatzPilot_",
                 LocationSeparator = ",",
                 QueryStartSeparator = "?",
@@ -101,6 +117,22 @@ public sealed class SeatFinderServiceTests
         }
 
         public HttpClient CreateClient(string name) => _client;
+    }
+
+    private sealed class StubPreferencesService : IPreferencesService
+    {
+        public StubPreferencesService(string selectedCityId)
+        {
+            SelectedCityId = selectedCityId;
+        }
+
+        public string SelectedCityId { get; set; }
+
+        public T Get<T>(string key, T defaultValue) => defaultValue;
+
+        public void Set<T>(string key, T value)
+        {
+        }
     }
 
     private sealed class StubHttpMessageHandler : HttpMessageHandler

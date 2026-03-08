@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Devices;
 using PlatzPilot.Configuration;
 using PlatzPilot.Resources.Strings;
+using PlatzPilot.Services;
 
 namespace PlatzPilot.ViewModels;
 
@@ -26,6 +27,7 @@ public sealed class FilterChangedEventArgs : EventArgs
 public partial class FilterViewModel : ObservableObject
 {
     private readonly AppConfig _config;
+    private readonly IPreferencesService _preferencesService;
     private bool _isUpdatingDateTimeSelection;
     private bool _suppressHaptics;
 
@@ -215,9 +217,10 @@ public partial class FilterViewModel : ObservableObject
         set => SetProperty(ref _isFilterActive, value);
     }
 
-    public FilterViewModel(AppConfig config)
+    public FilterViewModel(AppConfig config, IPreferencesService preferencesService)
     {
         _config = config;
+        _preferencesService = preferencesService;
         SortOptions =
         [
             _config.Sort.Relevance,
@@ -227,7 +230,7 @@ public partial class FilterViewModel : ObservableObject
         ];
 
         _minimumOpenHours = _config.UiNumbers.MinOpeningHours;
-        _selectedSortOption = Preferences.Default.Get(_config.Preferences.SortModeKey, _config.Sort.Relevance);
+        _selectedSortOption = _preferencesService.Get(_config.Preferences.SortModeKey, _config.Sort.Relevance);
 
         if (!SortOptions.Contains(_selectedSortOption))
         {
@@ -481,7 +484,7 @@ public partial class FilterViewModel : ObservableObject
             return;
         }
 
-        Preferences.Default.Set(_config.Preferences.SortModeKey, value);
+        _preferencesService.Set(_config.Preferences.SortModeKey, value);
         RaiseFiltersChanged(FilterChangeKind.ImmediateApply);
     }
 
@@ -497,7 +500,7 @@ public partial class FilterViewModel : ObservableObject
             return;
         }
 
-        if (!Preferences.Default.Get(_config.Preferences.HapticFeedbackKey, true))
+        if (!_preferencesService.Get(_config.Preferences.HapticFeedbackKey, true))
         {
             return;
         }

@@ -4,6 +4,14 @@ namespace PlatzPilot.Services;
 
 public sealed class PreferencesService : IPreferencesService
 {
+    private const string SelectedCityIdKey = "SelectedCityId";
+
+    public string SelectedCityId
+    {
+        get => Preferences.Default.Get(SelectedCityIdKey, "karlsruhe");
+        set => Preferences.Default.Set(SelectedCityIdKey, value);
+    }
+
     public T Get<T>(string key, T defaultValue)
     {
         return Preferences.Default.Get(key, defaultValue);

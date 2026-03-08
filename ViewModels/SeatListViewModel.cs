@@ -5,16 +5,19 @@ using System.Linq;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Networking;
 using PlatzPilot.Configuration;
+using PlatzPilot.Constants;
+using PlatzPilot.Messages;
 using PlatzPilot.Models;
 using PlatzPilot.Resources.Strings;
 using PlatzPilot.Services;
 
 namespace PlatzPilot.ViewModels;
 
-public partial class SeatListViewModel : ObservableObject
+public partial class SeatListViewModel : ObservableObject, IDisposable
 {
     private readonly AppConfig _config;
     private readonly SeatFinderService _seatFinderService;
@@ -22,6 +25,7 @@ public partial class SeatListViewModel : ObservableObject
     private readonly IStudySpaceFeatureService _studySpaceFeatureService;
     private readonly INavigationService _navigationService;
     private readonly MensaForecastService _mensaForecastService;
+    private readonly IPreferencesService _preferencesService;
     private readonly FilterViewModel _filters;
     private readonly NavigationViewModel _navigation;
     private readonly SettingsViewModel _settings;
@@ -30,10 +34,12 @@ public partial class SeatListViewModel : ObservableObject
     private UiLocation? _selectedLocation;
     private bool _isBusy;
     private bool _isRefreshing;
+    private bool _isSwitchingCity;
     private bool _isOfflineBannerVisible;
     private SafeArrivalRecommendation? _mensaSafeArrivalRecommendation;
     private string _mensaFluxLabel = string.Empty;
     private int _filteredLocationCount;
+    private bool _disposed;
 
     public ObservableCollection<UiLocation> UiLocations
     {
@@ -81,7 +87,24 @@ public partial class SeatListViewModel : ObservableObject
     public bool IsRefreshing
     {
         get => _isRefreshing;
-        set => SetProperty(ref _isRefreshing, value);
+        set
+        {
+            if (SetProperty(ref _isRefreshing, value))
+            {
+            }
+        }
+    }
+
+    public bool IsSwitchingCity
+    {
+        get => _isSwitchingCity;
+        set
+        {
+            if (SetProperty(ref _isSwitchingCity, value))
+            {
+                OnPropertyChanged(nameof(IsBlockingOverlayVisible));
+            }
+        }
     }
 
     public bool IsOfflineBannerVisible
@@ -133,12 +156,6 @@ public partial class SeatListViewModel : ObservableObject
     private string _lastLoadedBeforeParameter = string.Empty;
     private DateTime _lastLiveSnapshotFetchUtc = DateTime.MinValue;
     private CancellationTokenSource? _offlineBannerCts;
-    private static readonly HashSet<string> BadischeLandesbibliothekIds = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "BLB",
-        "WIS"
-    };
-    private const string BadischeLandesbibliothekKey = "BLB_WIS";
     public bool IsDataVisible => !IsBusy && UiLocations.Count > 0 && _navigation.IsMainContentVisible;
     public bool IsListEmpty => UiLocations.Count == 0 && _navigation.IsMainContentVisible;
     public bool IsHomeEmpty => UiLocations.Count == 0 && _navigation.CurrentTab == _config.Tabs.Home;
@@ -150,12 +167,15 @@ public partial class SeatListViewModel : ObservableObject
     public string ShowResultsButtonText =>
         string.Format(CultureInfo.CurrentCulture, AppResources.ShowResultsFormat, FilteredLocationCount);
 
+    public bool IsBlockingOverlayVisible => IsSwitchingCity;
+
     public SeatListViewModel(
         SeatFinderService seatFinderService,
         SafeArrivalForecastService safeArrivalForecastService,
         IStudySpaceFeatureService studySpaceFeatureService,
         INavigationService navigationService,
         MensaForecastService mensaForecastService,
+        IPreferencesService preferencesService,
         FilterViewModel filters,
         NavigationViewModel navigation,
         SettingsViewModel settings,
@@ -167,6 +187,7 @@ public partial class SeatListViewModel : ObservableObject
         _studySpaceFeatureService = studySpaceFeatureService;
         _navigationService = navigationService;
         _mensaForecastService = mensaForecastService;
+        _preferencesService = preferencesService;
         _filters = filters;
         _navigation = navigation;
         _settings = settings;
@@ -174,8 +195,39 @@ public partial class SeatListViewModel : ObservableObject
         _filters.FiltersChanged += OnFiltersChanged;
         _navigation.PropertyChanged += OnNavigationPropertyChanged;
         _settings.PropertyChanged += OnSettingsPropertyChanged;
+        WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) =>
+            MainThreadHelper.BeginInvoke(OnCityChanged));
 
         FilteredLocationCount = 0;
+    }
+
+    public void ResetCityData()
+    {
+        _hasLoadedWeeklyHistory = false;
+        _hasComputedSafeArrival = false;
+        _hasComputedChartSeries = false;
+
+        _historicalSeatDataByLocation = new Dictionary<string, List<SeatHistoryPoint>>(StringComparer.OrdinalIgnoreCase);
+        _spaceSafeArrivalCache.Clear();
+        _buildingSafeArrivalCache.Clear();
+        _spaceChartSeriesCache.Clear();
+        _buildingChartSeriesCache.Clear();
+
+        _allSpaces = new List<StudySpace>();
+        _lastLiveSnapshotFetchUtc = DateTime.MinValue;
+    }
+
+    private void OnCityChanged()
+    {
+        IsSwitchingCity = true;
+        ResetCityData();
+        if (LoadSpacesCommand.CanExecute(null))
+        {
+            LoadSpacesCommand.Execute(null);
+            return;
+        }
+
+        IsSwitchingCity = false;
     }
 
     [RelayCommand]
@@ -273,13 +325,13 @@ public partial class SeatListViewModel : ObservableObject
 
     private List<string> GetFavoriteNames()
     {
-        var json = Preferences.Default.Get(_config.Preferences.FavoritesKey, _config.Preferences.EmptyListJson);
+        var json = _preferencesService.Get(_config.Preferences.FavoritesKey, _config.Preferences.EmptyListJson);
         return JsonSerializer.Deserialize<List<string>>(json) ?? [];
     }
 
     private void SaveFavoriteNames(List<string> favorites)
     {
-        Preferences.Default.Set(_config.Preferences.FavoritesKey, JsonSerializer.Serialize(favorites));
+        _preferencesService.Set(_config.Preferences.FavoritesKey, JsonSerializer.Serialize(favorites));
     }
 
     [RelayCommand]
@@ -323,6 +375,25 @@ public partial class SeatListViewModel : ObservableObject
     {
         if (IsBusy)
         {
+            if (IsSwitchingCity)
+            {
+                IsSwitchingCity = false;
+            }
+
+            return;
+        }
+
+        // Blockiere das Laden, wenn das Onboarding noch nicht abgeschlossen ist
+        var onboardingKey = string.IsNullOrWhiteSpace(_config.Preferences.OnboardingCompletedKey)
+            ? "HasCompletedOnboarding"
+            : _config.Preferences.OnboardingCompletedKey;
+        if (!_preferencesService.Get(onboardingKey, false))
+        {
+            IsRefreshing = false;
+            if (IsSwitchingCity)
+            {
+                IsSwitchingCity = false;
+            }
             return;
         }
 
@@ -365,6 +436,11 @@ public partial class SeatListViewModel : ObservableObject
                 await ShowOfflineBannerAsync();
                 return;
             }
+            catch (Exception)
+            {
+                await ShowOfflineBannerAsync();
+                return;
+            }
 
             ApplySpaceFeatureOverrides(_allSpaces);
 
@@ -379,22 +455,23 @@ public partial class SeatListViewModel : ObservableObject
             var hasLoadedWeeklyHistory = _hasLoadedWeeklyHistory;
             var hasComputedSafeArrival = _hasComputedSafeArrival;
             var hasComputedChartSeries = _hasComputedChartSeries;
+            var currentSpaces = _allSpaces.ToList();
 
             await Task.Run(() =>
             {
                 if (shouldReloadWeeklyHistory)
                 {
-                    updatedHistory = BuildHistoricalSeatData(_allSpaces);
+                    updatedHistory = BuildHistoricalSeatData(currentSpaces);
                     hasLoadedWeeklyHistory = true;
                 }
                 else
                 {
-                    updatedHistory = AppendLatestSeatDataToHistory(_historicalSeatDataByLocation, _allSpaces);
+                    updatedHistory = AppendLatestSeatDataToHistory(_historicalSeatDataByLocation, currentSpaces);
                 }
 
                 if (shouldReloadWeeklyHistory || !hasComputedSafeArrival)
                 {
-                    var safeArrivalResult = BuildSafeArrivalCaches(updatedHistory);
+                    var safeArrivalResult = BuildSafeArrivalCaches(updatedHistory, currentSpaces);
                     spaceSafeArrivalCache = safeArrivalResult.SpaceCache;
                     buildingSafeArrivalCache = safeArrivalResult.BuildingCache;
                     safeArrivalReferenceDate = safeArrivalResult.ReferenceDate;
@@ -402,12 +479,12 @@ public partial class SeatListViewModel : ObservableObject
                 }
                 else
                 {
-                    ApplyCachedSafeArrivalRecommendations(spaceSafeArrivalCache);
+                    ApplyCachedSafeArrivalRecommendations(spaceSafeArrivalCache, currentSpaces);
                 }
 
                 if (shouldReloadWeeklyHistory || !hasComputedChartSeries)
                 {
-                    var chartSeriesResult = BuildChartSeriesCaches(updatedHistory);
+                    var chartSeriesResult = BuildChartSeriesCaches(updatedHistory, currentSpaces);
                     spaceChartSeriesCache = chartSeriesResult.SpaceCache;
                     buildingChartSeriesCache = chartSeriesResult.BuildingCache;
                     chartReferenceTime = chartSeriesResult.ReferenceTime;
@@ -418,7 +495,7 @@ public partial class SeatListViewModel : ObservableObject
                     ? DateTime.Today
                     : safeArrivalReferenceDate;
                 mensaResult = _mensaForecastService.BuildForecast(
-                    _allSpaces,
+                    currentSpaces,
                     updatedHistory,
                     forecastReferenceDate,
                     _filters.GetReferenceDateTime(),
@@ -447,6 +524,7 @@ public partial class SeatListViewModel : ObservableObject
         {
             IsBusy = false;
             IsRefreshing = false;
+            IsSwitchingCity = false;
         }
 
         ApplyFilter();
@@ -532,7 +610,7 @@ public partial class SeatListViewModel : ObservableObject
             return;
         }
 
-        MainThread.BeginInvokeOnMainThread(async () => await GoToDetailAsync(value));
+        MainThreadHelper.BeginInvoke(async () => await GoToDetailAsync(value));
         SelectedLocation = null;
     }
 
@@ -634,13 +712,15 @@ public partial class SeatListViewModel : ObservableObject
         return historyByLocation;
     }
 
-    private SafeArrivalCacheResult BuildSafeArrivalCaches(IReadOnlyDictionary<string, List<SeatHistoryPoint>> historyByLocation)
+    private SafeArrivalCacheResult BuildSafeArrivalCaches(
+        IReadOnlyDictionary<string, List<SeatHistoryPoint>> historyByLocation,
+        List<StudySpace> spaces)
     {
         var referenceDate = DateTime.Today;
         var spaceCache = new Dictionary<string, SafeArrivalRecommendation?>(StringComparer.OrdinalIgnoreCase);
         var buildingCache = new Dictionary<string, SafeArrivalRecommendation?>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var space in _allSpaces)
+        foreach (var space in spaces)
         {
             if (!historyByLocation.TryGetValue(space.Id, out var history) || history.Count == 0)
             {
@@ -652,7 +732,7 @@ public partial class SeatListViewModel : ObservableObject
             spaceCache[space.Id] = space.SafeArrivalRecommendation;
         }
 
-        foreach (var group in _allSpaces.GroupBy(GetBuildingGroupKey))
+        foreach (var group in spaces.GroupBy(GetBuildingGroupKey))
         {
             var buildingKey = group.Key?.Trim();
             var spacesInBuilding = group.ToList();
@@ -668,14 +748,16 @@ public partial class SeatListViewModel : ObservableObject
         return new SafeArrivalCacheResult(referenceDate, spaceCache, buildingCache);
     }
 
-    private void ApplyCachedSafeArrivalRecommendations(IReadOnlyDictionary<string, SafeArrivalRecommendation?> cache)
+    private void ApplyCachedSafeArrivalRecommendations(
+        IReadOnlyDictionary<string, SafeArrivalRecommendation?> cache,
+        List<StudySpace> spaces)
     {
         if (cache.Count == 0)
         {
             return;
         }
 
-        foreach (var space in _allSpaces)
+        foreach (var space in spaces)
         {
             if (cache.TryGetValue(space.Id, out var recommendation))
             {
@@ -697,12 +779,14 @@ public partial class SeatListViewModel : ObservableObject
         }
     }
 
-    private ChartSeriesCacheResult BuildChartSeriesCaches(IReadOnlyDictionary<string, List<SeatHistoryPoint>> historyByLocation)
+    private ChartSeriesCacheResult BuildChartSeriesCaches(
+        IReadOnlyDictionary<string, List<SeatHistoryPoint>> historyByLocation,
+        List<StudySpace> spaces)
     {
         var spaceCache = new Dictionary<string, List<float>>(StringComparer.OrdinalIgnoreCase);
         var buildingCache = new Dictionary<string, List<float>>(StringComparer.OrdinalIgnoreCase);
 
-        if (_allSpaces.Count == 0)
+        if (spaces.Count == 0)
         {
             return new ChartSeriesCacheResult(DateTime.MinValue, spaceCache, buildingCache);
         }
@@ -712,7 +796,7 @@ public partial class SeatListViewModel : ObservableObject
         var endTime = NormalizeToChartBin(DateTime.Now, binMinutes);
         var startTime = endTime.AddHours(-chartConfig.HistoryHours);
 
-        foreach (var space in _allSpaces)
+        foreach (var space in spaces)
         {
             if (!historyByLocation.TryGetValue(space.Id, out var history) || history.Count == 0)
             {
@@ -726,7 +810,7 @@ public partial class SeatListViewModel : ObservableObject
             }
         }
 
-        foreach (var group in _allSpaces.GroupBy(GetBuildingGroupKey))
+        foreach (var group in spaces.GroupBy(GetBuildingGroupKey))
         {
             var buildingKey = group.Key?.Trim();
             var spacesInBuilding = group.ToList();
@@ -931,22 +1015,7 @@ public partial class SeatListViewModel : ObservableObject
             return;
         }
 
-        var filteredSpaces = ApplySpaceFilters(GetSpacesWithMensa());
-        var results = MapSpacesToUiLocations(filteredSpaces);
-
-        if (_navigation.CurrentTab == _config.Tabs.Home && _settings.IsHideClosedLocations)
-        {
-            results = results
-                .Where(location => location.IsOpen || location.IsStudentOnlyClosed)
-                .ToList();
-        }
-
-        if (_navigation.CurrentTab == _config.Tabs.Favorites)
-        {
-            results = results.Where(location => location.IsFavorite).ToList();
-        }
-
-        var sortedResults = SortLocations(results);
+        var sortedResults = BuildFilteredUiLocations();
         ReplaceUiLocations(sortedResults);
     }
 
@@ -958,10 +1027,13 @@ public partial class SeatListViewModel : ObservableObject
         }
 
         var spaces = new List<StudySpace>(_allSpaces);
-        var mensaSpace = _mensaForecastService.BuildVirtualSpace(_mensaForecastCache, _filters.GetReferenceDateTime());
-        if (mensaSpace != null)
+        if (string.Equals(_preferencesService.SelectedCityId, CityIds.Karlsruhe, StringComparison.OrdinalIgnoreCase))
         {
-            spaces.Add(mensaSpace);
+            var mensaSpace = _mensaForecastService.BuildVirtualSpace(_mensaForecastCache, _filters.GetReferenceDateTime());
+            if (mensaSpace != null)
+            {
+                spaces.Add(mensaSpace);
+            }
         }
 
         return spaces;
@@ -980,6 +1052,11 @@ public partial class SeatListViewModel : ObservableObject
             return;
         }
 
+        FilteredLocationCount = BuildFilteredUiLocations().Count;
+    }
+
+    private List<UiLocation> BuildFilteredUiLocations()
+    {
         var filteredSpaces = ApplySpaceFilters(GetSpacesWithMensa());
         var results = MapSpacesToUiLocations(filteredSpaces);
 
@@ -995,7 +1072,7 @@ public partial class SeatListViewModel : ObservableObject
             results = results.Where(location => location.IsFavorite).ToList();
         }
 
-        FilteredLocationCount = SortLocations(results).Count;
+        return SortLocations(results);
     }
 
     private void ShowSkeletonLocationsIfNeeded()
@@ -1295,9 +1372,10 @@ public partial class SeatListViewModel : ObservableObject
 
     private string GetBuildingGroupKey(StudySpace space)
     {
-        if (BadischeLandesbibliothekIds.Contains(space.Id))
+        if (_spaceFeaturesById.TryGetValue(space.Id, out var features) &&
+            !string.IsNullOrWhiteSpace(features.BuildingGroupKey))
         {
-            return BadischeLandesbibliothekKey;
+            return features.BuildingGroupKey.Trim();
         }
 
         return space.Building ?? string.Empty;
@@ -1386,12 +1464,11 @@ public partial class SeatListViewModel : ObservableObject
     private UiLocation CreateGroupedLocation(string buildingKey, List<StudySpace> spaces, List<string> favoriteNames, DateTime referenceTime)
     {
         var normalizedBuildingKey = buildingKey.Trim();
-        var isBadischeLandesbibliothek = string.Equals(normalizedBuildingKey, BadischeLandesbibliothekKey, StringComparison.OrdinalIgnoreCase);
-        var displayName = _config.BuildingNames.TryGetValue(normalizedBuildingKey, out var mappedName)
-            ? mappedName
-            : isBadischeLandesbibliothek
-                ? AppResources.BuildingName_BadischeLandesbibliothek
-                : string.Format(CultureInfo.CurrentCulture, AppResources.BuildingFormat, normalizedBuildingKey);
+        var hasMappedName = _config.BuildingNames.TryGetValue(normalizedBuildingKey, out var mappedName);
+        var hasDisplayName = hasMappedName && !string.IsNullOrWhiteSpace(mappedName);
+        var displayName = hasDisplayName
+            ? mappedName!
+            : string.Format(CultureInfo.CurrentCulture, AppResources.BuildingFormat, normalizedBuildingKey);
 
         var buildingRecommendation = GetCachedBuildingRecommendation(normalizedBuildingKey);
         var series = GetChartSeriesForBuilding(normalizedBuildingKey);
@@ -1403,8 +1480,8 @@ public partial class SeatListViewModel : ObservableObject
             Name = displayName,
             TileName = displayName,
             Subtitle = string.Format(CultureInfo.CurrentCulture, AppResources.GroupedLocationSubtitleFormat, spaces.Count),
-            BuildingNumber = isBadischeLandesbibliothek ? null : normalizedBuildingKey,
-            BuildingDisplayOverride = isBadischeLandesbibliothek ? displayName : null,
+            BuildingNumber = hasDisplayName ? null : normalizedBuildingKey,
+            BuildingDisplayOverride = hasDisplayName ? displayName : null,
             TotalSeats = spaces.Sum(space => space.TotalSeats),
             FreeSeats = spaces.Sum(space => space.FreeSeats),
             OccupiedSeats = spaces.Sum(space => space.OccupiedSeats),
@@ -1675,6 +1752,22 @@ public partial class SeatListViewModel : ObservableObject
         }
 
         await _navigationService.NavigateToDetailAsync(selectedLocation);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _filters.FiltersChanged -= OnFiltersChanged;
+        _navigation.PropertyChanged -= OnNavigationPropertyChanged;
+        _settings.PropertyChanged -= OnSettingsPropertyChanged;
+        _offlineBannerCts?.Cancel();
+        _offlineBannerCts?.Dispose();
+        WeakReferenceMessenger.Default.UnregisterAll(this);
     }
 
 }
