@@ -264,17 +264,6 @@ public partial class SettingsViewModel : ObservableObject
         await ShowDialogAsync(AppResources.LicensesTitle, AppResources.LicensesText);
     }
 
-    [RelayCommand]
-    private void TriggerTestCrash()
-    {
-        // Wirft den Fehler auf einem Hintergrund-Thread. 
-        // Das kann MAUI nicht ignorieren -> Sofortiger, harter Crash!
-        System.Threading.ThreadPool.QueueUserWorkItem(state => 
-        {
-            throw new Exception("Dies ist ein manueller Test-Crash für Discord!");
-        });
-    }
-
     private void OnIsColorBlindModeChanged(bool value)
     {
         _preferencesService.Set(_config.Preferences.ColorBlindModeKey, value);
