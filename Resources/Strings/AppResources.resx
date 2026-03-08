@@ -398,4 +398,20 @@ Diese Schriftart wird über Google Fonts bereitgestellt und ist lizenziert unter
   <data name="BuildingName_BadischeLandesbibliothek" xml:space="preserve">
     <value>Badische Landesbibliothek</value>
   </data>
-<data name="LanguageLabel" xml:space="preserve"><value>Sprache</value></data><data name="LanguageSelectTitle" xml:space="preserve"><value>Sprache auswählen</value></data><data name="LanguageOptionGerman" xml:space="preserve"><value>Deutsch</value></data><data name="LanguageOptionEnglish" xml:space="preserve"><value>Englisch</value></data><data name="LanguageOptionCancel" xml:space="preserve"><value>Abbrechen</value></data></root>
+<data name="LanguageLabel" xml:space="preserve"><value>Sprache</value></data><data name="LanguageSelectTitle" xml:space="preserve"><value>Sprache auswählen</value></data><data name="LanguageOptionGerman" xml:space="preserve"><value>Deutsch</value></data><data name="LanguageOptionEnglish" xml:space="preserve"><value>Englisch</value></data><data name="LanguageOptionCancel" xml:space="preserve"><value>Abbrechen</value></data>
+  <data name="CrashReportTitle" xml:space="preserve">
+    <value>Absturzbericht senden?</value>
+  </data>
+  <data name="CrashReportNo" xml:space="preserve">
+    <value>Nein</value>
+  </data>
+  <data name="CrashReportSend" xml:space="preserve">
+    <value>Ja, senden</value>
+  </data>
+  <data name="CrashReportNeverAsk" xml:space="preserve">
+    <value>Nie wieder fragen</value>
+  </data>
+  <data name="SettingsCrashReportLabel" xml:space="preserve">
+    <value>Nach Absturzbericht fragen</value>
+  </data>
+</root>

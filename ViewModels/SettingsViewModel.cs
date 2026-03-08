@@ -1,6 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using PlatzPilot.Configuration;
+using PlatzPilot.Constants;
+using PlatzPilot.Messages;
 using PlatzPilot.Services;
 using System.Globalization;
 using PlatzPilot.Localization;
@@ -10,6 +13,7 @@ namespace PlatzPilot.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
+    private const string _crashReportOptOutKey = "CrashReportOptOut";
     private readonly AppConfig _config;
     private readonly INavigationService _navigationService;
     private readonly IPreferencesService _preferencesService;
@@ -74,6 +78,38 @@ public partial class SettingsViewModel : ObservableObject
         set => SetProperty(ref _isAboutOpen, value);
     }
 
+    public bool IsCrashReportEnabled
+    {
+        get => !Preferences.Default.Get(_crashReportOptOutKey, false);
+        set
+        {
+            var shouldOptOut = !value;
+            var currentOptOut = Preferences.Default.Get(_crashReportOptOutKey, false);
+            if (shouldOptOut == currentOptOut)
+            {
+                return;
+            }
+
+            Preferences.Default.Set(_crashReportOptOutKey, shouldOptOut);
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CrashReportIcon));
+        }
+    }
+
+    public string CrashReportIcon
+    {
+        get
+        {
+            var isDarkTheme = Application.Current?.RequestedTheme == AppTheme.Dark;
+            if (IsCrashReportEnabled)
+            {
+                return isDarkTheme ? AppAssets.CampusSouthOnIconDark : AppAssets.CampusSouthOnIconLight;
+            }
+
+            return isDarkTheme ? AppAssets.CampusSouthOffIconDark : AppAssets.CampusSouthOffIconLight;
+        }
+    }
+
     public SettingsViewModel(
         AppConfig config,
         INavigationService navigationService,
@@ -89,6 +125,12 @@ public partial class SettingsViewModel : ObservableObject
         _isHideClosedLocations = _preferencesService.Get(_config.Preferences.HideClosedLocationsKey, false);
 
         ApplySavedTheme();
+
+        WeakReferenceMessenger.Default.Register<CrashReportSettingsChangedMessage>(this, (_, _) =>
+        {
+            OnPropertyChanged(nameof(IsCrashReportEnabled));
+            OnPropertyChanged(nameof(CrashReportIcon));
+        });
     }
 
     public string AboutAppName =>
@@ -118,6 +160,7 @@ public partial class SettingsViewModel : ObservableObject
 
         Application.Current.UserAppTheme = nextTheme;
         _preferencesService.Set(_config.Preferences.ThemeKey, nextTheme == AppTheme.Light ? _config.Theme.Light : _config.Theme.Dark);
+        OnPropertyChanged(nameof(CrashReportIcon));
     }
 
     [RelayCommand]
@@ -142,6 +185,12 @@ public partial class SettingsViewModel : ObservableObject
     private void ToggleHideClosedLocations()
     {
         IsHideClosedLocations = !IsHideClosedLocations;
+    }
+
+    [RelayCommand]
+    private void ToggleCrashReport()
+    {
+        IsCrashReportEnabled = !IsCrashReportEnabled;
     }
 
     [RelayCommand]
@@ -213,6 +262,17 @@ public partial class SettingsViewModel : ObservableObject
     {
         CloseAboutIfOpen();
         await ShowDialogAsync(AppResources.LicensesTitle, AppResources.LicensesText);
+    }
+
+    [RelayCommand]
+    private void TriggerTestCrash()
+    {
+        // Wirft den Fehler auf einem Hintergrund-Thread. 
+        // Das kann MAUI nicht ignorieren -> Sofortiger, harter Crash!
+        System.Threading.ThreadPool.QueueUserWorkItem(state => 
+        {
+            throw new Exception("Dies ist ein manueller Test-Crash für Discord!");
+        });
     }
 
     private void OnIsColorBlindModeChanged(bool value)
