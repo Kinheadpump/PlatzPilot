@@ -27,6 +27,22 @@ jobs:
     - name: 🛠️ MAUI Workload installieren
       run: dotnet workload install maui-android ios maccatalyst
 
+    - name: Create production app_config.json
+      shell: pwsh
+      env:
+        DISCORD_CRASH_WEBHOOK: ${{ secrets.DISCORD_CRASH_WEBHOOK }}
+      run: |
+        $examplePath = "PlatzPilot/Resources/Raw/app_config.json.example"
+        $outputPath = "PlatzPilot/Resources/Raw/app_config.json"
+        if (-not (Test-Path $examplePath)) {
+          $examplePath = "Resources/Raw/app_config.json.example"
+          $outputPath = "Resources/Raw/app_config.json"
+        }
+
+        $template = Get-Content $examplePath -Raw | ConvertFrom-Json
+        $template.urls.discordCrashWebhook = $env:DISCORD_CRASH_WEBHOOK
+        $template | ConvertTo-Json -Depth 20 | Set-Content $outputPath
+
     - name: 🧪 Unit Tests ausführen
       shell: pwsh
       run: .\scripts\run_tests.ps1
