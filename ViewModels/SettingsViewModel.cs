@@ -14,7 +14,7 @@ using PlatzPilot.Services;
 
 namespace PlatzPilot.ViewModels;
 
-public partial class SettingsViewModel : ObservableObject
+public partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private const string _crashReportOptOutKey = "CrashReportOptOut";
     private readonly AppConfig _config;
@@ -28,6 +28,7 @@ public partial class SettingsViewModel : ObservableObject
     private bool _isAboutOpen;
     private CityConfig? _selectedCity;
     private int _debugClickCount = 0;
+    private bool _disposed;
 
     public bool IsColorBlindMode
     {
@@ -83,7 +84,7 @@ public partial class SettingsViewModel : ObservableObject
         set => SetProperty(ref _isAboutOpen, value);
     }
 
-    public bool IsKarlsruheSelected => string.Equals(SelectedCity?.Id, "karlsruhe", StringComparison.OrdinalIgnoreCase);
+    public bool IsKarlsruheSelected => string.Equals(SelectedCity?.Id, CityIds.Karlsruhe, StringComparison.OrdinalIgnoreCase);
     public double CampusSouthOpacity => IsKarlsruheSelected ? 1.0 : 0.4;
     public string CampusSouthLabel => IsKarlsruheSelected
         ? AppResources.CampusSouthOnlyLabel
@@ -162,12 +163,14 @@ public partial class SettingsViewModel : ObservableObject
         ApplySavedTheme();
 
         WeakReferenceMessenger.Default.Register<CrashReportSettingsChangedMessage>(this, (_, _) =>
-        {
-            OnPropertyChanged(nameof(IsCrashReportEnabled));
-            OnPropertyChanged(nameof(CrashReportIcon));
-        });
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                OnPropertyChanged(nameof(IsCrashReportEnabled));
+                OnPropertyChanged(nameof(CrashReportIcon));
+            }));
 
-        WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) => UpdateSelectedCityFromPreferences());
+        WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) =>
+            MainThread.BeginInvokeOnMainThread(UpdateSelectedCityFromPreferences));
     }
 
     public string AboutAppName =>
@@ -388,6 +391,17 @@ public partial class SettingsViewModel : ObservableObject
         {
             IsAboutOpen = false;
         }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        WeakReferenceMessenger.Default.UnregisterAll(this);
     }
 }
 

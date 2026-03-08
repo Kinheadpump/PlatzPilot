@@ -10,13 +10,14 @@ using PlatzPilot.Services;
 
 namespace PlatzPilot.ViewModels;
 
-public sealed partial class MainPageViewModel : ObservableObject
+public sealed partial class MainPageViewModel : ObservableObject, IDisposable
 {
     private const string _onboardingCompletedKey = "HasCompletedOnboarding";
     private readonly AppConfig _config;
     private readonly IPreferencesService _preferencesService;
     private DateTime _lastRefreshTime = DateTime.MinValue;
     private CityConfig? _selectedCity;
+    private bool _disposed;
 
     public MainPageViewModel(
         SeatListViewModel seatList,
@@ -35,8 +36,10 @@ public sealed partial class MainPageViewModel : ObservableObject
         Settings = settings;
 
         SeatList.PropertyChanged += OnSeatListPropertyChanged;
-        WeakReferenceMessenger.Default.Register<AppResumedMessage>(this, (_, _) => HandleAppResumed());
-        WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) => UpdateSelectedCityFromPreferences());
+        WeakReferenceMessenger.Default.Register<AppResumedMessage>(this, (_, _) =>
+            MainThread.BeginInvokeOnMainThread(HandleAppResumed));
+        WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) =>
+            MainThread.BeginInvokeOnMainThread(UpdateSelectedCityFromPreferences));
 
         foreach (var city in _config.SeatFinder.Cities.OrderBy(city => city.DisplayName))
         {
@@ -130,5 +133,17 @@ public sealed partial class MainPageViewModel : ObservableObject
 
         _selectedCity = city;
         OnPropertyChanged(nameof(SelectedCity));
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        SeatList.PropertyChanged -= OnSeatListPropertyChanged;
+        WeakReferenceMessenger.Default.UnregisterAll(this);
     }
 }

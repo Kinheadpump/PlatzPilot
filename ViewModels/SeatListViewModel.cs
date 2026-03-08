@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Networking;
 using PlatzPilot.Configuration;
+using PlatzPilot.Constants;
 using PlatzPilot.Messages;
 using PlatzPilot.Models;
 using PlatzPilot.Resources.Strings;
@@ -16,7 +17,7 @@ using PlatzPilot.Services;
 
 namespace PlatzPilot.ViewModels;
 
-public partial class SeatListViewModel : ObservableObject
+public partial class SeatListViewModel : ObservableObject, IDisposable
 {
     private readonly AppConfig _config;
     private readonly SeatFinderService _seatFinderService;
@@ -38,6 +39,7 @@ public partial class SeatListViewModel : ObservableObject
     private SafeArrivalRecommendation? _mensaSafeArrivalRecommendation;
     private string _mensaFluxLabel = string.Empty;
     private int _filteredLocationCount;
+    private bool _disposed;
 
     public ObservableCollection<UiLocation> UiLocations
     {
@@ -193,7 +195,8 @@ public partial class SeatListViewModel : ObservableObject
         _filters.FiltersChanged += OnFiltersChanged;
         _navigation.PropertyChanged += OnNavigationPropertyChanged;
         _settings.PropertyChanged += OnSettingsPropertyChanged;
-        WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) => OnCityChanged());
+        WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) =>
+            MainThread.BeginInvokeOnMainThread(OnCityChanged));
 
         FilteredLocationCount = 0;
     }
@@ -221,7 +224,10 @@ public partial class SeatListViewModel : ObservableObject
         if (LoadSpacesCommand.CanExecute(null))
         {
             LoadSpacesCommand.Execute(null);
+            return;
         }
+
+        IsSwitchingCity = false;
     }
 
     [RelayCommand]
@@ -369,13 +375,25 @@ public partial class SeatListViewModel : ObservableObject
     {
         if (IsBusy)
         {
+            if (IsSwitchingCity)
+            {
+                IsSwitchingCity = false;
+            }
+
             return;
         }
 
         // Blockiere das Laden, wenn das Onboarding noch nicht abgeschlossen ist
-        if (!_preferencesService.Get("HasCompletedOnboarding", false))
+        var onboardingKey = string.IsNullOrWhiteSpace(_config.Preferences.OnboardingCompletedKey)
+            ? "HasCompletedOnboarding"
+            : _config.Preferences.OnboardingCompletedKey;
+        if (!_preferencesService.Get(onboardingKey, false))
         {
             IsRefreshing = false;
+            if (IsSwitchingCity)
+            {
+                IsSwitchingCity = false;
+            }
             return;
         }
 
@@ -418,6 +436,11 @@ public partial class SeatListViewModel : ObservableObject
                 await ShowOfflineBannerAsync();
                 return;
             }
+            catch (Exception)
+            {
+                await ShowOfflineBannerAsync();
+                return;
+            }
 
             ApplySpaceFeatureOverrides(_allSpaces);
 
@@ -456,7 +479,7 @@ public partial class SeatListViewModel : ObservableObject
                 }
                 else
                 {
-                    ApplyCachedSafeArrivalRecommendations(spaceSafeArrivalCache);
+                    ApplyCachedSafeArrivalRecommendations(spaceSafeArrivalCache, currentSpaces);
                 }
 
                 if (shouldReloadWeeklyHistory || !hasComputedChartSeries)
@@ -725,14 +748,16 @@ public partial class SeatListViewModel : ObservableObject
         return new SafeArrivalCacheResult(referenceDate, spaceCache, buildingCache);
     }
 
-    private void ApplyCachedSafeArrivalRecommendations(IReadOnlyDictionary<string, SafeArrivalRecommendation?> cache)
+    private void ApplyCachedSafeArrivalRecommendations(
+        IReadOnlyDictionary<string, SafeArrivalRecommendation?> cache,
+        List<StudySpace> spaces)
     {
         if (cache.Count == 0)
         {
             return;
         }
 
-        foreach (var space in _allSpaces)
+        foreach (var space in spaces)
         {
             if (cache.TryGetValue(space.Id, out var recommendation))
             {
@@ -990,22 +1015,7 @@ public partial class SeatListViewModel : ObservableObject
             return;
         }
 
-        var filteredSpaces = ApplySpaceFilters(GetSpacesWithMensa());
-        var results = MapSpacesToUiLocations(filteredSpaces);
-
-        if (_navigation.CurrentTab == _config.Tabs.Home && _settings.IsHideClosedLocations)
-        {
-            results = results
-                .Where(location => location.IsOpen || location.IsStudentOnlyClosed)
-                .ToList();
-        }
-
-        if (_navigation.CurrentTab == _config.Tabs.Favorites)
-        {
-            results = results.Where(location => location.IsFavorite).ToList();
-        }
-
-        var sortedResults = SortLocations(results);
+        var sortedResults = BuildFilteredUiLocations();
         ReplaceUiLocations(sortedResults);
     }
 
@@ -1017,7 +1027,7 @@ public partial class SeatListViewModel : ObservableObject
         }
 
         var spaces = new List<StudySpace>(_allSpaces);
-        if (string.Equals(_preferencesService.SelectedCityId, "karlsruhe", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(_preferencesService.SelectedCityId, CityIds.Karlsruhe, StringComparison.OrdinalIgnoreCase))
         {
             var mensaSpace = _mensaForecastService.BuildVirtualSpace(_mensaForecastCache, _filters.GetReferenceDateTime());
             if (mensaSpace != null)
@@ -1042,6 +1052,11 @@ public partial class SeatListViewModel : ObservableObject
             return;
         }
 
+        FilteredLocationCount = BuildFilteredUiLocations().Count;
+    }
+
+    private List<UiLocation> BuildFilteredUiLocations()
+    {
         var filteredSpaces = ApplySpaceFilters(GetSpacesWithMensa());
         var results = MapSpacesToUiLocations(filteredSpaces);
 
@@ -1057,7 +1072,7 @@ public partial class SeatListViewModel : ObservableObject
             results = results.Where(location => location.IsFavorite).ToList();
         }
 
-        FilteredLocationCount = SortLocations(results).Count;
+        return SortLocations(results);
     }
 
     private void ShowSkeletonLocationsIfNeeded()
@@ -1737,6 +1752,22 @@ public partial class SeatListViewModel : ObservableObject
         }
 
         await _navigationService.NavigateToDetailAsync(selectedLocation);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _filters.FiltersChanged -= OnFiltersChanged;
+        _navigation.PropertyChanged -= OnNavigationPropertyChanged;
+        _settings.PropertyChanged -= OnSettingsPropertyChanged;
+        _offlineBannerCts?.Cancel();
+        _offlineBannerCts?.Dispose();
+        WeakReferenceMessenger.Default.UnregisterAll(this);
     }
 
 }
