@@ -698,13 +698,6 @@
                     </Border>
                 </Grid>
 
-                <Button Text="💥 TEST CRASH AUSLÖSEN"
-                        Command="{Binding Settings.TriggerTestCrashCommand}"
-                        BackgroundColor="Red"
-                        TextColor="White"
-                        FontAttributes="Bold"
-                        HeightRequest="48"
-                        Margin="0,10,0,0" />
             </VerticalStackLayout>
         </ScrollView>
 
