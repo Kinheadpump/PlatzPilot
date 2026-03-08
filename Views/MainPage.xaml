@@ -43,9 +43,10 @@
                       ColumnSpacing="8"
                       VerticalOptions="Center">
                     <Label Grid.Column="0"
-                           Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[HomeTitle], x:DataType=loc:LocalizationResourceManager}"
-                           FontSize="22"
+                           Text="{Binding SelectedCity.DisplayName}"
                            FontAttributes="Bold"
+                           FontSize="24"
+                           HorizontalOptions="Start"
                            TextColor="{AppThemeBinding Light=#6b7280, Dark=#cbd5e1}"
                            VerticalOptions="Center"
                            IsVisible="{Binding Filters.IsSearchInactive}" />
@@ -458,8 +459,23 @@
                             StrokeShape="RoundRectangle 20"
                             StrokeThickness="1">
                         <VerticalStackLayout Spacing="12">
-                            <Grid ColumnDefinitions="*, Auto">
-                                <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[CampusSouthOnlyLabel], x:DataType=loc:LocalizationResourceManager}"
+                            <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[CityLabel], x:DataType=loc:LocalizationResourceManager}"
+                                   VerticalOptions="Center"
+                                   FontAttributes="Bold" />
+
+                            <Picker ItemsSource="{Binding Settings.AvailableCities}"
+                                    ItemDisplayBinding="{Binding DisplayName}"
+                                    SelectedItem="{Binding Settings.SelectedCity}"
+                                    Title="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[CitySelectTitle], x:DataType=loc:LocalizationResourceManager}"
+                                    FontAttributes="Bold" />
+
+                            <BoxView HeightRequest="1"
+                                     Color="{AppThemeBinding Light=#ededed, Dark=#2a2a2a}" />
+
+                            <Grid ColumnDefinitions="*, Auto"
+                                  IsEnabled="{Binding Settings.IsKarlsruheSelected}"
+                                  Opacity="{Binding Settings.CampusSouthOpacity}">
+                                <Label Text="{Binding Settings.CampusSouthLabel}"
                                        VerticalOptions="Center"
                                        FontAttributes="Bold" />
 
@@ -1176,6 +1192,13 @@
                                    FontSize="22"
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
+
+                            <Picker ItemsSource="{Binding AvailableCities}"
+                                    ItemDisplayBinding="{Binding DisplayName}"
+                                    SelectedItem="{Binding SelectedCity}"
+                                    Title="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[CitySelectTitle], x:DataType=loc:LocalizationResourceManager}"
+                                    FontAttributes="Bold"
+                                    TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
 
                             <Grid ColumnDefinitions="Auto,*"
                                   ColumnSpacing="12"

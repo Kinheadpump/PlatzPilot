@@ -30,6 +30,12 @@ public sealed class SettingsViewModelTests
         public List<(string Key, object? Value)> SetCalls { get; } = [];
         private readonly Dictionary<string, object?> _values = new();
 
+        public string SelectedCityId
+        {
+            get => Get("SelectedCityId", "karlsruhe");
+            set => Set("SelectedCityId", value);
+        }
+
         public T Get<T>(string key, T defaultValue)
         {
             if (_values.TryGetValue(key, out var value) && value is T typed)

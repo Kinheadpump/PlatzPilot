@@ -14,14 +14,20 @@ public class SeatFinderService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly SeatFinderConfig _settings;
     private readonly InternalConfig _internal;
+    private readonly IPreferencesService _preferencesService;
     private readonly TimeSpan _requestTimeout;
     private readonly ILogger<SeatFinderService> _logger;
 
-    public SeatFinderService(IHttpClientFactory httpClientFactory, AppConfig config, ILogger<SeatFinderService> logger)
+    public SeatFinderService(
+        IHttpClientFactory httpClientFactory,
+        AppConfig config,
+        IPreferencesService preferencesService,
+        ILogger<SeatFinderService> logger)
     {
         _httpClientFactory = httpClientFactory;
         _settings = config.SeatFinder;
         _internal = config.Internal;
+        _preferencesService = preferencesService;
         _requestTimeout = TimeSpan.FromSeconds(Math.Max(1, _settings.RequestTimeoutSeconds));
         _logger = logger;
     }
@@ -32,8 +38,18 @@ public class SeatFinderService
         string? before = null,
         CancellationToken cancellationToken = default)
     {
+        var cityId = _preferencesService.SelectedCityId;
+        var cityConfig = _settings.Cities.FirstOrDefault(c => c.Id == cityId)
+                         ?? _settings.Cities.FirstOrDefault(); // Fallback zur ersten Stadt
+
+        if (cityConfig == null || cityConfig.Locations == null || !cityConfig.Locations.Any())
+        {
+            return new List<StudySpace>(); // Keine Konfiguration gefunden
+        }
+
         var resultList = new List<StudySpace>();
-        string locationString = string.Join(_settings.LocationSeparator, _settings.Locations);
+
+        string locationString = string.Join(_settings.LocationSeparator, cityConfig.Locations);
 
         var query = _settings.Query;
         var resolvedAfter = after ?? string.Empty;
@@ -59,7 +75,8 @@ public class SeatFinderService
             { query.Limit1Param, _settings.MetadataLimit.ToString(CultureInfo.InvariantCulture) }
         };
 
-        string requestUrl = $"{_settings.BaseUrl}{_settings.QueryStartSeparator}{BuildQueryString(queryParams)}";
+        string formattedBaseUrl = string.Format(_settings.BaseUrl, cityConfig.Id);
+        string requestUrl = $"{formattedBaseUrl}{_settings.QueryStartSeparator}{BuildQueryString(queryParams)}";
 
         try
         {

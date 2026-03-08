@@ -1,14 +1,16 @@
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Linq;
+using System.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using PlatzPilot.Configuration;
 using PlatzPilot.Constants;
-using PlatzPilot.Messages;
-using PlatzPilot.Services;
-using System.Globalization;
-using System.Threading;
 using PlatzPilot.Localization;
+using PlatzPilot.Messages;
 using PlatzPilot.Resources.Strings;
+using PlatzPilot.Services;
 
 namespace PlatzPilot.ViewModels;
 
@@ -24,6 +26,7 @@ public partial class SettingsViewModel : ObservableObject
     private bool _isHapticFeedbackEnabled;
     private bool _isHideClosedLocations;
     private bool _isAboutOpen;
+    private CityConfig? _selectedCity;
     private int _debugClickCount = 0;
 
     public bool IsColorBlindMode
@@ -80,6 +83,30 @@ public partial class SettingsViewModel : ObservableObject
         set => SetProperty(ref _isAboutOpen, value);
     }
 
+    public bool IsKarlsruheSelected => string.Equals(SelectedCity?.Id, "karlsruhe", StringComparison.OrdinalIgnoreCase);
+    public double CampusSouthOpacity => IsKarlsruheSelected ? 1.0 : 0.4;
+    public string CampusSouthLabel => IsKarlsruheSelected
+        ? AppResources.CampusSouthOnlyLabel
+        : $"{AppResources.CampusSouthOnlyLabel} (Nur Karlsruhe)";
+
+    public ObservableCollection<CityConfig> AvailableCities { get; } = new();
+
+    public CityConfig? SelectedCity
+    {
+        get => _selectedCity;
+        set
+        {
+            if (SetProperty(ref _selectedCity, value) && value != null)
+            {
+                _preferencesService.SelectedCityId = value.Id;
+                OnPropertyChanged(nameof(IsKarlsruheSelected));
+                OnPropertyChanged(nameof(CampusSouthOpacity));
+                OnPropertyChanged(nameof(CampusSouthLabel));
+                WeakReferenceMessenger.Default.Send(new CityChangedMessage());
+            }
+        }
+    }
+
     public bool IsCrashReportEnabled
     {
         get => !Preferences.Default.Get(_crashReportOptOutKey, false);
@@ -126,6 +153,12 @@ public partial class SettingsViewModel : ObservableObject
         _isHapticFeedbackEnabled = _preferencesService.Get(_config.Preferences.HapticFeedbackKey, true);
         _isHideClosedLocations = _preferencesService.Get(_config.Preferences.HideClosedLocationsKey, false);
 
+        foreach (var city in _config.SeatFinder.Cities.OrderBy(city => city.DisplayName))
+        {
+            AvailableCities.Add(city);
+        }
+        UpdateSelectedCityFromPreferences();
+
         ApplySavedTheme();
 
         WeakReferenceMessenger.Default.Register<CrashReportSettingsChangedMessage>(this, (_, _) =>
@@ -133,6 +166,8 @@ public partial class SettingsViewModel : ObservableObject
             OnPropertyChanged(nameof(IsCrashReportEnabled));
             OnPropertyChanged(nameof(CrashReportIcon));
         });
+
+        WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) => UpdateSelectedCityFromPreferences());
     }
 
     public string AboutAppName =>
@@ -313,6 +348,24 @@ public partial class SettingsViewModel : ObservableObject
             var value when string.Equals(value, _config.Theme.Dark, StringComparison.Ordinal) => AppTheme.Dark,
             _ => AppTheme.Unspecified
         };
+    }
+
+    private void UpdateSelectedCityFromPreferences()
+    {
+        var selectedCityId = _preferencesService.SelectedCityId;
+        var city = AvailableCities.FirstOrDefault(c => string.Equals(c.Id, selectedCityId, StringComparison.OrdinalIgnoreCase))
+            ?? AvailableCities.FirstOrDefault();
+
+        if (ReferenceEquals(_selectedCity, city))
+        {
+            return;
+        }
+
+        _selectedCity = city;
+        OnPropertyChanged(nameof(SelectedCity));
+        OnPropertyChanged(nameof(IsKarlsruheSelected));
+        OnPropertyChanged(nameof(CampusSouthOpacity));
+        OnPropertyChanged(nameof(CampusSouthLabel));
     }
 
     private async Task ShowDialogAsync(string title, string message)

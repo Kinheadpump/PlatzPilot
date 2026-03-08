@@ -1,7 +1,10 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using PlatzPilot.Configuration;
 using PlatzPilot.Messages;
 using PlatzPilot.Services;
 
@@ -10,16 +13,20 @@ namespace PlatzPilot.ViewModels;
 public sealed partial class MainPageViewModel : ObservableObject
 {
     private const string _onboardingCompletedKey = "HasCompletedOnboarding";
+    private readonly AppConfig _config;
     private readonly IPreferencesService _preferencesService;
     private DateTime _lastRefreshTime = DateTime.MinValue;
+    private CityConfig? _selectedCity;
 
     public MainPageViewModel(
         SeatListViewModel seatList,
         FilterViewModel filters,
         NavigationViewModel navigation,
         SettingsViewModel settings,
+        AppConfig config,
         IPreferencesService preferencesService)
     {
+        _config = config;
         _preferencesService = preferencesService;
 
         SeatList = seatList;
@@ -29,6 +36,16 @@ public sealed partial class MainPageViewModel : ObservableObject
 
         SeatList.PropertyChanged += OnSeatListPropertyChanged;
         WeakReferenceMessenger.Default.Register<AppResumedMessage>(this, (_, _) => HandleAppResumed());
+        WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) => UpdateSelectedCityFromPreferences());
+
+        foreach (var city in _config.SeatFinder.Cities.OrderBy(city => city.DisplayName))
+        {
+            AvailableCities.Add(city);
+        }
+
+        UpdateSelectedCityFromPreferences();
+
+        _preferencesService.Set(_onboardingCompletedKey, false);
 
         var hasCompletedOnboarding = _preferencesService.Get(_onboardingCompletedKey, false);
         IsOnboardingVisible = !hasCompletedOnboarding;
@@ -38,6 +55,21 @@ public sealed partial class MainPageViewModel : ObservableObject
     public FilterViewModel Filters { get; }
     public NavigationViewModel Navigation { get; }
     public SettingsViewModel Settings { get; }
+
+    public ObservableCollection<CityConfig> AvailableCities { get; } = new();
+
+    public CityConfig? SelectedCity
+    {
+        get => _selectedCity;
+        set
+        {
+            if (SetProperty(ref _selectedCity, value) && value != null)
+            {
+                _preferencesService.SelectedCityId = value.Id;
+                WeakReferenceMessenger.Default.Send(new CityChangedMessage());
+            }
+        }
+    }
 
     private bool _isOnboardingVisible;
 
@@ -79,5 +111,20 @@ public sealed partial class MainPageViewModel : ObservableObject
     {
         _preferencesService.Set(_onboardingCompletedKey, true);
         IsOnboardingVisible = false;
+    }
+
+    private void UpdateSelectedCityFromPreferences()
+    {
+        var selectedCityId = _preferencesService.SelectedCityId;
+        var city = AvailableCities.FirstOrDefault(c => string.Equals(c.Id, selectedCityId, StringComparison.OrdinalIgnoreCase))
+            ?? AvailableCities.FirstOrDefault();
+
+        if (ReferenceEquals(_selectedCity, city))
+        {
+            return;
+        }
+
+        _selectedCity = city;
+        OnPropertyChanged(nameof(SelectedCity));
     }
 }

@@ -286,6 +286,12 @@
   <data name="SettingsTitle" xml:space="preserve">
     <value>Einstellungen</value>
   </data>
+  <data name="CityLabel" xml:space="preserve">
+    <value>Stadt</value>
+  </data>
+  <data name="CitySelectTitle" xml:space="preserve">
+    <value>Wähle deine Stadt</value>
+  </data>
   <data name="SettingsDesignLabel" xml:space="preserve">
     <value>Design (Hell / Dunkel)</value>
   </data>

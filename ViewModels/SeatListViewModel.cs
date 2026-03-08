@@ -5,9 +5,11 @@ using System.Linq;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Networking;
 using PlatzPilot.Configuration;
+using PlatzPilot.Messages;
 using PlatzPilot.Models;
 using PlatzPilot.Resources.Strings;
 using PlatzPilot.Services;
@@ -22,6 +24,7 @@ public partial class SeatListViewModel : ObservableObject
     private readonly IStudySpaceFeatureService _studySpaceFeatureService;
     private readonly INavigationService _navigationService;
     private readonly MensaForecastService _mensaForecastService;
+    private readonly IPreferencesService _preferencesService;
     private readonly FilterViewModel _filters;
     private readonly NavigationViewModel _navigation;
     private readonly SettingsViewModel _settings;
@@ -133,12 +136,6 @@ public partial class SeatListViewModel : ObservableObject
     private string _lastLoadedBeforeParameter = string.Empty;
     private DateTime _lastLiveSnapshotFetchUtc = DateTime.MinValue;
     private CancellationTokenSource? _offlineBannerCts;
-    private static readonly HashSet<string> BadischeLandesbibliothekIds = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "BLB",
-        "WIS"
-    };
-    private const string BadischeLandesbibliothekKey = "BLB_WIS";
     public bool IsDataVisible => !IsBusy && UiLocations.Count > 0 && _navigation.IsMainContentVisible;
     public bool IsListEmpty => UiLocations.Count == 0 && _navigation.IsMainContentVisible;
     public bool IsHomeEmpty => UiLocations.Count == 0 && _navigation.CurrentTab == _config.Tabs.Home;
@@ -156,6 +153,7 @@ public partial class SeatListViewModel : ObservableObject
         IStudySpaceFeatureService studySpaceFeatureService,
         INavigationService navigationService,
         MensaForecastService mensaForecastService,
+        IPreferencesService preferencesService,
         FilterViewModel filters,
         NavigationViewModel navigation,
         SettingsViewModel settings,
@@ -167,6 +165,7 @@ public partial class SeatListViewModel : ObservableObject
         _studySpaceFeatureService = studySpaceFeatureService;
         _navigationService = navigationService;
         _mensaForecastService = mensaForecastService;
+        _preferencesService = preferencesService;
         _filters = filters;
         _navigation = navigation;
         _settings = settings;
@@ -174,8 +173,34 @@ public partial class SeatListViewModel : ObservableObject
         _filters.FiltersChanged += OnFiltersChanged;
         _navigation.PropertyChanged += OnNavigationPropertyChanged;
         _settings.PropertyChanged += OnSettingsPropertyChanged;
+        WeakReferenceMessenger.Default.Register<CityChangedMessage>(this, (_, _) => OnCityChanged());
 
         FilteredLocationCount = 0;
+    }
+
+    public void ResetCityData()
+    {
+        _hasLoadedWeeklyHistory = false;
+        _hasComputedSafeArrival = false;
+        _hasComputedChartSeries = false;
+
+        _historicalSeatDataByLocation = new Dictionary<string, List<SeatHistoryPoint>>(StringComparer.OrdinalIgnoreCase);
+        _spaceSafeArrivalCache.Clear();
+        _buildingSafeArrivalCache.Clear();
+        _spaceChartSeriesCache.Clear();
+        _buildingChartSeriesCache.Clear();
+
+        _allSpaces.Clear();
+        _lastLiveSnapshotFetchUtc = DateTime.MinValue;
+    }
+
+    private void OnCityChanged()
+    {
+        ResetCityData();
+        if (LoadSpacesCommand.CanExecute(null))
+        {
+            LoadSpacesCommand.Execute(null);
+        }
     }
 
     [RelayCommand]
@@ -958,10 +983,13 @@ public partial class SeatListViewModel : ObservableObject
         }
 
         var spaces = new List<StudySpace>(_allSpaces);
-        var mensaSpace = _mensaForecastService.BuildVirtualSpace(_mensaForecastCache, _filters.GetReferenceDateTime());
-        if (mensaSpace != null)
+        if (string.Equals(_preferencesService.SelectedCityId, "karlsruhe", StringComparison.OrdinalIgnoreCase))
         {
-            spaces.Add(mensaSpace);
+            var mensaSpace = _mensaForecastService.BuildVirtualSpace(_mensaForecastCache, _filters.GetReferenceDateTime());
+            if (mensaSpace != null)
+            {
+                spaces.Add(mensaSpace);
+            }
         }
 
         return spaces;
@@ -1295,9 +1323,10 @@ public partial class SeatListViewModel : ObservableObject
 
     private string GetBuildingGroupKey(StudySpace space)
     {
-        if (BadischeLandesbibliothekIds.Contains(space.Id))
+        if (_spaceFeaturesById.TryGetValue(space.Id, out var features) &&
+            !string.IsNullOrWhiteSpace(features.BuildingGroupKey))
         {
-            return BadischeLandesbibliothekKey;
+            return features.BuildingGroupKey.Trim();
         }
 
         return space.Building ?? string.Empty;
@@ -1386,12 +1415,11 @@ public partial class SeatListViewModel : ObservableObject
     private UiLocation CreateGroupedLocation(string buildingKey, List<StudySpace> spaces, List<string> favoriteNames, DateTime referenceTime)
     {
         var normalizedBuildingKey = buildingKey.Trim();
-        var isBadischeLandesbibliothek = string.Equals(normalizedBuildingKey, BadischeLandesbibliothekKey, StringComparison.OrdinalIgnoreCase);
-        var displayName = _config.BuildingNames.TryGetValue(normalizedBuildingKey, out var mappedName)
-            ? mappedName
-            : isBadischeLandesbibliothek
-                ? AppResources.BuildingName_BadischeLandesbibliothek
-                : string.Format(CultureInfo.CurrentCulture, AppResources.BuildingFormat, normalizedBuildingKey);
+        var hasMappedName = _config.BuildingNames.TryGetValue(normalizedBuildingKey, out var mappedName);
+        var hasDisplayName = hasMappedName && !string.IsNullOrWhiteSpace(mappedName);
+        var displayName = hasDisplayName
+            ? mappedName!
+            : string.Format(CultureInfo.CurrentCulture, AppResources.BuildingFormat, normalizedBuildingKey);
 
         var buildingRecommendation = GetCachedBuildingRecommendation(normalizedBuildingKey);
         var series = GetChartSeriesForBuilding(normalizedBuildingKey);
@@ -1403,8 +1431,8 @@ public partial class SeatListViewModel : ObservableObject
             Name = displayName,
             TileName = displayName,
             Subtitle = string.Format(CultureInfo.CurrentCulture, AppResources.GroupedLocationSubtitleFormat, spaces.Count),
-            BuildingNumber = isBadischeLandesbibliothek ? null : normalizedBuildingKey,
-            BuildingDisplayOverride = isBadischeLandesbibliothek ? displayName : null,
+            BuildingNumber = hasDisplayName ? null : normalizedBuildingKey,
+            BuildingDisplayOverride = hasDisplayName ? displayName : null,
             TotalSeats = spaces.Sum(space => space.TotalSeats),
             FreeSeats = spaces.Sum(space => space.FreeSeats),
             OccupiedSeats = spaces.Sum(space => space.OccupiedSeats),
