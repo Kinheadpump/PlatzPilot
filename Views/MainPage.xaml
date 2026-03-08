@@ -1193,6 +1193,11 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
 
+                            <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[OnboardingCityPrompt], x:DataType=loc:LocalizationResourceManager}"
+                                   FontSize="14"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#1C1C1E, Dark=White}" />
+
                             <Picker ItemsSource="{Binding AvailableCities}"
                                     ItemDisplayBinding="{Binding DisplayName}"
                                     SelectedItem="{Binding SelectedCity}"
@@ -1328,6 +1333,24 @@
                             HorizontalOptions="Fill" />
                 </Grid>
             </Border>
+        </Grid>
+
+        <Grid Grid.RowSpan="99"
+              Grid.ColumnSpan="99"
+              HorizontalOptions="Fill"
+              VerticalOptions="Fill"
+              BackgroundColor="#A0000000"
+              IsVisible="{Binding SeatList.IsBlockingOverlayVisible}"
+              InputTransparent="False">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer />
+            </Grid.GestureRecognizers>
+            <ActivityIndicator IsRunning="{Binding SeatList.IsBlockingOverlayVisible}"
+                               Color="White"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               WidthRequest="60"
+                               HeightRequest="60" />
         </Grid>
 
     </Grid>

@@ -292,6 +292,9 @@
   <data name="CitySelectTitle" xml:space="preserve">
     <value>Choose your city</value>
   </data>
+  <data name="OnboardingCityPrompt" xml:space="preserve">
+    <value>Pick your city</value>
+  </data>
   <data name="SettingsDesignLabel" xml:space="preserve">
     <value>Design (Light / Dark)</value>
   </data>

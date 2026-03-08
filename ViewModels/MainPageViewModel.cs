@@ -109,6 +109,12 @@ public sealed partial class MainPageViewModel : ObservableObject
     {
         _preferencesService.Set(_onboardingCompletedKey, true);
         IsOnboardingVisible = false;
+
+        // Lade die Daten der gewählten Stadt herunter
+        if (SeatList.LoadSpacesCommand.CanExecute(null))
+        {
+            SeatList.LoadSpacesCommand.Execute(null);
+        }
     }
 
     private void UpdateSelectedCityFromPreferences()

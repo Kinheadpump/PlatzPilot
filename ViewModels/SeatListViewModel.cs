@@ -33,6 +33,7 @@ public partial class SeatListViewModel : ObservableObject
     private UiLocation? _selectedLocation;
     private bool _isBusy;
     private bool _isRefreshing;
+    private bool _isSwitchingCity;
     private bool _isOfflineBannerVisible;
     private SafeArrivalRecommendation? _mensaSafeArrivalRecommendation;
     private string _mensaFluxLabel = string.Empty;
@@ -84,7 +85,24 @@ public partial class SeatListViewModel : ObservableObject
     public bool IsRefreshing
     {
         get => _isRefreshing;
-        set => SetProperty(ref _isRefreshing, value);
+        set
+        {
+            if (SetProperty(ref _isRefreshing, value))
+            {
+            }
+        }
+    }
+
+    public bool IsSwitchingCity
+    {
+        get => _isSwitchingCity;
+        set
+        {
+            if (SetProperty(ref _isSwitchingCity, value))
+            {
+                OnPropertyChanged(nameof(IsBlockingOverlayVisible));
+            }
+        }
     }
 
     public bool IsOfflineBannerVisible
@@ -147,6 +165,8 @@ public partial class SeatListViewModel : ObservableObject
     public string ShowResultsButtonText =>
         string.Format(CultureInfo.CurrentCulture, AppResources.ShowResultsFormat, FilteredLocationCount);
 
+    public bool IsBlockingOverlayVisible => IsSwitchingCity;
+
     public SeatListViewModel(
         SeatFinderService seatFinderService,
         SafeArrivalForecastService safeArrivalForecastService,
@@ -190,12 +210,13 @@ public partial class SeatListViewModel : ObservableObject
         _spaceChartSeriesCache.Clear();
         _buildingChartSeriesCache.Clear();
 
-        _allSpaces.Clear();
+        _allSpaces = new List<StudySpace>();
         _lastLiveSnapshotFetchUtc = DateTime.MinValue;
     }
 
     private void OnCityChanged()
     {
+        IsSwitchingCity = true;
         ResetCityData();
         if (LoadSpacesCommand.CanExecute(null))
         {
@@ -351,6 +372,13 @@ public partial class SeatListViewModel : ObservableObject
             return;
         }
 
+        // Blockiere das Laden, wenn das Onboarding noch nicht abgeschlossen ist
+        if (!_preferencesService.Get("HasCompletedOnboarding", false))
+        {
+            IsRefreshing = false;
+            return;
+        }
+
         if (!HasInternetAccess())
         {
             await ShowOfflineBannerAsync();
@@ -404,22 +432,23 @@ public partial class SeatListViewModel : ObservableObject
             var hasLoadedWeeklyHistory = _hasLoadedWeeklyHistory;
             var hasComputedSafeArrival = _hasComputedSafeArrival;
             var hasComputedChartSeries = _hasComputedChartSeries;
+            var currentSpaces = _allSpaces.ToList();
 
             await Task.Run(() =>
             {
                 if (shouldReloadWeeklyHistory)
                 {
-                    updatedHistory = BuildHistoricalSeatData(_allSpaces);
+                    updatedHistory = BuildHistoricalSeatData(currentSpaces);
                     hasLoadedWeeklyHistory = true;
                 }
                 else
                 {
-                    updatedHistory = AppendLatestSeatDataToHistory(_historicalSeatDataByLocation, _allSpaces);
+                    updatedHistory = AppendLatestSeatDataToHistory(_historicalSeatDataByLocation, currentSpaces);
                 }
 
                 if (shouldReloadWeeklyHistory || !hasComputedSafeArrival)
                 {
-                    var safeArrivalResult = BuildSafeArrivalCaches(updatedHistory);
+                    var safeArrivalResult = BuildSafeArrivalCaches(updatedHistory, currentSpaces);
                     spaceSafeArrivalCache = safeArrivalResult.SpaceCache;
                     buildingSafeArrivalCache = safeArrivalResult.BuildingCache;
                     safeArrivalReferenceDate = safeArrivalResult.ReferenceDate;
@@ -432,7 +461,7 @@ public partial class SeatListViewModel : ObservableObject
 
                 if (shouldReloadWeeklyHistory || !hasComputedChartSeries)
                 {
-                    var chartSeriesResult = BuildChartSeriesCaches(updatedHistory);
+                    var chartSeriesResult = BuildChartSeriesCaches(updatedHistory, currentSpaces);
                     spaceChartSeriesCache = chartSeriesResult.SpaceCache;
                     buildingChartSeriesCache = chartSeriesResult.BuildingCache;
                     chartReferenceTime = chartSeriesResult.ReferenceTime;
@@ -443,7 +472,7 @@ public partial class SeatListViewModel : ObservableObject
                     ? DateTime.Today
                     : safeArrivalReferenceDate;
                 mensaResult = _mensaForecastService.BuildForecast(
-                    _allSpaces,
+                    currentSpaces,
                     updatedHistory,
                     forecastReferenceDate,
                     _filters.GetReferenceDateTime(),
@@ -472,6 +501,7 @@ public partial class SeatListViewModel : ObservableObject
         {
             IsBusy = false;
             IsRefreshing = false;
+            IsSwitchingCity = false;
         }
 
         ApplyFilter();
@@ -659,13 +689,15 @@ public partial class SeatListViewModel : ObservableObject
         return historyByLocation;
     }
 
-    private SafeArrivalCacheResult BuildSafeArrivalCaches(IReadOnlyDictionary<string, List<SeatHistoryPoint>> historyByLocation)
+    private SafeArrivalCacheResult BuildSafeArrivalCaches(
+        IReadOnlyDictionary<string, List<SeatHistoryPoint>> historyByLocation,
+        List<StudySpace> spaces)
     {
         var referenceDate = DateTime.Today;
         var spaceCache = new Dictionary<string, SafeArrivalRecommendation?>(StringComparer.OrdinalIgnoreCase);
         var buildingCache = new Dictionary<string, SafeArrivalRecommendation?>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var space in _allSpaces)
+        foreach (var space in spaces)
         {
             if (!historyByLocation.TryGetValue(space.Id, out var history) || history.Count == 0)
             {
@@ -677,7 +709,7 @@ public partial class SeatListViewModel : ObservableObject
             spaceCache[space.Id] = space.SafeArrivalRecommendation;
         }
 
-        foreach (var group in _allSpaces.GroupBy(GetBuildingGroupKey))
+        foreach (var group in spaces.GroupBy(GetBuildingGroupKey))
         {
             var buildingKey = group.Key?.Trim();
             var spacesInBuilding = group.ToList();
@@ -722,12 +754,14 @@ public partial class SeatListViewModel : ObservableObject
         }
     }
 
-    private ChartSeriesCacheResult BuildChartSeriesCaches(IReadOnlyDictionary<string, List<SeatHistoryPoint>> historyByLocation)
+    private ChartSeriesCacheResult BuildChartSeriesCaches(
+        IReadOnlyDictionary<string, List<SeatHistoryPoint>> historyByLocation,
+        List<StudySpace> spaces)
     {
         var spaceCache = new Dictionary<string, List<float>>(StringComparer.OrdinalIgnoreCase);
         var buildingCache = new Dictionary<string, List<float>>(StringComparer.OrdinalIgnoreCase);
 
-        if (_allSpaces.Count == 0)
+        if (spaces.Count == 0)
         {
             return new ChartSeriesCacheResult(DateTime.MinValue, spaceCache, buildingCache);
         }
@@ -737,7 +771,7 @@ public partial class SeatListViewModel : ObservableObject
         var endTime = NormalizeToChartBin(DateTime.Now, binMinutes);
         var startTime = endTime.AddHours(-chartConfig.HistoryHours);
 
-        foreach (var space in _allSpaces)
+        foreach (var space in spaces)
         {
             if (!historyByLocation.TryGetValue(space.Id, out var history) || history.Count == 0)
             {
@@ -751,7 +785,7 @@ public partial class SeatListViewModel : ObservableObject
             }
         }
 
-        foreach (var group in _allSpaces.GroupBy(GetBuildingGroupKey))
+        foreach (var group in spaces.GroupBy(GetBuildingGroupKey))
         {
             var buildingKey = group.Key?.Trim();
             var spacesInBuilding = group.ToList();
