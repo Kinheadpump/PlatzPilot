@@ -6,6 +6,7 @@ using PlatzPilot.Constants;
 using PlatzPilot.Messages;
 using PlatzPilot.Services;
 using System.Globalization;
+using System.Threading;
 using PlatzPilot.Localization;
 using PlatzPilot.Resources.Strings;
 
@@ -23,6 +24,7 @@ public partial class SettingsViewModel : ObservableObject
     private bool _isHapticFeedbackEnabled;
     private bool _isHideClosedLocations;
     private bool _isAboutOpen;
+    private int _debugClickCount = 0;
 
     public bool IsColorBlindMode
     {
@@ -191,6 +193,19 @@ public partial class SettingsViewModel : ObservableObject
     private void ToggleCrashReport()
     {
         IsCrashReportEnabled = !IsCrashReportEnabled;
+    }
+
+    [RelayCommand]
+    private void SecretCrashTap()
+    {
+        _debugClickCount++;
+        if (_debugClickCount < 5)
+        {
+            return;
+        }
+
+        _debugClickCount = 0;
+        ThreadPool.QueueUserWorkItem(_ => throw new Exception("Secret crash trigger (test)."));
     }
 
     [RelayCommand]

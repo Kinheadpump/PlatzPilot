@@ -1131,9 +1131,13 @@
                                    FontAttributes="Bold"
                                    HorizontalOptions="Center" />
                             <Label Text="{Binding Settings.AboutVersionText}"
-                                   FontSize="12"
-                                   TextColor="Gray"
-                                   HorizontalOptions="Center" />
+                                    FontSize="12"
+                                    TextColor="Gray"
+                                    HorizontalOptions="Center">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Settings.SecretCrashTapCommand}" />
+                                </Label.GestureRecognizers>
+                            </Label>
                             <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[SettingsDisclaimer], x:DataType=loc:LocalizationResourceManager}"
                                    FontSize="12"
                                    TextColor="Gray"
