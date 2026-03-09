@@ -6,6 +6,7 @@ using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Networking;
 using PlatzPilot.Configuration;
@@ -40,6 +41,7 @@ public partial class SeatListViewModel : ObservableObject, IDisposable
     private string _mensaFluxLabel = string.Empty;
     private int _filteredLocationCount;
     private bool _disposed;
+    private int _loadGeneration;
 
     public ObservableCollection<UiLocation> UiLocations
     {
@@ -150,8 +152,6 @@ public partial class SeatListViewModel : ObservableObject, IDisposable
     private bool _spaceFeaturesLoaded;
     private bool _hasLoadedWeeklyHistory;
     private bool _hasComputedSafeArrival;
-    private bool _hasComputedChartSeries;
-    private DateTime _chartReferenceTime = DateTime.MinValue;
     private DateTime _safeArrivalReferenceDate = DateTime.MinValue;
     private string _lastLoadedBeforeParameter = string.Empty;
     private DateTime _lastLiveSnapshotFetchUtc = DateTime.MinValue;
@@ -203,9 +203,9 @@ public partial class SeatListViewModel : ObservableObject, IDisposable
 
     public void ResetCityData()
     {
+        Interlocked.Increment(ref _loadGeneration);
         _hasLoadedWeeklyHistory = false;
         _hasComputedSafeArrival = false;
-        _hasComputedChartSeries = false;
 
         _historicalSeatDataByLocation = new Dictionary<string, List<SeatHistoryPoint>>(StringComparer.OrdinalIgnoreCase);
         _spaceSafeArrivalCache.Clear();
@@ -213,7 +213,11 @@ public partial class SeatListViewModel : ObservableObject, IDisposable
         _spaceChartSeriesCache.Clear();
         _buildingChartSeriesCache.Clear();
 
+        _mensaForecastCache = null;
+        MensaSafeArrivalRecommendation = null;
+        MensaFluxLabel = string.Empty;
         _allSpaces = new List<StudySpace>();
+        _lastLoadedBeforeParameter = string.Empty;
         _lastLiveSnapshotFetchUtc = DateTime.MinValue;
     }
 
@@ -411,25 +415,17 @@ public partial class SeatListViewModel : ObservableObject, IDisposable
             ShowSkeletonLocationsIfNeeded();
             await EnsureSpaceFeaturesLoadedAsync();
 
+            var loadGeneration = Interlocked.Increment(ref _loadGeneration);
             var forceWeeklyReload = IsRefreshing;
             var shouldReloadWeeklyHistory = !_hasLoadedWeeklyHistory || forceWeeklyReload;
             var requestedBeforeParameter = _filters.GetApiBeforeParameter();
+            var selectedCityId = _preferencesService.SelectedCityId;
+            var currentSpacesSnapshot = new List<StudySpace>();
             try
             {
-                if (shouldReloadWeeklyHistory)
-                {
-                    var historyWindow = GetWeeklyHistoryWindow();
-                    _allSpaces = await _seatFinderService.FetchSeatDataAsync(
-                        limit: _config.SeatFinder.WeeklyHistoryPoints,
-                        after: historyWindow.After,
-                        before: historyWindow.Before);
-                }
-                else
-                {
-                    _allSpaces = await _seatFinderService.FetchSeatDataAsync(
-                        limit: _config.SeatFinder.LiveSnapshotPoints,
-                        before: requestedBeforeParameter);
-                }
+                _allSpaces = await _seatFinderService.FetchSeatDataAsync(
+                    limit: _config.SeatFinder.LiveSnapshotPoints,
+                    before: requestedBeforeParameter);
             }
             catch (TaskCanceledException)
             {
@@ -443,53 +439,82 @@ public partial class SeatListViewModel : ObservableObject, IDisposable
             }
 
             ApplySpaceFeatureOverrides(_allSpaces);
+            if (!IsLoadContextCurrent(loadGeneration, selectedCityId))
+            {
+                return;
+            }
 
-            MensaForecastResult? mensaResult = null;
-            var updatedHistory = _historicalSeatDataByLocation;
-            var spaceSafeArrivalCache = _spaceSafeArrivalCache;
-            var buildingSafeArrivalCache = _buildingSafeArrivalCache;
-            var spaceChartSeriesCache = _spaceChartSeriesCache;
-            var buildingChartSeriesCache = _buildingChartSeriesCache;
+            if (_hasComputedSafeArrival && _spaceSafeArrivalCache.Count > 0)
+            {
+                ApplyCachedSafeArrivalRecommendations(_spaceSafeArrivalCache, _allSpaces);
+            }
+
+            _lastLoadedBeforeParameter = requestedBeforeParameter;
+            _lastLiveSnapshotFetchUtc = DateTime.UtcNow;
+            currentSpacesSnapshot = _allSpaces.ToList();
+
+            IsBusy = false;
+            IsRefreshing = false;
+            IsSwitchingCity = false;
+            ApplyFilter();
+
+            if (shouldReloadWeeklyHistory)
+            {
+                _ = LoadHistoryAndComputeBackgroundAsync(
+                    currentSpacesSnapshot,
+                    requestedBeforeParameter,
+                    selectedCityId,
+                    loadGeneration);
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+            IsRefreshing = false;
+            IsSwitchingCity = false;
+        }
+    }
+
+    private async Task LoadHistoryAndComputeBackgroundAsync(
+        List<StudySpace> currentSpaces,
+        string requestedBeforeParameter,
+        string selectedCityId,
+        int loadGeneration)
+    {
+        try
+        {
+            var historyWindow = GetWeeklyHistoryWindow();
+            var historySpaces = await _seatFinderService.FetchSeatDataAsync(
+                limit: _config.SeatFinder.WeeklyHistoryPoints,
+                after: historyWindow.After,
+                before: historyWindow.Before);
+
+            ApplySpaceFeatureOverrides(historySpaces);
+            if (!IsLoadContextCurrent(loadGeneration, selectedCityId))
+            {
+                return;
+            }
+
+            IReadOnlyDictionary<string, List<SeatHistoryPoint>> updatedHistory = _historicalSeatDataByLocation;
+            Dictionary<string, SafeArrivalRecommendation?> spaceSafeArrivalCache = _spaceSafeArrivalCache;
+            Dictionary<string, SafeArrivalRecommendation?> buildingSafeArrivalCache = _buildingSafeArrivalCache;
+            Dictionary<string, List<float>> spaceChartSeriesCache = _spaceChartSeriesCache;
+            Dictionary<string, List<float>> buildingChartSeriesCache = _buildingChartSeriesCache;
             var safeArrivalReferenceDate = _safeArrivalReferenceDate;
-            var chartReferenceTime = _chartReferenceTime;
-            var hasLoadedWeeklyHistory = _hasLoadedWeeklyHistory;
-            var hasComputedSafeArrival = _hasComputedSafeArrival;
-            var hasComputedChartSeries = _hasComputedChartSeries;
-            var currentSpaces = _allSpaces.ToList();
+            MensaForecastResult? mensaResult = null;
 
             await Task.Run(() =>
             {
-                if (shouldReloadWeeklyHistory)
-                {
-                    updatedHistory = BuildHistoricalSeatData(currentSpaces);
-                    hasLoadedWeeklyHistory = true;
-                }
-                else
-                {
-                    updatedHistory = AppendLatestSeatDataToHistory(_historicalSeatDataByLocation, currentSpaces);
-                }
+                updatedHistory = BuildHistoricalSeatData(historySpaces);
 
-                if (shouldReloadWeeklyHistory || !hasComputedSafeArrival)
-                {
-                    var safeArrivalResult = BuildSafeArrivalCaches(updatedHistory, currentSpaces);
-                    spaceSafeArrivalCache = safeArrivalResult.SpaceCache;
-                    buildingSafeArrivalCache = safeArrivalResult.BuildingCache;
-                    safeArrivalReferenceDate = safeArrivalResult.ReferenceDate;
-                    hasComputedSafeArrival = true;
-                }
-                else
-                {
-                    ApplyCachedSafeArrivalRecommendations(spaceSafeArrivalCache, currentSpaces);
-                }
+                var safeArrivalResult = BuildSafeArrivalCaches(updatedHistory, currentSpaces);
+                spaceSafeArrivalCache = safeArrivalResult.SpaceCache;
+                buildingSafeArrivalCache = safeArrivalResult.BuildingCache;
+                safeArrivalReferenceDate = safeArrivalResult.ReferenceDate;
 
-                if (shouldReloadWeeklyHistory || !hasComputedChartSeries)
-                {
-                    var chartSeriesResult = BuildChartSeriesCaches(updatedHistory, currentSpaces);
-                    spaceChartSeriesCache = chartSeriesResult.SpaceCache;
-                    buildingChartSeriesCache = chartSeriesResult.BuildingCache;
-                    chartReferenceTime = chartSeriesResult.ReferenceTime;
-                    hasComputedChartSeries = true;
-                }
+                var chartSeriesResult = BuildChartSeriesCaches(updatedHistory, currentSpaces);
+                spaceChartSeriesCache = chartSeriesResult.SpaceCache;
+                buildingChartSeriesCache = chartSeriesResult.BuildingCache;
 
                 var forecastReferenceDate = safeArrivalReferenceDate == DateTime.MinValue
                     ? DateTime.Today
@@ -502,32 +527,35 @@ public partial class SeatListViewModel : ObservableObject, IDisposable
                     DateTime.Now);
             });
 
+            if (!IsLoadContextCurrent(loadGeneration, selectedCityId) ||
+                !string.Equals(requestedBeforeParameter, _lastLoadedBeforeParameter, StringComparison.Ordinal))
+            {
+                return;
+            }
+
             _historicalSeatDataByLocation = updatedHistory;
             _spaceSafeArrivalCache = spaceSafeArrivalCache;
             _buildingSafeArrivalCache = buildingSafeArrivalCache;
             _spaceChartSeriesCache = spaceChartSeriesCache;
             _buildingChartSeriesCache = buildingChartSeriesCache;
             _safeArrivalReferenceDate = safeArrivalReferenceDate;
-            _chartReferenceTime = chartReferenceTime;
-            _hasLoadedWeeklyHistory = hasLoadedWeeklyHistory;
-            _hasComputedSafeArrival = hasComputedSafeArrival;
-            _hasComputedChartSeries = hasComputedChartSeries;
+            _hasLoadedWeeklyHistory = true;
+            _hasComputedSafeArrival = true;
 
             ApplyMensaForecastResult(mensaResult);
 
-            _lastLoadedBeforeParameter = shouldReloadWeeklyHistory
-                ? _config.SeatFinder.NowToken
-                : requestedBeforeParameter;
-            _lastLiveSnapshotFetchUtc = DateTime.UtcNow;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                if (IsLoadContextCurrent(loadGeneration, selectedCityId) &&
+                    string.Equals(requestedBeforeParameter, _lastLoadedBeforeParameter, StringComparison.Ordinal))
+                {
+                    ApplyFilter();
+                }
+            });
         }
-        finally
+        catch
         {
-            IsBusy = false;
-            IsRefreshing = false;
-            IsSwitchingCity = false;
         }
-
-        ApplyFilter();
     }
 
     private bool ShouldRefreshSnapshot(string requestedBeforeParameter)
@@ -1690,6 +1718,13 @@ public partial class SeatListViewModel : ObservableObject, IDisposable
     private bool HasInternetAccess()
     {
         return Connectivity.Current.NetworkAccess == NetworkAccess.Internet;
+    }
+
+    private bool IsLoadContextCurrent(int loadGeneration, string selectedCityId)
+    {
+        return !_disposed &&
+               loadGeneration == Volatile.Read(ref _loadGeneration) &&
+               string.Equals(selectedCityId, _preferencesService.SelectedCityId, StringComparison.OrdinalIgnoreCase);
     }
 
     private void PerformFavoriteHaptic()

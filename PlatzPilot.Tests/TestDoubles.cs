@@ -80,6 +80,55 @@ internal sealed class TrackingHttpMessageHandler : HttpMessageHandler
     }
 }
 
+internal sealed class TwoPhaseTrackingHttpMessageHandler : HttpMessageHandler
+{
+    private readonly string _responseBody;
+    private readonly int _liveLimit;
+    private readonly int _weeklyLimit;
+    private readonly TaskCompletionSource<bool> _weeklyRequestStarted =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource<bool> _releaseWeeklyResponse =
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public TwoPhaseTrackingHttpMessageHandler(string responseBody, int liveLimit, int weeklyLimit)
+    {
+        _responseBody = responseBody;
+        _liveLimit = liveLimit;
+        _weeklyLimit = weeklyLimit;
+    }
+
+    public int LiveCallCount { get; private set; }
+
+    public int WeeklyCallCount { get; private set; }
+
+    public Task WeeklyRequestStarted => _weeklyRequestStarted.Task;
+
+    public void ReleaseWeeklyResponse()
+    {
+        _releaseWeeklyResponse.TrySetResult(true);
+    }
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var query = Uri.UnescapeDataString(request.RequestUri?.Query ?? string.Empty);
+        if (query.Contains($"limit[0]={_weeklyLimit}", StringComparison.Ordinal))
+        {
+            WeeklyCallCount++;
+            _weeklyRequestStarted.TrySetResult(true);
+            await _releaseWeeklyResponse.Task.WaitAsync(cancellationToken);
+        }
+        else if (query.Contains($"limit[0]={_liveLimit}", StringComparison.Ordinal))
+        {
+            LiveCallCount++;
+        }
+
+        return new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(_responseBody, Encoding.UTF8, "application/json")
+        };
+    }
+}
+
 internal sealed class StubHttpClientFactory : IHttpClientFactory
 {
     private readonly HttpClient _client;

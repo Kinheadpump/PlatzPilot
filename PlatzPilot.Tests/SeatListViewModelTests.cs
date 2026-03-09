@@ -136,6 +136,81 @@ public sealed class SeatListViewModelTests
         Assert.True(cachesCleared);
     }
 
+    [Fact]
+    public async Task LoadSpacesAsync_CompletesAfterLivePhaseWhileHistoryLoadsInBackground()
+    {
+        WeakReferenceMessenger.Default.Reset();
+        using var _ = DispatcherQueueScope.TryCreate();
+
+        var config = TestConfigFactory.Create(TestConfigFactory.CreateCity("karlsruhe", "Karlsruhe", "L1"));
+        config.SeatFinder.LiveSnapshotPoints = 1;
+        config.SeatFinder.WeeklyHistoryPoints = 99;
+        config.SeatFinder.RequestTimeoutSeconds = 5;
+
+        var preferences = new TestPreferencesService();
+        preferences.Set(config.Preferences.OnboardingCompletedKey, true);
+
+        var handler = new TwoPhaseTrackingHttpMessageHandler(
+            TestPayloads.ValidJsonp,
+            config.SeatFinder.LiveSnapshotPoints,
+            config.SeatFinder.WeeklyHistoryPoints);
+        var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://example.test/") };
+        var seatFinderService = new SeatFinderService(
+            new StubHttpClientFactory(httpClient),
+            config,
+            preferences,
+            NullLogger<SeatFinderService>.Instance);
+
+        var navigationService = new StubNavigationService();
+        var safeArrivalService = new SafeArrivalForecastService(config);
+        var mensaForecastService = new MensaForecastService(config, safeArrivalService);
+        var featureService = new StubStudySpaceFeatureService();
+        var filters = new FilterViewModel(config, preferences);
+        var navigation = new NavigationViewModel(config, preferences);
+        var settings = new SettingsViewModel(config, navigationService, preferences);
+        WeakReferenceMessenger.Default.UnregisterAll(settings);
+
+        var viewModel = new SeatListViewModel(
+            seatFinderService,
+            safeArrivalService,
+            featureService,
+            navigationService,
+            mensaForecastService,
+            preferences,
+            filters,
+            navigation,
+            settings,
+            config);
+
+        var loadTask = viewModel.LoadSpacesAsync();
+
+        var livePhaseCompleted = await TestAsyncHelper.WaitForConditionAsync(
+            () => loadTask.IsCompleted &&
+                  !viewModel.IsBusy &&
+                  !viewModel.IsSwitchingCity &&
+                  viewModel.UiLocations.Count > 0,
+            TimeSpan.FromSeconds(1));
+
+        Assert.True(livePhaseCompleted);
+        Assert.Equal(1, handler.LiveCallCount);
+        Assert.Single(viewModel.UiLocations);
+
+        var weeklyStarted = await TestAsyncHelper.WaitForConditionAsync(
+            () => handler.WeeklyCallCount == 1,
+            TimeSpan.FromSeconds(1));
+
+        Assert.True(weeklyStarted);
+        Assert.False(GetPrivateField<bool>(viewModel, "_hasLoadedWeeklyHistory"));
+
+        handler.ReleaseWeeklyResponse();
+
+        var backgroundCompleted = await TestAsyncHelper.WaitForConditionAsync(
+            () => GetPrivateField<bool>(viewModel, "_hasLoadedWeeklyHistory"),
+            TimeSpan.FromSeconds(1));
+
+        Assert.True(backgroundCompleted);
+    }
+
     private static void SeedCaches(SeatListViewModel viewModel)
     {
         var spaces = new List<StudySpace>
