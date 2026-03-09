@@ -124,33 +124,27 @@
                 <CollectionView ItemsSource="{Binding SeatList.UiLocations}"
                                 SelectionMode="Single"
                                 SelectedItem="{Binding SeatList.SelectedLocation, Mode=TwoWay}"
+                                ItemSizingStrategy="MeasureFirstItem"
                                 BackgroundColor="Transparent"
                                 Margin="10,0,10,10">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:UiLocation"
                                       x:CompileBindings="True">
                             <Border Margin="0,5,0,5"
-                                    Padding="15"
+                                    Padding="14"
+                                    HeightRequest="132"
                                     BackgroundColor="{AppThemeBinding Light=White, Dark=#1e1e1e}"
                                     Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#333333}"
-                                    StrokeShape="RoundRectangle 20"
                                     StrokeThickness="1">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border"
-                                                 Binding="{Binding IsSkeleton}"
-                                                 Value="True">
-                                        <Setter Property="MinimumHeightRequest" Value="150" />
-                                    </DataTrigger>
-                                    <DataTrigger TargetType="Border"
-                                                 Binding="{Binding IsSkeleton}"
-                                                 Value="False">
-                                        <Setter Property="MinimumHeightRequest" Value="0" />
-                                    </DataTrigger>
-                                </Border.Triggers>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
                                 <Grid>
                                     <Grid x:Name="ContentGrid"
-                                          ColumnDefinitions="*,Auto"
-                                          ColumnSpacing="10">
+                                          ColumnDefinitions="*,132,28"
+                                          RowDefinitions="28,16,18,18,8"
+                                          ColumnSpacing="10"
+                                          RowSpacing="4">
                                         <Grid.Triggers>
                                             <DataTrigger TargetType="Grid"
                                                          Binding="{Binding IsSkeleton}"
@@ -158,118 +152,140 @@
                                                 <Setter Property="IsVisible" Value="False" />
                                             </DataTrigger>
                                         </Grid.Triggers>
-                                        <Grid Grid.Column="0"
-                                              RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                                              RowSpacing="6">
-                                            <VerticalStackLayout Grid.Row="0"
-                                                                 Spacing="2">
-                                                <Label Text="{Binding TileName}"
-                                                       FontAttributes="Bold"
-                                                       FontSize="16"
-                                                       MaxLines="1"
-                                                       LineBreakMode="TailTruncation" />
-                                                <Label Text="{Binding Subtitle}"
-                                                       FontSize="12"
-                                                       TextColor="Gray"
-                                                       MaxLines="1"
-                                                       LineBreakMode="TailTruncation" />
-                                            </VerticalStackLayout>
 
-                                            <Label Grid.Row="1"
-                                                   Text="{Binding BestArrivalText}"
-                                                   FontSize="12"
-                                                   TextColor="{AppThemeBinding Light=#7b8aa6, Dark=#c4d0e1}"
-                                                   MaxLines="2"
-                                                   LineBreakMode="TailTruncation" />
+                                        <Label Grid.Row="0"
+                                               Grid.Column="0"
+                                               Text="{Binding TileName}"
+                                               HeightRequest="28"
+                                               FontAttributes="Bold"
+                                               FontSize="16"
+                                               MaxLines="1"
+                                               LineBreakMode="TailTruncation"
+                                               VerticalTextAlignment="Center" />
 
-                                            <Label Grid.Row="2"
-                                                   Text="{Binding StatusText}"
-                                                   FontSize="12"
-                                                   TextColor="{Binding StatusTextColor}"
-                                                   MaxLines="2"
-                                                   LineBreakMode="TailTruncation"
-                                                   IsVisible="{Binding HasStatusText}" />
+                                        <Label Grid.Row="1"
+                                               Grid.Column="0"
+                                               Text="{Binding Subtitle}"
+                                               HeightRequest="16"
+                                               FontSize="12"
+                                               TextColor="Gray"
+                                               MaxLines="1"
+                                               LineBreakMode="TailTruncation"
+                                               VerticalTextAlignment="Center" />
 
-                                            <Grid Grid.Row="3"
-                                                  ColumnDefinitions="*,Auto">
-                                                <VerticalStackLayout Grid.Column="1"
-                                                                     Spacing="2"
-                                                                     HorizontalOptions="End">
-                                                    <Label Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[ManualCountLabel], x:DataType=loc:LocalizationResourceManager}"
-                                                           FontSize="10"
-                                                           TextColor="DarkOrange"
-                                                           IsVisible="{Binding IsManualCountVisible}"
-                                                           HorizontalTextAlignment="End" />
-                                                    <Label Text="{Binding HomeAvailabilityText}"
-                                                           FontAttributes="Bold"
-                                                           FontSize="15"
-                                                           TextColor="{AppThemeBinding Light=#4a4a4a, Dark=#cfcfcf}"
-                                                           HorizontalTextAlignment="End"
-                                                           MaxLines="1"
-                                                           LineBreakMode="TailTruncation" />
-                                                </VerticalStackLayout>
-                                            </Grid>
+                                        <Label Grid.Row="2"
+                                               Grid.Column="0"
+                                               Text="{Binding BestArrivalText}"
+                                               HeightRequest="18"
+                                               FontSize="12"
+                                               TextColor="{AppThemeBinding Light=#7b8aa6, Dark=#c4d0e1}"
+                                               MaxLines="1"
+                                               LineBreakMode="TailTruncation"
+                                               VerticalTextAlignment="Center" />
 
-                                            <ProgressBar Grid.Row="4"
-                                                         Progress="{Binding HomeOccupancyRate}"
-                                                         ProgressColor="{Binding HomeOccupancyColor}"
-                                                         HeightRequest="6"
-                                                         Margin="0,4,0,0" />
-                                        </Grid>
+                                        <Label Grid.Row="3"
+                                               Grid.Column="0"
+                                               Text="{Binding StatusText}"
+                                               HeightRequest="20"
+                                               FontSize="12"
+                                               TextColor="{Binding StatusTextColor}"
+                                               MaxLines="1"
+                                               LineBreakMode="TailTruncation"
+                                               VerticalTextAlignment="Center"
+                                               IsVisible="{Binding HasStatusText}" />
 
-                                        <Grid Grid.Column="1"
-                                              RowDefinitions="Auto,*,Auto"
-                                              RowSpacing="0"
-                                              VerticalOptions="Fill"
-                                              HorizontalOptions="End">
-                                            <ImageButton Grid.Row="0"
-                                                         Source="{x:Static constants:AppAssets.FavoriteIconOutline}"
-                                                         WidthRequest="24"
-                                                         HeightRequest="24"
-                                                         MinimumWidthRequest="28"
-                                                         MinimumHeightRequest="28"
-                                                         Padding="3"
-                                                         Aspect="AspectFit"
-                                                         HorizontalOptions="End"
-                                                         VerticalOptions="Start"
-                                                         BackgroundColor="Transparent"
-                                                         Command="{Binding Source={RelativeSource AncestorType={x:Type views:MainPage}}, Path=ViewModel.SeatList.ToggleFavoriteCommand, x:DataType=views:MainPage}"
-                                                         CommandParameter="{Binding .}">
-                                                <ImageButton.Triggers>
-                                                    <DataTrigger TargetType="ImageButton"
-                                                                 Binding="{Binding IsFavorite}"
-                                                                 Value="True">
-                                                        <Setter Property="Source"
-                                                                Value="{x:Static constants:AppAssets.FavoriteIconFilled}" />
-                                                        <Setter Property="Opacity"
-                                                                Value="1" />
-                                                    </DataTrigger>
-                                                    <DataTrigger TargetType="ImageButton"
-                                                                 Binding="{Binding IsFavorite}"
-                                                                 Value="False">
-                                                        <Setter Property="Source"
-                                                                Value="{x:Static constants:AppAssets.FavoriteIconOutline}" />
-                                                        <Setter Property="Opacity"
-                                                                Value="1" />
-                                                    </DataTrigger>
-                                                </ImageButton.Triggers>
-                                            </ImageButton>
+                                        <Label Grid.Row="2"
+                                               Grid.Column="1"
+                                               Grid.ColumnSpan="2"
+                                               Text="{Binding Source={x:Static loc:LocalizationResourceManager.Instance}, Path=[ManualCountLabel], x:DataType=loc:LocalizationResourceManager}"
+                                               HeightRequest="18"
+                                               Margin="0,0,28,0"
+                                               FontSize="10"
+                                               TextColor="DarkOrange"
+                                               IsVisible="{Binding IsManualCountVisible}"
+                                               HorizontalTextAlignment="End"
+                                               VerticalTextAlignment="Center" />
 
-                                            <Label Grid.Row="1"
-                                                   Text="›"
-                                                   FontSize="20"
-                                                   TextColor="{AppThemeBinding Light=#9aa0a6, Dark=#8b939f}"
-                                                   HorizontalTextAlignment="Center"
-                                                   VerticalTextAlignment="Center"
-                                                   HorizontalOptions="End"
-                                                   VerticalOptions="Center" />
-                                        </Grid>
+                                        <Label Grid.Row="3"
+                                               Grid.Column="1"
+                                               Grid.ColumnSpan="2"
+                                               Text="{Binding HomeAvailabilityText}"
+                                               HeightRequest="18"
+                                               Margin="0,-1,28,0"
+                                               FontAttributes="Bold"
+                                               FontSize="15"
+                                               TextColor="{AppThemeBinding Light=#4a4a4a, Dark=#cfcfcf}"
+                                               HorizontalTextAlignment="End"
+                                               VerticalTextAlignment="Center"
+                                               MaxLines="1"
+                                               LineBreakMode="TailTruncation" />
+
+                                        <ProgressBar Grid.Row="4"
+                                                     Grid.Column="0"
+                                                     Grid.ColumnSpan="2"
+                                                     Progress="{Binding HomeOccupancyRate}"
+                                                     ProgressColor="{Binding HomeOccupancyColor}"
+                                                     HeightRequest="6"
+                                                     Margin="0,2,0,0"
+                                                     VerticalOptions="End" />
+
+                                        <ImageButton Grid.Row="0"
+                                                     Grid.Column="2"
+                                                     Source="{x:Static constants:AppAssets.FavoriteIconOutline}"
+                                                     WidthRequest="24"
+                                                     HeightRequest="24"
+                                                     MinimumWidthRequest="28"
+                                                     MinimumHeightRequest="28"
+                                                     Padding="3"
+                                                     Aspect="AspectFit"
+                                                     HorizontalOptions="End"
+                                                     VerticalOptions="Start"
+                                                     BackgroundColor="Transparent"
+                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type views:MainPage}}, Path=ViewModel.SeatList.ToggleFavoriteCommand, x:DataType=views:MainPage}"
+                                                     CommandParameter="{Binding .}">
+                                            <ImageButton.Triggers>
+                                                <DataTrigger TargetType="ImageButton"
+                                                             Binding="{Binding IsFavorite}"
+                                                             Value="True">
+                                                    <Setter Property="Source"
+                                                            Value="{x:Static constants:AppAssets.FavoriteIconFilled}" />
+                                                    <Setter Property="Opacity"
+                                                            Value="1" />
+                                                </DataTrigger>
+                                                <DataTrigger TargetType="ImageButton"
+                                                             Binding="{Binding IsFavorite}"
+                                                             Value="False">
+                                                    <Setter Property="Source"
+                                                            Value="{x:Static constants:AppAssets.FavoriteIconOutline}" />
+                                                    <Setter Property="Opacity"
+                                                            Value="1" />
+                                                </DataTrigger>
+                                            </ImageButton.Triggers>
+                                        </ImageButton>
+
+                                        <Label Grid.Row="2"
+                                               Grid.Column="2"
+                                               Grid.RowSpan="2"
+                                               Text="›"
+                                               WidthRequest="28"
+                                               HeightRequest="38"
+                                               FontSize="20"
+                                               TextColor="{AppThemeBinding Light=#9aa0a6, Dark=#8b939f}"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center"
+                                               HorizontalOptions="End"
+                                               VerticalOptions="Center" />
                                     </Grid>
 
                                     <Grid x:Name="SkeletonGrid"
                                           IsVisible="False"
+                                          InputTransparent="True"
                                           HorizontalOptions="Fill"
-                                          VerticalOptions="Fill">
+                                          VerticalOptions="Fill"
+                                          ColumnDefinitions="*,132,28"
+                                          RowDefinitions="28,16,18,18,8"
+                                          ColumnSpacing="10"
+                                          RowSpacing="4">
                                         <Grid.Triggers>
                                             <DataTrigger TargetType="Grid"
                                                          Binding="{Binding IsSkeleton}"
@@ -280,32 +296,54 @@
                                         <Grid.Behaviors>
                                             <behaviors:ShimmerBehavior />
                                         </Grid.Behaviors>
-                                        <Grid ColumnDefinitions="*,Auto"
-                                              ColumnSpacing="10">
-                                            <Grid Grid.Column="0"
-                                                  RowDefinitions="Auto,*,Auto"
-                                                  RowSpacing="8"
-                                                  HorizontalOptions="Fill">
-                                                <Border HeightRequest="18"
-                                                        Grid.Row="0"
-                                                        Margin="0,0,120,0"
-                                                        BackgroundColor="{AppThemeBinding Light=#e3e6ea, Dark=#2a2f35}"
-                                                        StrokeShape="RoundRectangle 10" />
-                                                <Border HeightRequest="6"
-                                                        Grid.Row="2"
-                                                        Margin="0,6,0,0"
-                                                        BackgroundColor="{AppThemeBinding Light=#e3e6ea, Dark=#2a2f35}"
-                                                        StrokeShape="RoundRectangle 6" />
-                                            </Grid>
-                                            <Border Grid.Column="1"
-                                                    HeightRequest="20"
-                                                    WidthRequest="20"
-                                                    Margin="0,2,0,0"
-                                                    BackgroundColor="{AppThemeBinding Light=#e3e6ea, Dark=#2a2f35}"
-                                                    StrokeShape="RoundRectangle 8"
-                                                    HorizontalOptions="End"
-                                                    VerticalOptions="Start" />
-                                        </Grid>
+                                        <Border Grid.Row="0"
+                                                Grid.Column="0"
+                                                HeightRequest="18"
+                                                WidthRequest="148"
+                                                BackgroundColor="{AppThemeBinding Light=#e3e6ea, Dark=#2a2f35}"
+                                                StrokeShape="RoundRectangle 10"
+                                                HorizontalOptions="Start"
+                                                VerticalOptions="Center" />
+                                        <Border Grid.Row="1"
+                                                Grid.Column="0"
+                                                HeightRequest="12"
+                                                WidthRequest="96"
+                                                BackgroundColor="{AppThemeBinding Light=#e3e6ea, Dark=#2a2f35}"
+                                                StrokeShape="RoundRectangle 8"
+                                                HorizontalOptions="Start"
+                                                VerticalOptions="Center" />
+                                        <Border Grid.Row="2"
+                                                Grid.Column="0"
+                                                HeightRequest="14"
+                                                WidthRequest="172"
+                                                BackgroundColor="{AppThemeBinding Light=#e3e6ea, Dark=#2a2f35}"
+                                                StrokeShape="RoundRectangle 8"
+                                                HorizontalOptions="Start"
+                                                VerticalOptions="Center" />
+                                        <Border Grid.Row="3"
+                                                Grid.Column="1"
+                                                HeightRequest="18"
+                                                WidthRequest="98"
+                                                BackgroundColor="{AppThemeBinding Light=#e3e6ea, Dark=#2a2f35}"
+                                                StrokeShape="RoundRectangle 8"
+                                                HorizontalOptions="End"
+                                                VerticalOptions="Center" />
+                                        <Border Grid.Row="4"
+                                                Grid.Column="0"
+                                                Grid.ColumnSpan="2"
+                                                HeightRequest="6"
+                                                BackgroundColor="{AppThemeBinding Light=#e3e6ea, Dark=#2a2f35}"
+                                                StrokeShape="RoundRectangle 6"
+                                                HorizontalOptions="Fill"
+                                                VerticalOptions="Center" />
+                                        <Border Grid.Row="0"
+                                                Grid.Column="2"
+                                                HeightRequest="20"
+                                                WidthRequest="20"
+                                                BackgroundColor="{AppThemeBinding Light=#e3e6ea, Dark=#2a2f35}"
+                                                StrokeShape="RoundRectangle 8"
+                                                HorizontalOptions="End"
+                                                VerticalOptions="Center" />
                                     </Grid>
                                 </Grid>
                             </Border>
