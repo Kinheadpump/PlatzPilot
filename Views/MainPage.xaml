@@ -467,6 +467,8 @@
                                     ItemsSource="{Binding Settings.AvailableCities}"
                                     ItemDisplayBinding="{Binding DisplayName}"
                                     SelectedItem="{Binding Settings.SelectedCity}"
+                                    MinimumHeightRequest="50"
+                                    MinimumWidthRequest="200"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Center"
                                     FontAttributes="Bold" />
@@ -1204,6 +1206,8 @@
                                     ItemsSource="{Binding AvailableCities}"
                                     ItemDisplayBinding="{Binding DisplayName}"
                                     SelectedItem="{Binding SelectedCity}"
+                                    MinimumHeightRequest="50"
+                                    MinimumWidthRequest="200"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Center"
                                     FontAttributes="Bold"

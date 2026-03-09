@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace PlatzPilot.Configuration;
 
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
 public sealed class CityConfig
 {
     [JsonPropertyName("id")]
