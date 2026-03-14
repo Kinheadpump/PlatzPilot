@@ -15,6 +15,11 @@ public sealed class CityConfig
 
     [JsonPropertyName("locations")]
     public List<string> Locations { get; set; } = [];
+
+    public override string ToString()
+    {
+        return DisplayName ?? Id ?? "Unbekannte Stadt";
+    }
 }
 
 public sealed class SeatFinderConfig
