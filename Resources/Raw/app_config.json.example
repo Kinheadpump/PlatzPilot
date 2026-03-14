@@ -34,31 +34,39 @@
     "discordCrashWebhook": ""
   },
   "seatFinder": {
-    "baseUrl": "https://seatfinder.bibliothek.kit.edu/karlsruhe/getdata.php",
     "nowToken": "now",
-    "locations": [
-      "LSG",
-      "LSM",
-      "LST",
-      "LSN",
-      "LSW",
-      "LBS",
-      "BIB-N",
-      "L3",
-      "L2",
-      "SAR",
-      "L1",
-      "LEG",
-      "FBC",
-      "FBP",
-      "LAF",
-      "FBA",
-      "FBI",
-      "FBM",
-      "FBH",
-      "FBD",
-      "BLB",
-      "WIS"
+    "baseUrl": "https://seatfinder.bibliothek.kit.edu/{0}/getdata.php",
+    "cities": [
+    {
+      "id": "karlsruhe",
+      "displayName": "Karlsruhe",
+      "locations": [ "LSG", "LSM", "LST", "LSN", "LSW", "LBS", "BIB-N", "L3", "L2", "SAR", "L1", "LEG", "FBC", "FBP", "LAF", "FBA", "FBI", "FBM", "FBH", "FBD", "BLB", "WIS" ]
+    },
+    {
+      "id": "tuebingen",
+      "displayName": "Tübingen",
+      "locations": [ "UBH1", "UBB2", "UBB2HLS", "UBA3A", "UBA3C", "UBA4A", "UBA4B", "UBA4C", "UBA5A", "UBA5B", "UBA5C", "UBA6A", "UBA6B", "UBA6C", "UBWZA", "UBWZB", "UBNEG", "UBCEG", "UBCUG", "UBLZN" ]
+    },
+    {
+      "id": "unige",
+      "displayName": "Genf",
+      "locations": ["MAIL", "JURA", "BATELLED", "CMU", "ATRIUM", "ARVE", "ISE", "MATHS", "OBS"]
+    },
+    {
+      "id": "unisg_v2",
+      "displayName": "St. Gallen",
+      "locations": ["BIB_EG", "BIB_OG", "SHSG", "01_2. OG", "01_3. OG", "theCO", "WASH", "theStage", "gym"]
+    },
+    {
+      "id": "kassel",
+      "displayName": "Kassel",
+      "locations": ["UBA0EP", "UBA1EP", "UBA2EP", "UBB0EP", "UBB1EP", "UBB2EP", "UBC0EP", "UBC1EP", "UBC2EP", "UBA0GP", "UBA1GP", "UBA2GP", "UBB0GP", "UBB1GP", "UBB2GP", "UBC0GP", "UBC1GP", "UBC2GP", "LeoEG", "LeoOG"]
+    },
+    {
+      "id": "ulb_darmstadt",
+      "displayName": "Darmstadt",
+      "locations": ["ULBSM1", "ULBSM2", "ULBSM3", "ULBSM4", "ULBLW1", "ULBLW2", "ULBLW3"]
+    }
     ],
     "weeklyHistoryPoints": 2304,
     "liveSnapshotPoints": 1,
@@ -175,11 +183,11 @@
   "fonts": {
     "entries": [
       {
-        "fileName": "OpenSans-Regular.ttf",
+        "fileName": "Nunito-Medium.ttf",
         "alias": "NunitoRegular"
       },
       {
-        "fileName": "OpenSans-Semibold.ttf",
+        "fileName": "Nunito-SemiBold.ttf",
         "alias": "NunitoSemibold"
       }
     ]
@@ -199,10 +207,10 @@
     "closedColor": "#b0b0b0"
   },
   "colorBlindness": {
-    "lowColor": "#648FFF",
-    "mediumColor": "#FFB000",
-    "highColor": "#DC267F",
-    "fullColor": "#DC267F"
+    "lowColor": "#332288",
+    "mediumColor": "#88CCEE",
+    "highColor": "#DDCC77",
+    "fullColor": "#CC6677"
   },
   "campusSouth": {
     "excludedNameContains": [
@@ -289,7 +297,25 @@
     "30.50": "KIT-Bibliothek Süd Altbau",
     "30.51": "KIT-Bibliothek Süd Neubau",
     "50.19": "Informatikom",
-    "BLB_WIS": "Badische Landesbibliothek"
+    
+    "BLB_GROUP": "Badische Landesbibliothek",
+
+    "BASTIONS": "Uni Bastions",
+    "ARVE": "Uni Arve",
+    "CMU": "Uni CMU",
+
+    "STG_BIB": "Bibliothek",
+    "STG_MAIN": "Hauptgebäude",
+
+    "ULB_STADT": "ULB Stadtmitte",
+    "ULB_LICHT": "ULB Lichtwiese",
+    "BONATZBAU": "Bonatzbau",
+    "AMMERBAU": "Ammerbau",
+    "WASCHHALLE": "Alte Waschhalle",
+    "PCB_BIB": "PCB-Bibliothek",
+
+    "LEO": "LEO-Lernort",
+    "UB_EP_KASSEL": "Universitätsbibliothek Einzelplatz",
+    "UB_GP_KASSEL": "Universitätsbibliothek Gruppenplatz"
   }
 }
-
